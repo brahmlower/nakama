@@ -541,7 +541,7 @@ func CheckRuntime(logger *zap.Logger, config Config) error {
 	}
 
 	// Check any C runtime modules.
-	err = CheckRuntimeProviderC(logger, config)
+	err = CheckRuntimeProviderC(logger, config.GetRuntime().Path, paths)
 	if err != nil {
 		return err
 	}

@@ -15,8 +15,8 @@
 package server
 
 type SharedLib struct {
-	libpath string
-	err        string        // set if shared library failed to load
+	err        *string        // set if shared library failed to load
 	loaded     chan struct{} // closed when loaded
-	syms       map[string]interface{}
+	path	   string
+	syms       map[string]CSymbol
 }

@@ -64,8 +64,8 @@ func OpenSharedLib(name string) (*SharedLib, error) {
 	sharedLibMu.Lock()
 	if l := sharedLibs[filepath]; l != nil {
 		sharedLibMu.Unlock()
-		if l.err != "" {
-			return nil, errors.New(`OpenSharedLib("` + name + `"): ` + l.err + ` (previous failure)`)
+		if l.err != nil {
+			return nil, errors.New(`OpenSharedLib("` + name + `"): ` + *l.err + ` (previous failure)`)
 		}
 		<-l.loaded
 		return l, nil
@@ -82,21 +82,21 @@ func OpenSharedLib(name string) (*SharedLib, error) {
 	if sharedLibs == nil {
 		sharedLibs = make(map[string]*SharedLib)
 	}
-	libpath := ""
-	//libpath, syms, errstr := lastmoduleinit()
-	// if errstr != "" {
-	// 	sharedLibs[filepath] = &SharedLib{
-	// 		libpath: libpath,
-	// 		err:        errstr,
-	// 	}
-	// 	sharedLibMu.Unlock()
-	// 	return nil, errors.New(`OpenSharedLib("` + name + `"): ` + errstr)
-	// }
+	syms, err := loadCSymbols(h)
+	if err != nil {
+		sharedLibs[filepath] = &SharedLib{
+			err:  err,
+			path: filepath,
+		}
+		sharedLibMu.Unlock()
+		return nil, errors.New(`OpenSharedLib("` + name + `"): ` + *err)
+	}
 	// This function can be called from the init function of a plugin.
 	// Drop a placeholder in the map so subsequent opens can wait on it.
 	l := &SharedLib{
-		libpath: libpath,
-		loaded:     make(chan struct{}),
+		loaded: make(chan struct{}),
+		path:   filepath,
+		syms:   syms,
 	}
 	sharedLibs[filepath] = l
 	sharedLibMu.Unlock()
@@ -110,47 +110,41 @@ func OpenSharedLib(name string) (*SharedLib, error) {
 	// 	doInit(initTask)
 	// }
 
-	/*/ Fill out the value of each plugin symbol.
-	updatedSyms := map[string]interface{}{}
-	for symName, sym := range syms {
-		isFunc := symName[0] == '.'
-		if isFunc {
-			delete(syms, symName)
-			symName = symName[1:]
-		}
-
-		fullName := pluginpath + "." + symName
-		cname := make([]byte, len(fullName)+1)
-		copy(cname, fullName)
-
-		p := C.pluginLookup(h, (*C.char)(unsafe.Pointer(&cname[0])), &cErr)
-		if p == nil {
-			return nil, errors.New(`plugin.Open("` + name + `"): could not find symbol ` + symName + `: ` + C.GoString(cErr))
-		}
-		valp := (*[2]unsafe.Pointer)(unsafe.Pointer(&sym))
-		if isFunc {
-			(*valp)[1] = unsafe.Pointer(&p)
-		} else {
-			(*valp)[1] = p
-		}
-		// we can't add to syms during iteration as we'll end up processing
-		// some symbols twice with the inability to tell if the symbol is a function
-		updatedSyms[symName] = sym
-	}
-	p.syms = updatedSyms*/
-
 	close(l.loaded)
 	return l, nil
 }
 
-func (l *SharedLib) lookup(symName string) (Symbol, error) {
+func loadCSymbol(h C.ulong, syms map[string]CSymbol, name string) *string {
+	var cErr *C.char
+	var cName *C.char
+	cName = C.CString(name)
+	syms[name] = C.sharedLibLookup(h, cName, &cErr)
+	C.free(unsafe.Pointer(cName))
+	if cErr != nil {
+		err := C.GoString(cErr)
+		return &err
+	}
+
+	return nil
+}
+
+func loadCSymbols(h C.ulong) (map[string]CSymbol, *string) {
+	syms := make(map[string]CSymbol, 16) // TODO: COUNT!
+	if err := loadCSymbol(h, syms, "hello_world"); err != nil {
+		return nil, err
+	}
+
+	return syms, nil
+}
+
+func (l *SharedLib) lookup(symName string) (CSymbol, error) {
 	if s := l.syms[symName]; s != nil {
 		return s, nil
 	}
-	return nil, errors.New("shared library: symbol " + symName + " not found in " + l.libpath)
+	return nil, errors.New("shared library: symbol " + symName + " not found in " + l.path)
 }
 
 var (
 	sharedLibMu sync.Mutex
-	sharedLibs   map[string]*SharedLib
+	sharedLibs  map[string]*SharedLib
 )
