@@ -582,7 +582,7 @@ func NewRuntime(logger, startupLogger *zap.Logger, db *sql.DB, jsonpbMarshaler *
 		return nil, nil, err
 	}
 
-	cModules, cRPCFunctions, cBeforeRtFunctions, cAfterRtFunctions, cBeforeReqFunctions, cAfterReqFunctions, cMatchmakerMatchedFunction, cTournamentEndFunction, cTournamentResetFunction, cLeaderboardResetFunction, err := NewRuntimeProviderC(logger, startupLogger, db, jsonpbMarshaler, jsonpbUnmarshaler, config, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, matchRegistry, tracker, metrics, streamManager, router, allEventFunctions.eventFunction, runtimeConfig.Path, runtimeConfig.JsEntrypoint, matchProvider)
+	cModules, cRPCFunctions, cBeforeRtFunctions, cAfterRtFunctions, cBeforeReqFunctions, cAfterReqFunctions, cMatchmakerMatchedFunction, cTournamentEndFunction, cTournamentResetFunction, cLeaderboardResetFunction, err := NewRuntimeProviderC(logger, startupLogger, db, jsonpbMarshaler, jsonpbUnmarshaler, config, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, matchRegistry, tracker, metrics, streamManager, router, allEventFunctions.eventFunction, runtimeConfig.Path, paths, matchProvider)
 	if err != nil {
 		startupLogger.Error("Error initialising C runtime provider", zap.Error(err))
 		return nil, nil, err
