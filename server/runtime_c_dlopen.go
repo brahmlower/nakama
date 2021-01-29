@@ -101,14 +101,8 @@ func OpenSharedLib(name string) (*SharedLib, error) {
 	sharedLibs[filepath] = l
 	sharedLibMu.Unlock()
 
-	// initStr := make([]byte, len(pluginpath)+len("..inittask")+1) // +1 for terminating NUL
-	// copy(initStr, pluginpath)
-	// copy(initStr[len(pluginpath):], "..inittask")
-
-	// initTask := C.pluginLookup(h, (*C.char)(unsafe.Pointer(&initStr[0])), &cErr)
-	// if initTask != nil {
-	// 	doInit(initTask)
-	// }
+	// p, _ := l.lookup("c_nk_init_module")
+	// C.cNkInitModule(p, 2468)
 
 	close(l.loaded)
 	return l, nil
@@ -129,8 +123,8 @@ func loadCSymbol(h C.ulong, syms map[string]CSymbol, name string) *string {
 }
 
 func loadCSymbols(h C.ulong) (map[string]CSymbol, *string) {
-	syms := make(map[string]CSymbol, 16) // TODO: COUNT!
-	if err := loadCSymbol(h, syms, "hello_world"); err != nil {
+	syms := make(map[string]CSymbol)
+	if err := loadCSymbol(h, syms, "c_nk_init_module"); err != nil {
 		return nil, err
 	}
 
