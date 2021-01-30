@@ -38,7 +38,7 @@ typedef struct
 extern "C"
 {
 #endif
-  typedef void (*NkLogLevelFn)(NkString s);
+  typedef void (*NkLogLevelFn)();//NkString s);
 
   typedef struct NkLogger
   {
