@@ -14,11 +14,30 @@
 
 package server
 
+/*
+#include "../include/nakama.h"
+
+void *NkLogLevelFnVoid(NkLogLevelFn f)
+{
+  return (void *)f;
+}
+
+NkLogLevelFn VoidNkLogLevelFn(void *f)
+{
+  return (NkLogLevelFn)f;
+}
+
+*/
+import "C"
+
 import (
 	"context"
 	"database/sql"
 
+	//"unsafe"
+
 	"github.com/heroiclabs/nakama-common/runtime"
+	"github.com/mattn/go-pointer"
 	"github.com/rainycape/dl"
 )
 
@@ -26,14 +45,20 @@ import (
 // func HelloWorld(arg1, arg2 int, arg3 string) int64 {
 // 	return 0
 // }
+type CLogger struct {
+}
+
+type CSymbol interface{}
 
 type CSymbols struct {
-	initModule func() uint64
+	initModule func(C.NkLogger)
 }
+
+
 
 func NewCSymbols(lib *dl.DL) (CSymbols, error) {
 	syms := CSymbols{}
-	if err := lib.Sym("_c_nk_init_module", syms.InitModule); err != nil {
+	if err := lib.Sym("c_nk_init_module", syms.InitModule); err != nil {
 		return syms, err
 	}
 
@@ -41,9 +66,18 @@ func NewCSymbols(lib *dl.DL) (CSymbols, error) {
 }
 
 func (c *CSymbols) InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
-	res := c.initModule()
+	cLogger := C.NkLogger{
+		debug: C.VoidNkLogLevelFn(pointer.Save(func(s *C.char) {
+			logger.Debug(C.GoString(s))
+		})),
+		warn: C.VoidNkLogLevelFn(pointer.Save(func(s *C.char) {
+			logger.Warn(C.GoString(s))
+		})),
+	}
+	c.initModule(cLogger)
+	pointer.Unref(C.NkLogLevelFnVoid(cLogger.debug))
+	pointer.Unref(C.NkLogLevelFnVoid(cLogger.warn))
 
-	logger.Warn("C RESULTS: %v", res)
-
+	
 	return nil
 }
