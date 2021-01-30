@@ -2124,15 +2124,16 @@ func NewRuntimeProviderC(logger, startupLogger *zap.Logger, db *sql.DB, jsonpbMa
 
 	modulePaths := make([]string, 0)
 	for _, path := range paths {
+		// HACK: Name C-module shared object files ".cso" to avoid conflicts with Go-module plugins
 		// Skip everything except shared object files.
-		if strings.ToLower(filepath.Ext(path)) != ".so" {
+		if strings.ToLower(filepath.Ext(path)) != ".cso" {
 			continue
 		}
 
 		// Open the library, and look up the required initialisation function.
 		relPath, name, syms, err := openCModule(rootPath, path)
 		if err != nil {
-			// Errors are already logged in the function above.
+			startupLogger.Warn("Unable to open C module", zap.String("name", name), zap.Error(err))
 			return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 		}
 
@@ -2189,7 +2190,7 @@ func openCModule(rootPath, path string) (string, string, *CSymbols, error) {
 	lib, err := dl.Open(path, 0)
 	if err != nil {
 		sharedLibs[name] = SharedLib{
-			err: err,
+			err:  err,
 			name: name,
 		}
 		sharedLibMu.Unlock()
@@ -2212,9 +2213,9 @@ func openCModule(rootPath, path string) (string, string, *CSymbols, error) {
 	// This function can be called from the init function of a plugin.
 	// Drop a placeholder in the map so subsequent opens can wait on it.
 	sharedLibs[name] = SharedLib{
-		lib:    lib,
-		name:   name,
-		syms:   syms,
+		lib:  lib,
+		name: name,
+		syms: syms,
 	}
 	sharedLibMu.Unlock()
 
