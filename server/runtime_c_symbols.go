@@ -15,7 +15,13 @@
 package server
 
 /*
+#include <stdlib.h>
 #include "../include/nakama.h"
+
+void Free(void *p)
+{
+	free(p);
+}
 
 void *NkLogLevelFnVoid(NkLogLevelFn f)
 {
@@ -26,14 +32,25 @@ NkLogLevelFn VoidNkLogLevelFn(void *f)
 {
 	return (NkLogLevelFn)f;
 }
+
+NkLogger *NewNkLogger(NkLogLevelFn debug, NkLogLevelFn warn)
+{
+	NkLogger *res = malloc(sizeof(NkLogger));
+	if (res == NULL)
+		return NULL;
+
+	res->debug = debug;
+	res->warn = warn;
+
+	return res;
+}
 */
 import "C"
 
 import (
 	"context"
 	"database/sql"
-
-	//"unsafe"
+	"unsafe"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/mattn/go-pointer"
@@ -43,13 +60,13 @@ import (
 type CSymbol interface{}
 
 type CSymbols struct {
-	initModule func(C.NkLogLevelFn, C.NkLogLevelFn)
+	initModule func(*C.NkLogger)
 }
 
 func NewCSymbols(lib *dl.DL) (CSymbols, error) {
 	syms := CSymbols{}
 
-	if err := lib.Sym("__nk_init_module__", &syms.initModule); err != nil {
+	if err := lib.Sym("nk_init_module", &syms.initModule); err != nil {
 		return syms, err
 	}
 
@@ -63,9 +80,11 @@ func (c *CSymbols) InitModule(ctx context.Context, logger runtime.Logger, db *sq
 	cLoggerWarn := C.VoidNkLogLevelFn(pointer.Save(func(s *C.char) {
 		logger.Warn(C.GoString(s))
 	}))
-	c.initModule(cLoggerDebug, cLoggerWarn)
+	cLogger := C.NewNkLogger(cLoggerDebug, cLoggerWarn)
+	c.initModule(cLogger)
 	pointer.Unref(C.NkLogLevelFnVoid(cLoggerDebug))
 	pointer.Unref(C.NkLogLevelFnVoid(cLoggerWarn))
+	C.Free(unsafe.Pointer(cLogger))
 
 	return nil
 }
