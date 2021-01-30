@@ -14,9 +14,12 @@
 
 package server
 
+import "github.com/rainycape/dl"
+
+// SharedLib holds a C-module runtime library
 type SharedLib struct {
-	err        *string        // set if shared library failed to load
-	loaded     chan struct{} // closed when loaded
-	path	   string
-	syms       map[string]CSymbol
+	err    error // set if shared library failed to load
+	lib    *dl.DL
+	name   string
+	syms   CSymbols
 }

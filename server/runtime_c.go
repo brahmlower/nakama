@@ -22,13 +22,13 @@ import (
 	"strings"
 	"sync"
 
-
 	"github.com/dop251/goja"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/heroiclabs/nakama-common/api"
 	"github.com/heroiclabs/nakama-common/rtapi"
 	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/heroiclabs/nakama/v3/social"
+	"github.com/rainycape/dl"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -2069,8 +2069,6 @@ type RuntimeProviderC struct {
 	metrics              *Metrics
 }
 
-type CSymbol interface{}
-
 func CheckRuntimeProviderC(logger *zap.Logger, rootPath string, paths []string) error {
 	for _, path := range paths {
 		// Skip everything except shared object files.
@@ -2079,7 +2077,7 @@ func CheckRuntimeProviderC(logger *zap.Logger, rootPath string, paths []string) 
 		}
 
 		// Open the shared library, and hope for the best.
-		_, _, _, err := openCModule(logger, rootPath, path)
+		_, _, _, err := openCModule(rootPath, path)
 		if err != nil {
 			// Errors are already logged in the function above.
 			return err
@@ -2132,14 +2130,14 @@ func NewRuntimeProviderC(logger, startupLogger *zap.Logger, db *sql.DB, jsonpbMa
 		}
 
 		// Open the library, and look up the required initialisation function.
-		relPath, name, fn, err := openCModule(startupLogger, rootPath, path)
+		relPath, name, syms, err := openCModule(rootPath, path)
 		if err != nil {
 			// Errors are already logged in the function above.
 			return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 		}
 
 		// Run the initialisation.
-		if err = fn(ctx, runtimeLogger, db, nk, initializer); err != nil {
+		if err = syms.InitModule(ctx, runtimeLogger, db, nk, initializer); err != nil {
 			startupLogger.Fatal("Error returned by C module initialisation function", zap.String("name", name), zap.Error(err))
 			return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors.New("error returned by C module initialisation function")
 		}
@@ -2158,41 +2156,67 @@ func NewRuntimeProviderC(logger, startupLogger *zap.Logger, db *sql.DB, jsonpbMa
 	var tournamentResetFunction RuntimeTournamentResetFunction
 	var leaderboardResetFunction RuntimeLeaderboardResetFunction
 
-	
-
 	return modulePaths, rpcFunctions, beforeRtFunctions, afterRtFunctions, beforeReqFunctions, afterReqFunctions, matchmakerMatchedFunction, tournamentEndFunction, tournamentResetFunction, leaderboardResetFunction, nil
 }
 
-func openCModule(logger *zap.Logger, rootPath, path string) (string, string, func(context.Context, runtime.Logger, *sql.DB, runtime.NakamaModule, runtime.Initializer) error, error) {
+var (
+	sharedLibMu sync.Mutex
+	sharedLibs  map[string]SharedLib
+)
+
+func openCModule(rootPath, path string) (string, string, *CSymbols, error) {
+	// Get relative file path to the c-module
 	relPath, _ := filepath.Rel(rootPath, path)
 	name := strings.TrimSuffix(relPath, filepath.Ext(relPath))
 
-	// Open the shared library.
-	l, err := OpenSharedLib(path)
+	// Begin lock section
+	sharedLibMu.Lock()
+	if sharedLibs == nil {
+		sharedLibs = make(map[string]SharedLib)
+	}
+
+	// Early-out: Have we already loaded this c-module?
+	if l, ok := sharedLibs[name]; ok {
+		sharedLibMu.Unlock()
+		if l.err != nil {
+			return relPath, name, nil, l.err
+		}
+
+		return relPath, name, &l.syms, nil
+	}
+
+	// dl is a package which calls the dlopen/dlsym for us
+	lib, err := dl.Open(path, 0)
 	if err != nil {
-		logger.Error("Could not open C module", zap.String("path", path), zap.Error(err))
-		return "", "", nil, err
+		sharedLibs[name] = SharedLib{
+			err: err,
+			name: name,
+		}
+		sharedLibMu.Unlock()
+
+		return relPath, name, nil, err
 	}
 
-	// Look up the required initialisation function.
-	f, err := l.lookup("_c_nk_init_module")
+	// Get interesting symbols out of lib
+	syms, err := NewCSymbols(lib)
 	if err != nil {
-		logger.Fatal("Error looking up _c_nk_init_module function in C module", zap.String("name", name))
-		return "", "", nil, err
+		sharedLibs[name] = SharedLib{
+			err:  err,
+			name: name,
+		}
+		sharedLibMu.Unlock()
+
+		return relPath, name, nil, err
 	}
 
-	// Ensure the function has the correct signature.
-	fn, ok := f.(func(int64) error)
-	if !ok {
-		logger.Fatal("Error reading init_module function in C module", zap.String("name", name))
-		return "", "", nil, errors.New("error reading init_module function in C module")
+	// This function can be called from the init function of a plugin.
+	// Drop a placeholder in the map so subsequent opens can wait on it.
+	sharedLibs[name] = SharedLib{
+		lib:    lib,
+		name:   name,
+		syms:   syms,
 	}
+	sharedLibMu.Unlock()
 
-	wrappedFn := func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
-		fn(420)
-
-		return nil
-	}
-
-	return relPath, name, wrappedFn, nil
+	return relPath, name, &syms, nil
 }
