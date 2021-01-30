@@ -19,14 +19,13 @@ package server
 
 void *NkLogLevelFnVoid(NkLogLevelFn f)
 {
-  return (void *)f;
+	return (void *)f;
 }
 
 NkLogLevelFn VoidNkLogLevelFn(void *f)
 {
-  return (NkLogLevelFn)f;
+	return (NkLogLevelFn)f;
 }
-
 */
 import "C"
 
@@ -41,24 +40,16 @@ import (
 	"github.com/rainycape/dl"
 )
 
-// //export HelloWorld
-// func HelloWorld(arg1, arg2 int, arg3 string) int64 {
-// 	return 0
-// }
-type CLogger struct {
-}
-
 type CSymbol interface{}
 
 type CSymbols struct {
-	initModule func(C.NkLogger)
+	initModule func(C.NkLogLevelFn, C.NkLogLevelFn)
 }
-
-
 
 func NewCSymbols(lib *dl.DL) (CSymbols, error) {
 	syms := CSymbols{}
-	if err := lib.Sym("c_nk_init_module", syms.InitModule); err != nil {
+
+	if err := lib.Sym("__nk_init_module__", &syms.initModule); err != nil {
 		return syms, err
 	}
 
@@ -66,18 +57,15 @@ func NewCSymbols(lib *dl.DL) (CSymbols, error) {
 }
 
 func (c *CSymbols) InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
-	cLogger := C.NkLogger{
-		debug: C.VoidNkLogLevelFn(pointer.Save(func(s *C.char) {
-			logger.Debug(C.GoString(s))
-		})),
-		warn: C.VoidNkLogLevelFn(pointer.Save(func(s *C.char) {
-			logger.Warn(C.GoString(s))
-		})),
-	}
-	c.initModule(cLogger)
-	pointer.Unref(C.NkLogLevelFnVoid(cLogger.debug))
-	pointer.Unref(C.NkLogLevelFnVoid(cLogger.warn))
+	cLoggerDebug := C.VoidNkLogLevelFn(pointer.Save(func(s *C.char) {
+		logger.Debug(C.GoString(s))
+	}))
+	cLoggerWarn := C.VoidNkLogLevelFn(pointer.Save(func(s *C.char) {
+		logger.Warn(C.GoString(s))
+	}))
+	c.initModule(cLoggerDebug, cLoggerWarn)
+	pointer.Unref(C.NkLogLevelFnVoid(cLoggerDebug))
+	pointer.Unref(C.NkLogLevelFnVoid(cLoggerWarn))
 
-	
 	return nil
 }
