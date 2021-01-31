@@ -38,16 +38,16 @@ typedef struct
 extern "C"
 {
 #endif
-  typedef void (*NkLogLevelFn)();//NkString s);
+  typedef void (*NkLogLevelFn)(); //NkString s);
 
-  typedef struct NkLogger
+  typedef struct
   {
     NkLogLevelFn debug;
     NkLogLevelFn warn;
   } NkLogger;
 
   // extern GoInt64 _c_nk_init_module(GoInt arg1, GoInt arg2, GoString arg3);
-  extern void nk_init_module(NkLogger *);
+  extern void nk_init_module(NkLogger);
 
 #ifdef __cplusplus
 }

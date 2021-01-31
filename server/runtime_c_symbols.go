@@ -15,56 +15,28 @@
 package server
 
 /*
-#include <stdlib.h>
+// #include <stdlib.h>
 #include "../include/nakama.h"
 
-void Free(void *p)
-{
-	free(p);
-}
+// extern void goLoggerDebug(void *);
+extern void cLoggerDebug(void* p);
 
-void *NkLogLevelFnVoid(NkLogLevelFn f)
-{
-	return (void *)f;
-}
-
-NkLogLevelFn VoidNkLogLevelFn(void *f)
-{
-	return (NkLogLevelFn)f;
-}
-
-NkLogger *VoidNkLogger(void *f)
-{
-	return (NkLogger *)f;
-}
-
-NkLogger *NewNkLogger(NkLogLevelFn debug, NkLogLevelFn warn)
-{
-	NkLogger *res = malloc(sizeof(NkLogger));
-	if (res == NULL)
-		return NULL;
-
-	res->debug = debug;
-	res->warn = warn;
-
-	return res;
-}
 */
 import "C"
 
 import (
 	"context"
 	"database/sql"
+	"unsafe"
 
 	"github.com/heroiclabs/nakama-common/runtime"
-	"github.com/mattn/go-pointer"
 	"github.com/rainycape/dl"
 )
 
 type CSymbol interface{}
 
 type CSymbols struct {
-	initModule func(*C.NkLogger)
+	initModule func(C.NkLogger)
 }
 
 func NewCSymbols(lib *dl.DL) (CSymbols, error) {
@@ -78,25 +50,30 @@ func NewCSymbols(lib *dl.DL) (CSymbols, error) {
 }
 
 func (c *CSymbols) InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
-	debug := func() {
-		logger.Debug("DSAKJHDSAKJHDSAKJHASDKJHASD")
-	}
-	warn := func(s *C.char) {
-		logger.Warn(C.GoString(s))
-	}
-	cLoggerDebug := pointer.Save(&debug)
-	cLoggerWarn := pointer.Save(&warn)
-	cLogger := pointer.Save(&C.NkLogger{
-		C.VoidNkLogLevelFn(cLoggerDebug),
-		C.VoidNkLogLevelFn(cLoggerWarn),
-	})
-	//C.NewNkLogger(cLoggerDebug, cLoggerWarn)
-	c.initModule(C.VoidNkLogger(cLogger))
-	pointer.Unref(cLoggerDebug)
-	pointer.Unref(cLoggerWarn)
-	pointer.Unref(cLogger)
+	// debug := func() {
+	// 	logger.Debug("DSAKJHDSAKJHDSAKJHASDKJHASD")
+	// }
+	// warn := func(s *C.char) {
+	// 	logger.Warn(C.GoString(s))
+	// }
+	// cLoggerDebug := pointer.Save(&debug)
+	// cLoggerWarn := pointer.Save(&warn)
+	// cLogger := pointer.Save(&C.NewNkLogger(C.VoidNkLogLevelFn(cLoggerDebug), C.VoidNkLogLevelFn(cLoggerWarn)))
 
-	//C.Free(unsafe.Pointer(cLogger))
+	cLogger := C.NkLogger{}
+	cLogger.debug = C.NkLogLevelFn(C.cLoggerDebug)
+
+	c.initModule(cLogger)
+	// pointer.Unref(cLoggerDebug)
+	// pointer.Unref(cLoggerWarn)
+	// pointer.Unref(cLogger)
+
+	// C.Free(unsafe.Pointer(cLogger))
 
 	return nil
+}
+
+//export goLoggerDebug
+func goLoggerDebug(p unsafe.Pointer) {
+
 }
