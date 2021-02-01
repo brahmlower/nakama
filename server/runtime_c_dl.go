@@ -46,11 +46,11 @@ func DLOpen(name string) (CSymbols, error) {
 	return syms, nil
 }
 
-// DLSym gets the CSymbol for a name from the given library.
-func DLSym(lib unsafe.Pointer, name string) CSymbol {
+// DLSym gets the unsafe.Pointer to a function with the given name from the given library.
+func DLSym(lib unsafe.Pointer, name string) unsafe.Pointer {
 	cName := C.CString(name)
 	sym := C.dlsym(lib, cName)
 	C.free(unsafe.Pointer(cName))
 
-	return CSymbol(sym)
+	return sym
 }

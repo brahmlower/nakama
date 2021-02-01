@@ -26,30 +26,22 @@ import (
 
 //export cLoggerDebug
 func cLoggerDebug(p unsafe.Pointer, s C.NkString) {
-	logger := pointer.Restore(p).(*runtime.Logger)
-
-	(*logger).Debug(cStringGo(s))
+	pointer.Restore(p).(runtime.Logger).Debug(cStringGo(s))
 }
 
 //export cLoggerError
 func cLoggerError(p unsafe.Pointer, s C.NkString) {
-	logger := pointer.Restore(p).(*runtime.Logger)
-
-	(*logger).Error(cStringGo(s))
+	pointer.Restore(p).(runtime.Logger).Error(cStringGo(s))
 }
 
 //export cLoggerInfo
 func cLoggerInfo(p unsafe.Pointer, s C.NkString) {
-	logger := pointer.Restore(p).(*runtime.Logger)
-
-	(*logger).Info(cStringGo(s))
+	pointer.Restore(p).(runtime.Logger).Info(cStringGo(s))
 }
 
 //export cLoggerWarn
 func cLoggerWarn(p unsafe.Pointer, s C.NkString) {
-	logger := pointer.Restore(p).(*runtime.Logger)
-
-	(*logger).Warn(cStringGo(s))
+	pointer.Restore(p).(runtime.Logger).Warn(cStringGo(s))
 }
 
 func cStringGo(s C.NkString) string {

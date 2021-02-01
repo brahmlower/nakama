@@ -16,16 +16,13 @@ package server
 
 import "unsafe"
 
-// CSymbol is an exported c-module function pointer
-type CSymbol unsafe.Pointer
-
 // CSymbols holds all exported function pointers for a given c-module
 type CSymbols struct {
-	initModule CSymbol
+	initModule unsafe.Pointer
 }
 
 // Load simply fills out the function pointer fields; if missing a function pointer will be
 // nil
 func (s *CSymbols) Load(lib unsafe.Pointer) {
-	s.initModule = DLSym(lib, "init_module")
+	s.initModule = DLSym(lib, "nk_init_module")
 }

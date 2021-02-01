@@ -28,7 +28,7 @@ import "C"
 import (
 	"context"
 	"database/sql"
-	"unsafe"
+	"errors"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/mattn/go-pointer"
@@ -46,14 +46,18 @@ func (c *CLib) initModule(ctx context.Context, logger runtime.Logger, db *sql.DB
 		return c.err
 	}
 
+	if c.syms.initModule == nil {
+		return errors.New("Missing c-module library initialisation function")
+	}
+
 	cLogger := C.NkLogger{}
-	cLogger.ptr = pointer.Save(&logger)
+	cLogger.ptr = pointer.Save(logger)
 	cLogger.debug = C.NkLoggerLevelFn(C.loggerdebug)
 	cLogger.error = C.NkLoggerLevelFn(C.loggererror)
 	cLogger.info = C.NkLoggerLevelFn(C.loggerinfo)
 	cLogger.warn = C.NkLoggerLevelFn(C.loggerwarn)
 
-	C.initmodule(unsafe.Pointer(c.syms.initModule), cLogger)
+	C.initmodule(c.syms.initModule, cLogger)
 
 	pointer.Unref(cLogger.ptr)
 
