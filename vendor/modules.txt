@@ -186,8 +186,6 @@ github.com/philhofer/fwd
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/rainycape/dl v0.0.0-20151222075243-1b01514224a1
-github.com/rainycape/dl
 # github.com/rogpeppe/go-internal v1.3.1
 github.com/rogpeppe/go-internal/modfile
 github.com/rogpeppe/go-internal/module

@@ -38,7 +38,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/rainycape/dl v0.0.0-20151222075243-1b01514224a1
+	github.com/rainycape/dl v0.0.0-20151222075243-1b01514224a1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20190512091148-babf20351dd7 // indirect
 	github.com/rogpeppe/go-internal v1.3.1 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20190902133344-8926f37f0bc1
