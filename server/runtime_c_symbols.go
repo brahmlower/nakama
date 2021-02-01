@@ -14,66 +14,18 @@
 
 package server
 
-/*
-// #include <stdlib.h>
-#include "../include/nakama.h"
+import "unsafe"
 
-// extern void goLoggerDebug(void *);
-extern void cLoggerDebug(void* p);
+// CSymbol is an exported c-module function pointer
+type CSymbol unsafe.Pointer
 
-*/
-import "C"
-
-import (
-	"context"
-	"database/sql"
-	"unsafe"
-
-	"github.com/heroiclabs/nakama-common/runtime"
-	"github.com/rainycape/dl"
-)
-
-type CSymbol interface{}
-
+// CSymbols holds all exported function pointers for a given c-module
 type CSymbols struct {
-	initModule func(C.NkLogger)
+	initModule CSymbol
 }
 
-func NewCSymbols(lib *dl.DL) (CSymbols, error) {
-	syms := CSymbols{}
-
-	if err := lib.Sym("nk_init_module", &syms.initModule); err != nil {
-		return syms, err
-	}
-
-	return syms, nil
-}
-
-func (c *CSymbols) InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
-	// debug := func() {
-	// 	logger.Debug("DSAKJHDSAKJHDSAKJHASDKJHASD")
-	// }
-	// warn := func(s *C.char) {
-	// 	logger.Warn(C.GoString(s))
-	// }
-	// cLoggerDebug := pointer.Save(&debug)
-	// cLoggerWarn := pointer.Save(&warn)
-	// cLogger := pointer.Save(&C.NewNkLogger(C.VoidNkLogLevelFn(cLoggerDebug), C.VoidNkLogLevelFn(cLoggerWarn)))
-
-	cLogger := C.NkLogger{}
-	cLogger.debug = C.NkLogLevelFn(C.cLoggerDebug)
-
-	c.initModule(cLogger)
-	// pointer.Unref(cLoggerDebug)
-	// pointer.Unref(cLoggerWarn)
-	// pointer.Unref(cLogger)
-
-	// C.Free(unsafe.Pointer(cLogger))
-
-	return nil
-}
-
-//export goLoggerDebug
-func goLoggerDebug(p unsafe.Pointer) {
-
+// Load simply fills out the function pointer fields; if missing a function pointer will be
+// nil
+func (s *CSymbols) Load(lib unsafe.Pointer) {
+	s.initModule = DLSym(lib, "init_module")
 }

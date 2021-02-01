@@ -17,10 +17,37 @@ package server
 /*
 #include "../include/nakama.h"
 
-extern void goLoggerDebug(void *);
-void cLoggerDebug(void* p)
+typedef void (*InitModuleFn)(NkLogger logger);
+
+extern void cLoggerDebug(void *, NkString);
+extern void cLoggerError(void *, NkString);
+extern void cLoggerInfo(void *, NkString);
+extern void cLoggerWarn(void *, NkString);
+
+void initmodule(void *ptr, NkLogger logger)
 {
-	goLoggerDebug(p);
+	InitModuleFn fn = (InitModuleFn)ptr;
+	fn(logger);
+}
+
+void loggerdebug(void *ptr, NkString s)
+{
+	cLoggerDebug(ptr, s);
+}
+
+void loggererror(void *ptr, NkString s)
+{
+	cLoggerError(ptr, s);
+}
+
+void loggerinfo(void *ptr, NkString s)
+{
+	cLoggerInfo(ptr, s);
+}
+
+void loggerwarn(void *ptr, NkString s)
+{
+	cLoggerWarn(ptr, s);
 }
 */
 import "C"

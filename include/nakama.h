@@ -12,6 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTE: In order to implement a c-module, you must provide the following functions:
+//
+// Module entrypoint:
+// void nk_init_module(void *logger);
+//
+// Match initializer:
+// void *nk_init_match(void *logger);
+
 #include <stddef.h>
 
 typedef unsigned char NkU8;
@@ -27,27 +35,34 @@ typedef long long NkI64;
 typedef float NkF32;
 typedef double NkF64;
 
-typedef __SIZE_TYPE__ Ptr;
+// typedef __SIZE_TYPE__ Ptr;
 typedef struct
 {
-  const char *p;
-  ptrdiff_t n;
+	const char *p;
+	ptrdiff_t n;
 } NkString;
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-  typedef void (*NkLogLevelFn)(); //NkString s);
+	typedef void (*NkLoggerFieldsFn)(void *ptr);
+	typedef void (*NkLoggerLevelFn)(void *ptr, NkString s);
+	typedef void *(*NkLoggerWithFieldFn)(void *ptr, NkString key, NkString value);
+	typedef void (*NkLoggerWithFieldsFn)(void *ptr);
 
-  typedef struct
-  {
-    NkLogLevelFn debug;
-    NkLogLevelFn warn;
-  } NkLogger;
+	typedef struct
+	{
+		void *ptr;
+		NkLoggerLevelFn debug;
+		NkLoggerLevelFn error;
+		NkLoggerFieldsFn fields;
+		NkLoggerLevelFn info;
+		NkLoggerLevelFn warn;
+		NkLoggerWithFieldFn with_field;
+		NkLoggerWithFieldsFn with_fields;
+	} NkLogger;
 
-  // extern GoInt64 _c_nk_init_module(GoInt arg1, GoInt arg2, GoString arg3);
-  extern void nk_init_module(NkLogger);
 
 #ifdef __cplusplus
 }

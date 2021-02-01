@@ -28,7 +28,6 @@ import (
 	"github.com/heroiclabs/nakama-common/rtapi"
 	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/heroiclabs/nakama/v3/social"
-	"github.com/rainycape/dl"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -2138,7 +2137,7 @@ func NewRuntimeProviderC(logger, startupLogger *zap.Logger, db *sql.DB, jsonpbMa
 		}
 
 		// Run the initialisation.
-		if err = syms.InitModule(ctx, runtimeLogger, db, nk, initializer); err != nil {
+		if err = syms.initModule(ctx, runtimeLogger, db, nk, initializer); err != nil {
 			startupLogger.Fatal("Error returned by C module initialisation function", zap.String("name", name), zap.Error(err))
 			return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors.New("error returned by C module initialisation function")
 		}
@@ -2161,63 +2160,49 @@ func NewRuntimeProviderC(logger, startupLogger *zap.Logger, db *sql.DB, jsonpbMa
 }
 
 var (
-	sharedLibMu sync.Mutex
-	sharedLibs  map[string]SharedLib
+	cLibMu sync.Mutex
+	cLibs  map[string]CLib
 )
 
-func openCModule(rootPath, path string) (string, string, *CSymbols, error) {
+func openCModule(rootPath, path string) (string, string, *CLib, error) {
 	// Get relative file path to the c-module
 	relPath, _ := filepath.Rel(rootPath, path)
 	name := strings.TrimSuffix(relPath, filepath.Ext(relPath))
 
 	// Begin lock section
-	sharedLibMu.Lock()
-	if sharedLibs == nil {
-		sharedLibs = make(map[string]SharedLib)
+	cLibMu.Lock()
+	if cLibs == nil {
+		cLibs = make(map[string]CLib)
 	}
 
 	// Early-out: Have we already loaded this c-module?
-	if l, ok := sharedLibs[name]; ok {
-		sharedLibMu.Unlock()
+	if l, ok := cLibs[name]; ok {
+		cLibMu.Unlock()
 		if l.err != nil {
 			return relPath, name, nil, l.err
 		}
 
-		return relPath, name, &l.syms, nil
+		return relPath, name, &l, nil
 	}
 
-	// dl is a package which calls the dlopen/dlsym for us
-	lib, err := dl.Open(path, 0)
+	syms, err := DLOpen(path)
 	if err != nil {
-		sharedLibs[name] = SharedLib{
+		cLibs[name] = CLib{
 			err:  err,
 			name: name,
 		}
-		sharedLibMu.Unlock()
+		cLibMu.Unlock()
 
 		return relPath, name, nil, err
 	}
 
-	// Get interesting symbols out of lib
-	syms, err := NewCSymbols(lib)
-	if err != nil {
-		sharedLibs[name] = SharedLib{
-			err:  err,
-			name: name,
-		}
-		sharedLibMu.Unlock()
-
-		return relPath, name, nil, err
-	}
-
-	// This function can be called from the init function of a plugin.
-	// Drop a placeholder in the map so subsequent opens can wait on it.
-	sharedLibs[name] = SharedLib{
-		lib:  lib,
+	cLibs[name] = CLib{
 		name: name,
 		syms: syms,
 	}
-	sharedLibMu.Unlock()
+	cLibMu.Unlock()
 
-	return relPath, name, &syms, nil
+	l := cLibs[name]
+
+	return relPath, name, &l, nil
 }
