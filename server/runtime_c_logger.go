@@ -43,7 +43,3 @@ func cLoggerInfo(p unsafe.Pointer, s C.NkString) {
 func cLoggerWarn(p unsafe.Pointer, s C.NkString) {
 	pointer.Restore(p).(runtime.Logger).Warn(cStringGo(s))
 }
-
-func cStringGo(s C.NkString) string {
-	return C.GoStringN(s.p, C.int(s.n))
-}

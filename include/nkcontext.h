@@ -12,14 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// NOTE: In order to implement a c-module, you must provide the following functions:
-//
-// Module entrypoint:
-// void nk_init_module(NkLogger);
-//
-// Match initializer:
-// void *nk_init_match(NkLogger);
+#ifndef NKCONTEXT_H_INCLUDED
+#define NKCONTEXT_H_INCLUDED
 
 #include "nktypes.h"
-#include "nkmodule.h"
-#include "nklogger.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	typedef NkString (*NkContextValueFn)(void *ptr, NkString key);
+
+	typedef struct
+	{
+		void *ptr;
+		NkContextValueFn value;
+	} NkContext;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -12,14 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// NOTE: In order to implement a c-module, you must provide the following functions:
-//
-// Module entrypoint:
-// void nk_init_module(NkLogger);
-//
-// Match initializer:
-// void *nk_init_match(NkLogger);
+#ifndef NKTYPES_H_INCLUDED
+#define NKTYPES_H_INCLUDED
 
-#include "nktypes.h"
-#include "nkmodule.h"
-#include "nklogger.h"
+#include <stddef.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	typedef unsigned char NkU8;
+	typedef unsigned short NkU16;
+	typedef unsigned int NkU32;
+	typedef unsigned long long NkU64;
+
+	typedef signed char NkI8;
+	typedef short NkI16;
+	typedef int NkI32;
+	typedef long long NkI64;
+
+	typedef float NkF32;
+	typedef double NkF64;
+
+	typedef struct
+	{
+		const char *p;
+		ptrdiff_t n;
+	} NkString;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

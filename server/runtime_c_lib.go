@@ -17,11 +17,23 @@ package server
 /*
 #include "../include/nakama.h"
 
-extern void initmodule(void *, NkLogger);
+extern void initmodule(void *, NkLogger, NkModule);
+
 extern void loggerdebug(void *, NkString);
 extern void loggererror(void *, NkString);
 extern void loggerinfo(void *, NkString);
 extern void loggerwarn(void *, NkString);
+
+extern NkModuleAuthenticateResult moduleauthenticateapple(void *, NkContext, NkString, NkString, bool);
+extern NkModuleAuthenticateResult moduleauthenticatecustom(void *, NkContext, NkString, NkString, bool);
+extern NkModuleAuthenticateResult moduleauthenticatedevice(void *, NkContext, NkString, NkString, bool);
+extern NkModuleAuthenticateResult moduleauthenticateemail(void *, NkContext, NkString, NkString, NkString, bool);
+extern NkModuleAuthenticateResult moduleauthenticatefacebook(void *, NkContext, NkString, bool, NkString, bool);
+extern NkModuleAuthenticateResult moduleauthenticatefacebookinstantgame(void *, NkContext, NkString, NkString, bool);
+extern NkModuleAuthenticateResult moduleauthenticategamecenter(void *, NkContext, NkString, NkString, NkI64, NkString, NkString, NkString, NkString, bool);
+extern NkModuleAuthenticateResult moduleauthenticategoogle(void *, NkContext, NkString, NkString, bool);
+extern NkModuleAuthenticateResult moduleauthenticatesteam(void *, NkContext, NkString, NkString, bool);
+
 */
 import "C"
 
@@ -57,9 +69,22 @@ func (c *CLib) initModule(ctx context.Context, logger runtime.Logger, db *sql.DB
 	cLogger.info = C.NkLoggerLevelFn(C.loggerinfo)
 	cLogger.warn = C.NkLoggerLevelFn(C.loggerwarn)
 
-	C.initmodule(c.syms.initModule, cLogger)
+	cModule := C.NkModule{}
+	cModule.ptr = pointer.Save(nk)
+	cModule.authenticateapple = C.NkModuleAuthenticateFn(C.moduleauthenticateapple)
+	cModule.authenticatecustom = C.NkModuleAuthenticateFn(C.moduleauthenticatecustom)
+	cModule.authenticatedevice = C.NkModuleAuthenticateFn(C.moduleauthenticatedevice)
+	cModule.authenticateemail = C.NkModuleAuthenticateEmailFn(C.moduleauthenticateemail)
+	cModule.authenticatefacebook = C.NkModuleAuthenticateFacebookFn(C.moduleauthenticatefacebook)
+	cModule.authenticatefacebookinstantgame = C.NkModuleAuthenticateFn(C.moduleauthenticatefacebookinstantgame)
+	cModule.authenticategamecenter = C.NkModuleAuthenticateGameCenterFn(C.moduleauthenticategamecenter)
+	cModule.authenticategoogle = C.NkModuleAuthenticateFn(C.moduleauthenticategoogle)
+	cModule.authenticatesteam = C.NkModuleAuthenticateFn(C.moduleauthenticatesteam)
+
+	C.initmodule(c.syms.initModule, cLogger, cModule)
 
 	pointer.Unref(cLogger.ptr)
+	pointer.Unref(cModule.ptr)
 
 	return nil
 }
