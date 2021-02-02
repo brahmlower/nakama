@@ -55,32 +55,32 @@ extern "C"
 
 	typedef struct NkHashMap
 	{
-		void *ptr;
+		const void *ptr;
 	} NkHashMap;
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
-	typedef void (*NkContextValueFn)(void *ptr, NkString key, NkString *outvalue);
+	typedef void (*NkContextValueFn)(const void *ptr, NkString key, NkString *outvalue);
 
 	typedef struct NkContext
 	{
-		void *ptr;
+		const void *ptr;
 		NkContextValueFn value;
 	} NkContext;
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
-	typedef struct NkHashMap (*NkLoggerFieldsFn)(void *ptr);
+	typedef struct NkHashMap (*NkLoggerFieldsFn)(const void *ptr);
 
-	typedef void (*NkLoggerLevelFn)(void *ptr, NkString s);
+	typedef void (*NkLoggerLevelFn)(const void *ptr, NkString s);
 
-	typedef struct NkLogger (*NkLoggerWithFieldFn)(void *ptr, NkString key, NkString value);
+	typedef struct NkLogger (*NkLoggerWithFieldFn)(const void *ptr, NkString key, NkString value);
 
-	typedef struct NkLogger (*NkLoggerWithFieldsFn)(void *ptr, struct NkHashMap fields);
+	typedef struct NkLogger (*NkLoggerWithFieldsFn)(const void *ptr, struct NkHashMap fields);
 
 	typedef struct NkLogger
 	{
-		void *ptr;
+		const void *ptr;
 		NkLoggerLevelFn debug;
 		NkLoggerLevelFn error;
 		NkLoggerFieldsFn fields;
@@ -94,38 +94,39 @@ extern "C"
 
 	typedef struct NkDb
 	{
-		void *ptr;
+		const void *ptr;
 	} NkDb;
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
-	typedef int (*NkModuleAuthenticateEmailFn)(void *ptr, NkContext *ctx, NkString email,
-											   NkString password, NkString username, bool create,
-											   NkString *outuserid, NkString *outusername,
-											   NkString *outerror, bool *outcreated);
+	typedef int (*NkModuleAuthenticateEmailFn)(const void *ptr, const NkContext *ctx,
+											   NkString email, NkString password, NkString username,
+											   bool create, NkString *outuserid,
+											   NkString *outusername, NkString *outerror,
+											   bool *outcreated);
 
-	typedef int (*NkModuleAuthenticateFacebookFn)(void *ptr, NkContext *ctx, NkString token,
-												  bool importfriends, NkString username,
-												  bool create, NkString *outuserid,
-												  NkString *outusername, NkString *outerror,
-												  bool *outcreated);
+	typedef int (*NkModuleAuthenticateFacebookFn)(const void *ptr, const NkContext *ctx,
+												  NkString token, bool importfriends,
+												  NkString username, bool create,
+												  NkString *outuserid, NkString *outusername,
+												  NkString *outerror, bool *outcreated);
 
-	typedef int (*NkModuleAuthenticateFn)(void *ptr, NkContext *ctx, NkString userid,
+	typedef int (*NkModuleAuthenticateFn)(const void *ptr, const NkContext *ctx, NkString userid,
 										  NkString username, bool create, NkString *outuserid,
 										  NkString *outusername, NkString *outerror,
 										  bool *outcreated);
 
-	typedef int (*NkModuleAuthenticateGameCenterFn)(void *ptr, NkContext *ctx, NkString playerid,
-													NkString bundleid, NkI64 timestamp,
-													NkString salt, NkString signature,
-													NkString publickeyurl, NkString username,
-													bool create, NkString *outuserid,
-													NkString *outusername, NkString *outerror,
-													bool *outcreated);
+	typedef int (*NkModuleAuthenticateGameCenterFn)(const void *ptr, const NkContext *ctx,
+													NkString playerid, NkString bundleid,
+													NkI64 timestamp, NkString salt,
+													NkString signature, NkString publickeyurl,
+													NkString username, bool create,
+													NkString *outuserid, NkString *outusername,
+													NkString *outerror, bool *outcreated);
 
 	typedef struct NkModule
 	{
-		void *ptr;
+		const void *ptr;
 		NkModuleAuthenticateFn authenticateapple;
 		NkModuleAuthenticateFn authenticatecustom;
 		NkModuleAuthenticateFn authenticatedevice;
@@ -242,7 +243,7 @@ extern "C"
 
 	typedef struct
 	{
-		void *ptr;
+		const void *ptr;
 	} NkInitializer;
 
 #ifdef __cplusplus

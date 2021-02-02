@@ -18,24 +18,24 @@ package server
 #include <stdlib.h>
 #include "../include/nakama.h"
 
-extern int initmodule(void *, NkContext, NkLogger, NkDb, NkModule, NkInitializer);
+extern int initmodule(const void *, NkContext, NkLogger, NkDb, NkModule, NkInitializer);
 
-extern NkString contextvalue(void *, NkString key);
+extern NkString contextvalue(const void *, NkString key);
 
-extern void loggerdebug(void *, NkString);
-extern void loggererror(void *, NkString);
-extern void loggerinfo(void *, NkString);
-extern void loggerwarn(void *, NkString);
+extern void loggerdebug(const void *, NkString);
+extern void loggererror(const void *, NkString);
+extern void loggerinfo(const void *, NkString);
+extern void loggerwarn(const void *, NkString);
 
-extern int moduleauthenticateapple(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticatecustom(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticatedevice(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticateemail(void *, NkContext, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticatefacebook(void *, NkContext, NkString, bool, NkString, bool, NkString *, NkString *, NkString *, bool *l);
-extern int moduleauthenticatefacebookinstantgame(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticategamecenter(void *, NkContext, NkString, NkString, NkI64, NkString, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticategoogle(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticatesteam(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticateapple(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticatecustom(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticatedevice(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticateemail(const void *, NkContext, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticatefacebook(const void *, NkContext, NkString, bool, NkString, bool, NkString *, NkString *, NkString *, bool *l);
+extern int moduleauthenticatefacebookinstantgame(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticategamecenter(const void *, NkContext, NkString, NkString, NkI64, NkString, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticategoogle(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticatesteam(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
 
 */
 import "C"
