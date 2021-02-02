@@ -196,7 +196,7 @@ extern "C"
 
 	typedef struct NkLogger (*NkLoggerWithFieldsFn)(void *ptr, struct hashmap_s fields);
 
-	typedef struct
+	typedef struct NkLogger
 	{
 		void *ptr;
 		NkLoggerLevelFn debug;
