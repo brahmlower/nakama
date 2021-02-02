@@ -24,15 +24,15 @@ extern void loggererror(void *, NkString);
 extern void loggerinfo(void *, NkString);
 extern void loggerwarn(void *, NkString);
 
-extern NkModuleAuthenticateResult moduleauthenticateapple(void *, NkContext, NkString, NkString, bool);
-extern NkModuleAuthenticateResult moduleauthenticatecustom(void *, NkContext, NkString, NkString, bool);
-extern NkModuleAuthenticateResult moduleauthenticatedevice(void *, NkContext, NkString, NkString, bool);
-extern NkModuleAuthenticateResult moduleauthenticateemail(void *, NkContext, NkString, NkString, NkString, bool);
-extern NkModuleAuthenticateResult moduleauthenticatefacebook(void *, NkContext, NkString, bool, NkString, bool);
-extern NkModuleAuthenticateResult moduleauthenticatefacebookinstantgame(void *, NkContext, NkString, NkString, bool);
-extern NkModuleAuthenticateResult moduleauthenticategamecenter(void *, NkContext, NkString, NkString, NkI64, NkString, NkString, NkString, NkString, bool);
-extern NkModuleAuthenticateResult moduleauthenticategoogle(void *, NkContext, NkString, NkString, bool);
-extern NkModuleAuthenticateResult moduleauthenticatesteam(void *, NkContext, NkString, NkString, bool);
+extern int moduleauthenticateapple(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticatecustom(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticatedevice(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticateemail(void *, NkContext, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticatefacebook(void *, NkContext, NkString, bool, NkString, bool, NkString *, NkString *, NkString *, bool *l);
+extern int moduleauthenticatefacebookinstantgame(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticategamecenter(void *, NkContext, NkString, NkString, NkI64, NkString, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticategoogle(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int moduleauthenticatesteam(void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
 
 */
 import "C"
@@ -45,6 +45,36 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/mattn/go-pointer"
 )
+
+func cLogger(logger runtime.Logger) C.NkLogger {
+	ret := C.NkLogger{}
+	ret.ptr = pointer.Save(logger)
+	ret.debug = C.NkLoggerLevelFn(C.loggerdebug)
+	ret.error = C.NkLoggerLevelFn(C.loggererror)
+	ret.info = C.NkLoggerLevelFn(C.loggerinfo)
+	ret.warn = C.NkLoggerLevelFn(C.loggerwarn)
+
+	return ret
+}
+
+func cNakamaModule(nk runtime.NakamaModule) C.NkModule {
+	call := &RuntimeCNakamaModuleCall{}
+	call.nk = nk
+
+	ret := C.NkModule{}
+	ret.ptr = pointer.Save(call)
+	ret.authenticateapple = C.NkModuleAuthenticateFn(C.moduleauthenticateapple)
+	ret.authenticatecustom = C.NkModuleAuthenticateFn(C.moduleauthenticatecustom)
+	ret.authenticatedevice = C.NkModuleAuthenticateFn(C.moduleauthenticatedevice)
+	ret.authenticateemail = C.NkModuleAuthenticateEmailFn(C.moduleauthenticateemail)
+	ret.authenticatefacebook = C.NkModuleAuthenticateFacebookFn(C.moduleauthenticatefacebook)
+	ret.authenticatefacebookinstantgame = C.NkModuleAuthenticateFn(C.moduleauthenticatefacebookinstantgame)
+	ret.authenticategamecenter = C.NkModuleAuthenticateGameCenterFn(C.moduleauthenticategamecenter)
+	ret.authenticategoogle = C.NkModuleAuthenticateFn(C.moduleauthenticategoogle)
+	ret.authenticatesteam = C.NkModuleAuthenticateFn(C.moduleauthenticatesteam)
+
+	return ret
+}
 
 // CLib holds a C-module runtime library
 type CLib struct {
@@ -62,29 +92,17 @@ func (c *CLib) initModule(ctx context.Context, logger runtime.Logger, db *sql.DB
 		return errors.New("Missing c-module library initialisation function")
 	}
 
-	cLogger := C.NkLogger{}
-	cLogger.ptr = pointer.Save(logger)
-	cLogger.debug = C.NkLoggerLevelFn(C.loggerdebug)
-	cLogger.error = C.NkLoggerLevelFn(C.loggererror)
-	cLogger.info = C.NkLoggerLevelFn(C.loggerinfo)
-	cLogger.warn = C.NkLoggerLevelFn(C.loggerwarn)
+	cLogger := cLogger(logger)
+	cNk := cNakamaModule(nk)
 
-	cModule := C.NkModule{}
-	cModule.ptr = pointer.Save(nk)
-	cModule.authenticateapple = C.NkModuleAuthenticateFn(C.moduleauthenticateapple)
-	cModule.authenticatecustom = C.NkModuleAuthenticateFn(C.moduleauthenticatecustom)
-	cModule.authenticatedevice = C.NkModuleAuthenticateFn(C.moduleauthenticatedevice)
-	cModule.authenticateemail = C.NkModuleAuthenticateEmailFn(C.moduleauthenticateemail)
-	cModule.authenticatefacebook = C.NkModuleAuthenticateFacebookFn(C.moduleauthenticatefacebook)
-	cModule.authenticatefacebookinstantgame = C.NkModuleAuthenticateFn(C.moduleauthenticatefacebookinstantgame)
-	cModule.authenticategamecenter = C.NkModuleAuthenticateGameCenterFn(C.moduleauthenticategamecenter)
-	cModule.authenticategoogle = C.NkModuleAuthenticateFn(C.moduleauthenticategoogle)
-	cModule.authenticatesteam = C.NkModuleAuthenticateFn(C.moduleauthenticatesteam)
+	C.initmodule(c.syms.initModule, cLogger, cNk)
 
-	C.initmodule(c.syms.initModule, cLogger, cModule)
+	for _, alloc := range pointer.Restore(cLogger.ptr).(*RuntimeCNakamaModuleCall).allocs {
+		C.free(alloc)
+	}
 
 	pointer.Unref(cLogger.ptr)
-	pointer.Unref(cModule.ptr)
+	pointer.Unref(cNk.ptr)
 
 	return nil
 }

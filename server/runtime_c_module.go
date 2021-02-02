@@ -18,54 +18,186 @@ package server
 import "C"
 
 import (
-	"unsafe"
 	"context"
+	"unsafe"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/mattn/go-pointer"
 )
 
+type RuntimeCNakamaModuleCall struct {
+	nk     runtime.NakamaModule
+	allocs []unsafe.Pointer
+}
+
+func (c *RuntimeCNakamaModuleCall) goStringNk(s string) *C.NkString {
+	var ret *C.NkString
+	ret.p = C.CString(s)
+	ret.n = C.long(len(s))
+
+	c.allocs = append(c.allocs, unsafe.Pointer(ret.p))
+
+	return ret
+}
+
 //export cModuleAuthenticateApple
-func cModuleAuthenticateApple(p unsafe.Pointer, ctx unsafe.Pointer, token, userName C.NkString, create bool) {
-	pointer.Restore(p).(runtime.NakamaModule).AuthenticateApple(pointer.Restore(ctx).(context.Context), cStringGo(token), cStringGo(userName), create)
+func cModuleAuthenticateApple(pNk unsafe.Pointer, pCtx unsafe.Pointer, token, userName C.NkString, create bool, outUserID, outUserName, outErr *C.NkString, outCreated *bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUserID, retUserName, retCreated, err := call.nk.AuthenticateApple(ctx, nkStringGo(token), nkStringGo(userName), create)
+	outCreated = &retCreated
+	outUserID = call.goStringNk(retUserID)
+	outUserName = call.goStringNk(retUserName)
+
+	if err != nil {
+		outErr = call.goStringNk(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAuthenticateCustom
-func cModuleAuthenticateCustom(p unsafe.Pointer, ctx unsafe.Pointer, userID, userName C.NkString, create bool) {
-	pointer.Restore(p).(runtime.NakamaModule).AuthenticateCustom(pointer.Restore(ctx).(context.Context), cStringGo(userID), cStringGo(userName), create)
+func cModuleAuthenticateCustom(pNk unsafe.Pointer, pCtx unsafe.Pointer, userID, userName C.NkString, create bool, outUserID, outUserName, outErr *C.NkString, outCreated *bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUserID, retUserName, retCreated, err := call.nk.AuthenticateCustom(ctx, nkStringGo(userID), nkStringGo(userName), create)
+	outCreated = &retCreated
+	outUserID = call.goStringNk(retUserID)
+	outUserName = call.goStringNk(retUserName)
+
+	if err != nil {
+		outErr = call.goStringNk(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAuthenticateDevice
-func cModuleAuthenticateDevice(p unsafe.Pointer, ctx unsafe.Pointer, userID, userName C.NkString, create bool) {
-	pointer.Restore(p).(runtime.NakamaModule).AuthenticateDevice(pointer.Restore(ctx).(context.Context), cStringGo(userID), cStringGo(userName), create)
+func cModuleAuthenticateDevice(pNk unsafe.Pointer, pCtx unsafe.Pointer, userID, userName C.NkString, create bool, outUserID, outUserName, outErr *C.NkString, outCreated *bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUserID, retUserName, retCreated, err := call.nk.AuthenticateDevice(ctx, nkStringGo(userID), nkStringGo(userName), create)
+	outCreated = &retCreated
+	outUserID = call.goStringNk(retUserID)
+	outUserName = call.goStringNk(retUserName)
+
+	if err != nil {
+		outErr = call.goStringNk(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAuthenticateEmail
-func cModuleAuthenticateEmail(p unsafe.Pointer, ctx unsafe.Pointer, email, password, userName C.NkString, create bool) {
-	pointer.Restore(p).(runtime.NakamaModule).AuthenticateEmail(pointer.Restore(ctx).(context.Context), cStringGo(email), cStringGo(password), cStringGo(userName), create)
+func cModuleAuthenticateEmail(pNk unsafe.Pointer, pCtx unsafe.Pointer, email, password, userName C.NkString, create bool, outUserID, outUserName, outErr *C.NkString, outCreated *bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUserID, retUserName, retCreated, err := call.nk.AuthenticateEmail(ctx, nkStringGo(email), nkStringGo(password), nkStringGo(userName), create)
+	outCreated = &retCreated
+	outUserID = call.goStringNk(retUserID)
+	outUserName = call.goStringNk(retUserName)
+
+	if err != nil {
+		outErr = call.goStringNk(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAuthenticateFacebook
-func cModuleAuthenticateFacebook(p unsafe.Pointer, ctx unsafe.Pointer, token C.NkString, importFriends bool, userName C.NkString, create bool) {
-	pointer.Restore(p).(runtime.NakamaModule).AuthenticateFacebook(pointer.Restore(ctx).(context.Context), cStringGo(token), importFriends, cStringGo(userName), create)
+func cModuleAuthenticateFacebook(pNk unsafe.Pointer, pCtx unsafe.Pointer, token C.NkString, importFriends bool, userName C.NkString, create bool, outUserID, outUserName, outErr *C.NkString, outCreated *bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUserID, retUserName, retCreated, err := call.nk.AuthenticateFacebook(ctx, nkStringGo(token), importFriends, nkStringGo(userName), create)
+	outCreated = &retCreated
+	outUserID = call.goStringNk(retUserID)
+	outUserName = call.goStringNk(retUserName)
+
+	if err != nil {
+		outErr = call.goStringNk(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAuthenticateFacebookInstantGame
-func cModuleAuthenticateFacebookInstantGame(p unsafe.Pointer, ctx unsafe.Pointer, userID, userName C.NkString, create bool) {
-	pointer.Restore(p).(runtime.NakamaModule).AuthenticateFacebookInstantGame(pointer.Restore(ctx).(context.Context), cStringGo(userID), cStringGo(userName), create)
+func cModuleAuthenticateFacebookInstantGame(pNk unsafe.Pointer, pCtx unsafe.Pointer, userID, userName C.NkString, create bool, outUserID, outUserName, outErr *C.NkString, outCreated *bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUserID, retUserName, retCreated, err := call.nk.AuthenticateFacebookInstantGame(ctx, nkStringGo(userID), nkStringGo(userName), create)
+	outCreated = &retCreated
+	outUserID = call.goStringNk(retUserID)
+	outUserName = call.goStringNk(retUserName)
+
+	if err != nil {
+		outErr = call.goStringNk(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAuthenticateGameCenter
-func cModuleAuthenticateGameCenter(p unsafe.Pointer, ctx unsafe.Pointer, userID, bundleID C.NkString, timestamp int64, salt, signature, publicKeyURL, userName C.NkString, create bool) {
-	pointer.Restore(p).(runtime.NakamaModule).AuthenticateGameCenter(pointer.Restore(ctx).(context.Context), cStringGo(userID), cStringGo(bundleID), timestamp, cStringGo(salt), cStringGo(signature), cStringGo(publicKeyURL), cStringGo(userName), create)
+func cModuleAuthenticateGameCenter(pNk unsafe.Pointer, pCtx unsafe.Pointer, userID, bundleID C.NkString, timestamp int64, salt, signature, publicKeyURL, userName C.NkString, create bool, outUserID, outUserName, outErr *C.NkString, outCreated *bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUserID, retUserName, retCreated, err := call.nk.AuthenticateGameCenter(ctx, nkStringGo(userID), nkStringGo(bundleID), timestamp, nkStringGo(salt), nkStringGo(signature), nkStringGo(publicKeyURL), nkStringGo(userName), create)
+	outCreated = &retCreated
+	outUserID = call.goStringNk(retUserID)
+	outUserName = call.goStringNk(retUserName)
+
+	if err != nil {
+		outErr = call.goStringNk(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAuthenticateGoogle
-func cModuleAuthenticateGoogle(p unsafe.Pointer, ctx unsafe.Pointer, userID, userName C.NkString, create bool) {
-	pointer.Restore(p).(runtime.NakamaModule).AuthenticateGoogle(pointer.Restore(ctx).(context.Context), cStringGo(userID), cStringGo(userName), create)
+func cModuleAuthenticateGoogle(pNk unsafe.Pointer, pCtx unsafe.Pointer, userID, userName C.NkString, create bool, outUserID, outUserName, outErr *C.NkString, outCreated *bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUserID, retUserName, retCreated, err := call.nk.AuthenticateGoogle(ctx, nkStringGo(userID), nkStringGo(userName), create)
+	outCreated = &retCreated
+	outUserID = call.goStringNk(retUserID)
+	outUserName = call.goStringNk(retUserName)
+
+	if err != nil {
+		outErr = call.goStringNk(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAuthenticateSteam
-func cModuleAuthenticateSteam(p unsafe.Pointer, ctx unsafe.Pointer, userID, userName C.NkString, create bool) {
-	pointer.Restore(p).(runtime.NakamaModule).AuthenticateSteam(pointer.Restore(ctx).(context.Context), cStringGo(userID), cStringGo(userName), create)
+func cModuleAuthenticateSteam(pNk unsafe.Pointer, pCtx unsafe.Pointer, userID, userName C.NkString, create bool, outUserID, outUserName, outErr *C.NkString, outCreated *bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUserID, retUserName, retCreated, err := call.nk.AuthenticateSteam(ctx, nkStringGo(userID), nkStringGo(userName), create)
+	outCreated = &retCreated
+	outUserID = call.goStringNk(retUserID)
+	outUserName = call.goStringNk(retUserName)
+
+	if err != nil {
+		outErr = call.goStringNk(err.Error())
+
+		return 1
+	}
+
+	return 0
 }

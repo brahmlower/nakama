@@ -22,7 +22,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dop251/goja"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/heroiclabs/nakama-common/api"
 	"github.com/heroiclabs/nakama-common/rtapi"
@@ -32,16 +31,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 )
-
-type RuntimeC struct {
-	logger       *zap.Logger
-	node         string
-	nkInst       goja.Value
-	jsLoggerInst goja.Value
-	env          goja.Value
-	vm           *goja.Runtime
-	callbacks    *RuntimeJavascriptCallbacks
-}
 
 type RuntimeCInitializer struct {
 	logger runtime.Logger

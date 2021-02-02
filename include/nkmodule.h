@@ -24,21 +24,13 @@ extern "C"
 {
 #endif
 
-    typedef struct
-    {
-        NkString err;
-        bool status;
-        NkString userid;
-        NkString username;
-    } NkModuleAuthenticateResult;
+    typedef int (*NkModuleAuthenticateEmailFn)(void *ptr, NkContext *ctx, NkString email, NkString password, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerror, bool *outcreated);
 
-    typedef NkModuleAuthenticateResult (*NkModuleAuthenticateEmailFn)(NkContext ctx, NkString email, NkString password, NkString username, bool create);
+    typedef int (*NkModuleAuthenticateFacebookFn)(void *ptr, NkContext *ctx, NkString token, bool importfriends, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerror, bool *outcreated);
 
-    typedef NkModuleAuthenticateResult (*NkModuleAuthenticateFacebookFn)(NkContext ctx, NkString token, bool importfriends, NkString username, bool create);
+    typedef int (*NkModuleAuthenticateFn)(void *ptr, NkContext *ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerror, bool *outcreated);
 
-    typedef NkModuleAuthenticateResult (*NkModuleAuthenticateFn)(NkContext ctx, NkString userid, NkString username, bool create);
-
-    typedef NkModuleAuthenticateResult (*NkModuleAuthenticateGameCenterFn)(NkContext ctx, NkString playerid, NkString bundleid, NkI64 timestamp, NkString salt, NkString signature, NkString publickeyurl, NkString username, bool create);
+    typedef int (*NkModuleAuthenticateGameCenterFn)(void *ptr, NkContext *ctx, NkString playerid, NkString bundleid, NkI64 timestamp, NkString salt, NkString signature, NkString publickeyurl, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerror, bool *outcreated);
 
     typedef struct
     {
@@ -53,7 +45,7 @@ extern "C"
         NkModuleAuthenticateFn authenticategoogle;
         NkModuleAuthenticateFn authenticatesteam;
 
-        // AuthenticateTokenGenerate(userID, username string, exp int64, vars map[string]string) (string, int64, error)
+        // NkModuleAuthenticateGenerateTokenFn authenticatetokengenerate;// AuthenticateTokenGenerate(userID, username string, exp int64, vars map[string]string) (string, int64, error)
 
         // AccountGetId(ctx context.Context, userID string) (*api.Account, error)
         // AccountsGetId(ctx context.Context, userIDs []string) ([]*api.Account, error)

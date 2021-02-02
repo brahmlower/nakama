@@ -24,15 +24,15 @@ extern void cLoggerError(void *, NkString);
 extern void cLoggerInfo(void *, NkString);
 extern void cLoggerWarn(void *, NkString);
 
-extern NkModuleAuthenticateResult cModuleAuthenticateApple(void *, void *, NkString, NkString, bool);
-extern NkModuleAuthenticateResult cModuleAuthenticateCustom(void *, void *, NkString, NkString, bool);
-extern NkModuleAuthenticateResult cModuleAuthenticateDevice(void *, void *, NkString, NkString, bool);
-extern NkModuleAuthenticateResult cModuleAuthenticateEmail(void *, void *, NkString, NkString, NkString, bool);
-extern NkModuleAuthenticateResult cModuleAuthenticateFacebook(void *, void *, NkString, bool, NkString, bool);
-extern NkModuleAuthenticateResult cModuleAuthenticateFacebookInstantGame(void *, void *, NkString, NkString, bool);
-extern NkModuleAuthenticateResult cModuleAuthenticateGameCenter(void *, void *, NkString, NkString, NkI64, NkString, NkString, NkString, NkString, bool);
-extern NkModuleAuthenticateResult cModuleAuthenticateGoogle(void *, void *, NkString, NkString, bool);
-extern NkModuleAuthenticateResult cModuleAuthenticateSteam(void *, void *, NkString, NkString, bool);
+extern int cModuleAuthenticateApple(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int cModuleAuthenticateCustom(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int cModuleAuthenticateDevice(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int cModuleAuthenticateEmail(void *, void *, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int cModuleAuthenticateFacebook(void *, void *, NkString, bool, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int cModuleAuthenticateFacebookInstantGame(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int cModuleAuthenticateGameCenter(void *, void *, NkString, NkString, NkI64, NkString, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int cModuleAuthenticateGoogle(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int cModuleAuthenticateSteam(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
 
 void initmodule(void *ptr, NkLogger logger, NkModule nk)
 {
@@ -60,54 +60,54 @@ void loggerwarn(void *ptr, NkString s)
 	cLoggerWarn(ptr, s);
 }
 
-NkModuleAuthenticateResult moduleauthenticateapple(void *ptr, NkContext ctx, NkString userid, NkString username, bool create)
+int moduleauthenticateapple(void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
 {
-	cModuleAuthenticateApple(ptr, ctx.ptr, userid, username, create);
+	return cModuleAuthenticateApple(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
 }
 
-NkModuleAuthenticateResult moduleauthenticatecustom(void *ptr, NkContext ctx, NkString userid, NkString username, bool create)
+int moduleauthenticatecustom(void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
 {
-	cModuleAuthenticateCustom(ptr, ctx.ptr, userid, username, create);
+	return cModuleAuthenticateCustom(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
 }
 
-NkModuleAuthenticateResult moduleauthenticatedevice(void *ptr, NkContext ctx, NkString userid, NkString username, bool create)
+int moduleauthenticatedevice(void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
 {
-	cModuleAuthenticateDevice(ptr, ctx.ptr, userid, username, create);
+	return cModuleAuthenticateDevice(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
 }
 
-NkModuleAuthenticateResult moduleauthenticateemail(void *ptr, NkContext ctx, NkString email, NkString password, NkString username, bool create)
+int moduleauthenticateemail(void *ptr, NkContext ctx, NkString email, NkString password, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
 {
-	cModuleAuthenticateEmail(ptr, ctx.ptr, email, password, username, create);
+	return cModuleAuthenticateEmail(ptr, ctx.ptr, email, password, username, create, outuserid, outusername, outerr, outcreated);
 }
 
-NkModuleAuthenticateResult moduleauthenticatefacebook(void *ptr, NkContext ctx, NkString token, bool importfriends, NkString username, bool create)
+int moduleauthenticatefacebook(void *ptr, NkContext ctx, NkString token, bool importfriends, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
 {
-	cModuleAuthenticateFacebook(ptr, ctx.ptr, token, importfriends, username, create);
+	return cModuleAuthenticateFacebook(ptr, ctx.ptr, token, importfriends, username, create, outuserid, outusername, outerr, outcreated);
 }
 
-NkModuleAuthenticateResult moduleauthenticatefacebookinstantgame(void *ptr, NkContext ctx, NkString userid, NkString username, bool create)
+int moduleauthenticatefacebookinstantgame(void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
 {
-	cModuleAuthenticateFacebookInstantGame(ptr, ctx.ptr, userid, username, create);
+	return cModuleAuthenticateFacebookInstantGame(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
 }
 
-NkModuleAuthenticateResult moduleauthenticategamecenter(void *ptr, NkContext ctx, NkString playerid, NkString bundleid, NkI64 timestamp, NkString salt, NkString signature, NkString publickeyurl, NkString username, bool create)
+int moduleauthenticategamecenter(void *ptr, NkContext ctx, NkString playerid, NkString bundleid, NkI64 timestamp, NkString salt, NkString signature, NkString publickeyurl, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
 {
-	cModuleAuthenticateGameCenter(ptr, ctx.ptr, playerid, bundleid, timestamp, salt, signature, publickeyurl, username, create);
+	return cModuleAuthenticateGameCenter(ptr, ctx.ptr, playerid, bundleid, timestamp, salt, signature, publickeyurl, username, create, outuserid, outusername, outerr, outcreated);
 }
 
-NkModuleAuthenticateResult moduleauthenticategoogle(void *ptr, NkContext ctx, NkString userid, NkString username, bool create)
+int moduleauthenticategoogle(void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
 {
-	cModuleAuthenticateGoogle(ptr, ctx.ptr, userid, username, create);
+	return cModuleAuthenticateGoogle(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
 }
 
-NkModuleAuthenticateResult moduleauthenticatesteam(void *ptr, NkContext ctx, NkString userid, NkString username, bool create)
+int moduleauthenticatesteam(void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
 {
-	cModuleAuthenticateSteam(ptr, ctx.ptr, userid, username, create);
+	return cModuleAuthenticateSteam(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
 }
 
 */
 import "C"
 
-func cStringGo(s C.NkString) string {
+func nkStringGo(s C.NkString) string {
 	return C.GoStringN(s.p, C.int(s.n))
 }
