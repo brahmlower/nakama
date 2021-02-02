@@ -15,9 +15,10 @@
 package server
 
 /*
+#include <stdlib.h>
 #include "../include/nakama.h"
 
-extern void initmodule(void *, NkContext, NkLogger, NkDb, NkModule, NkInitializer);
+extern int initmodule(void *, NkContext, NkLogger, NkDb, NkModule, NkInitializer);
 
 extern NkString contextvalue(void *, NkString key);
 

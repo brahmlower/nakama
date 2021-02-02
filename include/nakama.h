@@ -15,17 +15,17 @@
 // NOTE: In order to implement a c-module, you must provide the following functions:
 //
 // Module entrypoint:
-// void nk_init_module(NkContext, NkLogger, NkDb, NkModule, NkInitializer);
+// int nk_init_module(NkContext, NkLogger, NkDb, NkModule, NkInitializer);
 //
 // Match initializer:
-// void *nk_init_match(NkContext, NkLogger, NkDb, NkModule);
+// int *nk_init_match(NkContext, NkLogger, NkDb, NkModule);
 
 #ifndef NAKAMA_H
 #define NAKAMA_H
 
 #include <stdbool.h>
 #include <stddef.h>
-#include "hashmap.h"
+//#include "hashmap.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -53,9 +53,16 @@ extern "C"
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
+	typedef struct NkHashMap
+	{
+		void *ptr;
+	} NkHashMap;
+
+	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
+
 	typedef void (*NkContextValueFn)(void *ptr, NkString key, NkString *outvalue);
 
-	typedef struct
+	typedef struct NkContext
 	{
 		void *ptr;
 		NkContextValueFn value;
@@ -63,13 +70,13 @@ extern "C"
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
-	typedef struct hashmap_s (*NkLoggerFieldsFn)(void *ptr);
+	typedef struct NkHashMap (*NkLoggerFieldsFn)(void *ptr);
 
 	typedef void (*NkLoggerLevelFn)(void *ptr, NkString s);
 
 	typedef struct NkLogger (*NkLoggerWithFieldFn)(void *ptr, NkString key, NkString value);
 
-	typedef struct NkLogger (*NkLoggerWithFieldsFn)(void *ptr, struct hashmap_s fields);
+	typedef struct NkLogger (*NkLoggerWithFieldsFn)(void *ptr, struct NkHashMap fields);
 
 	typedef struct NkLogger
 	{
@@ -85,7 +92,7 @@ extern "C"
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
-	typedef struct
+	typedef struct NkDb
 	{
 		void *ptr;
 	} NkDb;
@@ -116,7 +123,7 @@ extern "C"
 													NkString *outusername, NkString *outerror,
 													bool *outcreated);
 
-	typedef struct
+	typedef struct NkModule
 	{
 		void *ptr;
 		NkModuleAuthenticateFn authenticateapple;

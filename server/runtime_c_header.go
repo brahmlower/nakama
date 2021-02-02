@@ -17,7 +17,7 @@ package server
 /*
 #include "../include/nakama.h"
 
-typedef void (*InitModuleFn)(NkLogger logger, NkModule nk);
+typedef int (*InitModuleFn)(NkContext, NkLogger, NkDb, NkModule, NkInitializer);
 
 extern void cLoggerDebug(void *, NkString);
 extern void cLoggerError(void *, NkString);
@@ -36,10 +36,10 @@ extern int cModuleAuthenticateGameCenter(void *, void *, NkString, NkString, NkI
 extern int cModuleAuthenticateGoogle(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
 extern int cModuleAuthenticateSteam(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
 
-void initmodule(void *ptr, NkLogger logger, NkModule nk)
+int initmodule(void *ptr, NkContext ctx, NkLogger logger, NkDb db, NkModule nk, NkInitializer initializer)
 {
 	InitModuleFn fn = (InitModuleFn)ptr;
-	fn(logger, nk);
+	return fn(ctx, logger, db, nk, initializer);
 }
 
 void contextvalue(void *ptr, NkString key, NkString *outvalue)
