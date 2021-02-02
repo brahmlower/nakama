@@ -15,10 +15,10 @@
 // NOTE: In order to implement a c-module, you must provide the following functions:
 //
 // Module entrypoint:
-// void nk_init_module(NkLogger);
+// void nk_init_module(NkContext, NkLogger, NkDb, NkModule, NkInitializer);
 //
 // Match initializer:
-// void *nk_init_match(NkLogger);
+// void *nk_init_match(NkContext, NkLogger, NkDb, NkModule);
 
 #ifndef NAKAMA_H
 #define NAKAMA_H
@@ -53,7 +53,7 @@ extern "C"
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
-	typedef NkString (*NkContextValueFn)(void *ptr, NkString key);
+	typedef void (*NkContextValueFn)(void *ptr, NkString key, NkString *outvalue);
 
 	typedef struct
 	{
@@ -63,13 +63,58 @@ extern "C"
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
-	typedef int (*NkModuleAuthenticateEmailFn)(void *ptr, NkContext *ctx, NkString email, NkString password, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerror, bool *outcreated);
+	typedef struct hashmap_s (*NkLoggerFieldsFn)(void *ptr);
 
-	typedef int (*NkModuleAuthenticateFacebookFn)(void *ptr, NkContext *ctx, NkString token, bool importfriends, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerror, bool *outcreated);
+	typedef void (*NkLoggerLevelFn)(void *ptr, NkString s);
 
-	typedef int (*NkModuleAuthenticateFn)(void *ptr, NkContext *ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerror, bool *outcreated);
+	typedef struct NkLogger (*NkLoggerWithFieldFn)(void *ptr, NkString key, NkString value);
 
-	typedef int (*NkModuleAuthenticateGameCenterFn)(void *ptr, NkContext *ctx, NkString playerid, NkString bundleid, NkI64 timestamp, NkString salt, NkString signature, NkString publickeyurl, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerror, bool *outcreated);
+	typedef struct NkLogger (*NkLoggerWithFieldsFn)(void *ptr, struct hashmap_s fields);
+
+	typedef struct NkLogger
+	{
+		void *ptr;
+		NkLoggerLevelFn debug;
+		NkLoggerLevelFn error;
+		NkLoggerFieldsFn fields;
+		NkLoggerLevelFn info;
+		NkLoggerLevelFn warn;
+		NkLoggerWithFieldFn withfield;
+		NkLoggerWithFieldsFn withfields;
+	} NkLogger;
+
+	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
+
+	typedef struct
+	{
+		void *ptr;
+	} NkDb;
+
+	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
+
+	typedef int (*NkModuleAuthenticateEmailFn)(void *ptr, NkContext *ctx, NkString email,
+											   NkString password, NkString username, bool create,
+											   NkString *outuserid, NkString *outusername,
+											   NkString *outerror, bool *outcreated);
+
+	typedef int (*NkModuleAuthenticateFacebookFn)(void *ptr, NkContext *ctx, NkString token,
+												  bool importfriends, NkString username,
+												  bool create, NkString *outuserid,
+												  NkString *outusername, NkString *outerror,
+												  bool *outcreated);
+
+	typedef int (*NkModuleAuthenticateFn)(void *ptr, NkContext *ctx, NkString userid,
+										  NkString username, bool create, NkString *outuserid,
+										  NkString *outusername, NkString *outerror,
+										  bool *outcreated);
+
+	typedef int (*NkModuleAuthenticateGameCenterFn)(void *ptr, NkContext *ctx, NkString playerid,
+													NkString bundleid, NkI64 timestamp,
+													NkString salt, NkString signature,
+													NkString publickeyurl, NkString username,
+													bool create, NkString *outuserid,
+													NkString *outusername, NkString *outerror,
+													bool *outcreated);
 
 	typedef struct
 	{
@@ -188,25 +233,10 @@ extern "C"
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
-	typedef struct hashmap_s (*NkLoggerFieldsFn)(void *ptr);
-
-	typedef void (*NkLoggerLevelFn)(void *ptr, NkString s);
-
-	typedef struct NkLogger (*NkLoggerWithFieldFn)(void *ptr, NkString key, NkString value);
-
-	typedef struct NkLogger (*NkLoggerWithFieldsFn)(void *ptr, struct hashmap_s fields);
-
-	typedef struct NkLogger
+	typedef struct
 	{
 		void *ptr;
-		NkLoggerLevelFn debug;
-		NkLoggerLevelFn error;
-		NkLoggerFieldsFn fields;
-		NkLoggerLevelFn info;
-		NkLoggerLevelFn warn;
-		NkLoggerWithFieldFn withfield;
-		NkLoggerWithFieldsFn withfields;
-	} NkLogger;
+	} NkInitializer;
 
 #ifdef __cplusplus
 }

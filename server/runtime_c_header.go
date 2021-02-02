@@ -24,6 +24,8 @@ extern void cLoggerError(void *, NkString);
 extern void cLoggerInfo(void *, NkString);
 extern void cLoggerWarn(void *, NkString);
 
+extern void cContextValue(void *, NkString, NkString *);
+
 extern int cModuleAuthenticateApple(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
 extern int cModuleAuthenticateCustom(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
 extern int cModuleAuthenticateDevice(void *, void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
@@ -38,6 +40,11 @@ void initmodule(void *ptr, NkLogger logger, NkModule nk)
 {
 	InitModuleFn fn = (InitModuleFn)ptr;
 	fn(logger, nk);
+}
+
+void contextvalue(void *ptr, NkString key, NkString *outvalue)
+{
+	return cContextValue(ptr, key, outvalue);
 }
 
 void loggerdebug(void *ptr, NkString s)

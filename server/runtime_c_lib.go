@@ -17,7 +17,9 @@ package server
 /*
 #include "../include/nakama.h"
 
-extern void initmodule(void *, NkLogger, NkModule);
+extern void initmodule(void *, NkContext, NkLogger, NkDb, NkModule, NkInitializer);
+
+extern NkString contextvalue(void *, NkString key);
 
 extern void loggerdebug(void *, NkString);
 extern void loggererror(void *, NkString);
@@ -45,6 +47,28 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/mattn/go-pointer"
 )
+
+func cContext(ctx context.Context) C.NkContext {
+	ret := C.NkContext{}
+	ret.ptr = pointer.Save(ctx)
+	ret.value = C.NkContextValueFn(C.contextvalue)
+
+	return ret
+}
+
+func cDb(db *sql.DB) C.NkDb {
+	ret := C.NkDb{}
+	ret.ptr = pointer.Save(db)
+
+	return ret
+}
+
+func cInitializer(initializer runtime.Initializer) C.NkInitializer {
+	ret := C.NkInitializer{}
+	ret.ptr = pointer.Save(initializer)
+
+	return ret
+}
 
 func cLogger(logger runtime.Logger) C.NkLogger {
 	ret := C.NkLogger{}
@@ -92,10 +116,17 @@ func (c *CLib) initModule(ctx context.Context, logger runtime.Logger, db *sql.DB
 		return errors.New("Missing c-module library initialisation function")
 	}
 
-	cLogger := cLogger(logger)
+	cDb := cDb(db)
+	cCtx := cContext(ctx)
 	cNk := cNakamaModule(nk)
+	cLogger := cLogger(logger)
+	cInitializer := cInitializer(initializer)
 
-	C.initmodule(c.syms.initModule, cLogger, cNk)
+	C.initmodule(c.syms.initModule, cCtx, cLogger, cDb, cNk, cInitializer)
+
+	for _, alloc := range pointer.Restore(cCtx.ptr).(*RuntimeCContextCall).allocs {
+		C.free(alloc)
+	}
 
 	for _, alloc := range pointer.Restore(cLogger.ptr).(*RuntimeCNakamaModuleCall).allocs {
 		C.free(alloc)
