@@ -18,7 +18,7 @@
 // int nk_init_module(NkContext, NkLogger, NkDb, NkModule, NkInitializer);
 //
 // Match initializer:
-// int *nk_init_match(NkContext, NkLogger, NkDb, NkModule);
+// int nk_init_match(NkContext, NkLogger, NkDb, NkModule);
 
 #ifndef NAKAMA_H
 #define NAKAMA_H
@@ -241,9 +241,981 @@ extern "C"
 
 	//--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--//
 
+	typedef int (*NkRpcFn)(NkContext ctx, NkLogger logger, NkDb db, NkModule nk, NkString payload,
+						   NkString *outpayload, NkString *outerror);
+
+	typedef int (*NkInitializerRpcFn)(const void *ptr, NkString id, const NkRpcFn fn,
+									  NkString *outerror);
+
+	typedef struct NkEnvelope
+	{
+		const void *ptr;
+	} NkEnvelope;
+
+	typedef int (*NkBeforeRtCallbackFn)(NkContext ctx, NkLogger logger, NkDb db, NkModule nk,
+										NkEnvelope envelope, NkEnvelope *outenvelope,
+										NkString *outerror);
+
+	typedef int (*NkInitializerBeforeRtFn)(const void *ptr, NkString id,
+										   const NkBeforeRtCallbackFn cb,
+										   NkString *outerror);
+
+	typedef int (*NkAfterRtCallbackFn)(NkContext ctx, NkLogger logger, NkDb db, NkModule nk,
+									   NkEnvelope envelope, NkEnvelope *outenvelope,
+									   NkString *outerror);
+
+	typedef int (*NkInitializerAfterRtFn)(const void *ptr, NkString id,
+										  const NkAfterRtCallbackFn cb, NkString *outerror);
+
+	typedef struct NkMatchmakerEntry
+	{
+		const void *ptr;
+	} NkMatchmakerEntry;
+
+	typedef int (*NkMatchmakerMatchedCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												 NkModule nk, const NkMatchmakerEntry *entries,
+												 int numentries, NkString *outmatchid,
+												 NkString *outerror);
+
+	typedef int (*NkInitializerMatchmakerMatchedFn)(const void *ptr,
+													const NkMatchmakerMatchedCallbackFn cb,
+													NkString *outerror);
+
+	typedef int (*NkMatchCallbackFn)(NkContext ctx, NkLogger logger, NkDb db, NkModule nk,
+									 void *outmatch, NkString *outerror); // TODO: outmatch type!
+
+	typedef int (*NkInitializerMatchFn)(const void *ptr, NkString name, const NkMatchCallbackFn cb,
+										NkString *outerror);
+
+	typedef struct NkTournament
+	{
+		const void *ptr;
+	} NkTournament;
+
+	typedef int (*NkTournamentCallbackFn)(NkContext ctx, NkLogger logger, NkDb db, NkModule nk,
+										  NkTournament tournament, NkI64 end, NkI64 reset,
+										  NkString *outerror);
+
+	typedef int (*NkInitializerTournamentFn)(const void *ptr, const NkTournamentCallbackFn cb,
+											 NkString *outerror);
+
+	typedef struct NkLeaderBoard
+	{
+		const void *ptr;
+	} NkLeaderBoard;
+
+	typedef int (*NkLeaderBoardCallbackFn)(NkContext ctx, NkLogger logger, NkDb db, NkModule nk,
+										   NkLeaderBoard leaderboard, NkI64 reset,
+										   NkString *outerror);
+
+	typedef int (*NkInitializerLeaderBoardFn)(const void *ptr, const NkLeaderBoardCallbackFn cb,
+											  NkString *outerror);
+
+	typedef int (*NkCallbackFn)(NkContext ctx, NkLogger logger, NkDb db, NkModule nk,
+								NkString *outerror);
+
+	typedef int (*NkInitializerBeforeGetAccountFn)(const void *ptr, const NkCallbackFn cb,
+												   NkString *outerror);
+
+	typedef struct NkAccount
+	{
+		const void *ptr;
+	} NkAccount;
+
+	typedef int (*NkAfterGetAccountCallbackFn)(NkContext ctx, NkLogger logger, NkDb db, NkModule nk,
+											   NkAccount *outaccount, NkString *outerror);
+
+	typedef int (*NkInitializerAfterGetAccountFn)(const void *ptr,
+												  const NkAfterGetAccountCallbackFn cb,
+												  NkString *outerror);
+
+	typedef struct NkUpdateAccountRequest
+	{
+		const void *ptr;
+	} NkUpdateAccountRequest;
+
+	typedef int (*NkBeforeUpdateAccountCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												   NkModule nk, NkUpdateAccountRequest req,
+												   NkUpdateAccountRequest *outreq,
+												   NkString *outerror);
+
+	typedef int (*NkInitializerBeforeUpdateAccountFn)(const void *ptr,
+													  const NkBeforeUpdateAccountCallbackFn cb,
+													  NkString *outerror);
+
+	typedef int (*NkAfterUpdateAccountCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												  NkModule nk, NkUpdateAccountRequest req,
+												  NkString *outerror);
+
+	typedef int (*NkInitializerAfterUpdateAccountFn)(const void *ptr,
+													 const NkAfterUpdateAccountCallbackFn cb,
+													 NkString *outerror);
+
+	typedef struct NkSessionRefreshRequest
+	{
+		const void *ptr;
+	} NkSessionRefreshRequest;
+
+	typedef int (*NkBeforeSessionRefreshCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													NkModule nk, NkSessionRefreshRequest req,
+													NkSessionRefreshRequest *outreq,
+													NkString *outerror);
+
+	typedef int (*NkInitializerBeforeSessionRefreshFn)(const void *ptr,
+													   const NkBeforeSessionRefreshCallbackFn cb,
+													   NkString *outerror);
+
+	typedef struct NkSession
+	{
+		const void *ptr;
+	} NkSession;
+
+	typedef int (*NkAfterSessionRefreshCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												   NkModule nk, NkSession session,
+												   NkSessionRefreshRequest req, NkString *outerror);
+
+	typedef int (*NkInitializerAfterSessionRefreshFn)(const void *ptr,
+													  const NkAfterSessionRefreshCallbackFn cb,
+													  NkString *outerror);
+
+	typedef struct NkAuthenticateAppleRequest
+	{
+		const void *ptr;
+	} NkAuthenticateAppleRequest;
+
+	typedef int (*NkBeforeAuthenticateAppleCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													   NkModule nk, NkAuthenticateAppleRequest req,
+													   NkAuthenticateAppleRequest *outreq,
+													   NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAuthenticateAppleFn)(const void *ptr,
+														  const NkBeforeAuthenticateAppleCallbackFn cb,
+														  NkString *outerror);
+
+	typedef int (*NkAfterAuthenticateAppleCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													  NkModule nk, NkSession session,
+													  NkAuthenticateAppleRequest req,
+													  NkString *outerror);
+
+	typedef int (*NkInitializerAfterAuthenticateAppleFn)(const void *ptr,
+														 const NkAfterAuthenticateAppleCallbackFn cb,
+														 NkString *outerror);
+
+	typedef struct NkAuthenticateCustomRequest
+	{
+		const void *ptr;
+	} NkAuthenticateCustomRequest;
+
+	typedef int (*NkBeforeAuthenticateCustomCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														NkModule nk, NkAuthenticateCustomRequest req,
+														NkAuthenticateCustomRequest *outreq,
+														NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAuthenticateCustomFn)(const void *ptr,
+														   const NkBeforeAuthenticateCustomCallbackFn cb,
+														   NkString *outerror);
+
+	typedef int (*NkAfterAuthenticateCustomCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													   NkModule nk, NkSession session,
+													   NkAuthenticateCustomRequest req,
+													   NkString *outerror);
+
+	typedef int (*NkInitializerAfterAuthenticateCustomFn)(const void *ptr,
+														  const NkAfterAuthenticateCustomCallbackFn cb,
+														  NkString *outerror);
+
+	typedef struct NkAuthenticateDeviceRequest
+	{
+		const void *ptr;
+	} NkAuthenticateDeviceRequest;
+
+	typedef int (*NkBeforeAuthenticateDeviceCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														NkModule nk, NkAuthenticateDeviceRequest req,
+														NkAuthenticateDeviceRequest *outreq,
+														NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAuthenticateDeviceFn)(const void *ptr,
+														   const NkBeforeAuthenticateDeviceCallbackFn cb,
+														   NkString *outerror);
+
+	typedef int (*NkAfterAuthenticateDeviceCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													   NkModule nk, NkSession session,
+													   NkAuthenticateDeviceRequest req,
+													   NkString *outerror);
+
+	typedef int (*NkInitializerAfterAuthenticateDeviceFn)(const void *ptr,
+														  const NkAfterAuthenticateDeviceCallbackFn cb,
+														  NkString *outerror);
+
+	typedef struct NkAuthenticateEmailRequest
+	{
+		const void *ptr;
+	} NkAuthenticateEmailRequest;
+
+	typedef int (*NkBeforeAuthenticateEmailCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													   NkModule nk, NkAuthenticateEmailRequest req,
+													   NkAuthenticateEmailRequest *outreq,
+													   NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAuthenticateEmailFn)(const void *ptr,
+														  const NkBeforeAuthenticateEmailCallbackFn cb,
+														  NkString *outerror);
+
+	typedef int (*NkAfterAuthenticateEmailCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													  NkModule nk, NkSession session,
+													  NkAuthenticateEmailRequest req,
+													  NkString *outerror);
+
+	typedef int (*NkInitializerAfterAuthenticateEmailFn)(const void *ptr,
+														 const NkAfterAuthenticateEmailCallbackFn cb,
+														 NkString *outerror);
+
+	typedef struct NkAuthenticateFacebookRequest
+	{
+		const void *ptr;
+	} NkAuthenticateFacebookRequest;
+
+	typedef int (*NkBeforeAuthenticateFacebookCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														  NkModule nk, NkAuthenticateFacebookRequest req,
+														  NkAuthenticateFacebookRequest *outreq,
+														  NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAuthenticateFacebookFn)(const void *ptr,
+															 const NkBeforeAuthenticateFacebookCallbackFn cb,
+															 NkString *outerror);
+
+	typedef int (*NkAfterAuthenticateFacebookCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														 NkModule nk, NkSession session,
+														 NkAuthenticateFacebookRequest req,
+														 NkString *outerror);
+
+	typedef int (*NkInitializerAfterAuthenticateFacebookFn)(const void *ptr,
+															const NkAfterAuthenticateFacebookCallbackFn cb,
+															NkString *outerror);
+
+	typedef struct NkAuthenticateFacebookInstantGameRequest
+	{
+		const void *ptr;
+	} NkAuthenticateFacebookInstantGameRequest;
+
+	typedef int (*NkBeforeAuthenticateFacebookInstantGameCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+																	 NkModule nk, NkAuthenticateFacebookInstantGameRequest req,
+																	 NkAuthenticateFacebookInstantGameRequest *outreq,
+																	 NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAuthenticateFacebookInstantGameFn)(const void *ptr,
+																		const NkBeforeAuthenticateFacebookInstantGameCallbackFn cb,
+																		NkString *outerror);
+
+	typedef int (*NkAfterAuthenticateFacebookInstantGameCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+																	NkModule nk, NkSession session,
+																	NkAuthenticateFacebookInstantGameRequest req,
+																	NkString *outerror);
+
+	typedef int (*NkInitializerAfterAuthenticateFacebookInstantGameFn)(const void *ptr,
+																	   const NkAfterAuthenticateFacebookInstantGameCallbackFn cb,
+																	   NkString *outerror);
+
+	typedef struct NkAuthenticateGameCenterRequest
+	{
+		const void *ptr;
+	} NkAuthenticateGameCenterRequest;
+
+	typedef int (*NkBeforeAuthenticateGameCenterCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+															NkModule nk, NkAuthenticateGameCenterRequest req,
+															NkAuthenticateGameCenterRequest *outreq,
+															NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAuthenticateGameCenterFn)(const void *ptr,
+															   const NkBeforeAuthenticateGameCenterCallbackFn cb,
+															   NkString *outerror);
+
+	typedef int (*NkAfterAuthenticateGameCenterCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														   NkModule nk, NkSession session,
+														   NkAuthenticateGameCenterRequest req,
+														   NkString *outerror);
+
+	typedef int (*NkInitializerAfterAuthenticateGameCenterFn)(const void *ptr,
+															  const NkAfterAuthenticateGameCenterCallbackFn cb,
+															  NkString *outerror);
+
+	typedef struct NkAuthenticateGoogleRequest
+	{
+		const void *ptr;
+	} NkAuthenticateGoogleRequest;
+
+	typedef int (*NkBeforeAuthenticateGoogleCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														NkModule nk, NkAuthenticateGoogleRequest req,
+														NkAuthenticateGoogleRequest *outreq,
+														NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAuthenticateGoogleFn)(const void *ptr,
+														   const NkBeforeAuthenticateGoogleCallbackFn cb,
+														   NkString *outerror);
+
+	typedef int (*NkAfterAuthenticateGoogleCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													   NkModule nk, NkSession session,
+													   NkAuthenticateGoogleRequest req,
+													   NkString *outerror);
+
+	typedef int (*NkInitializerAfterAuthenticateGoogleFn)(const void *ptr,
+														  const NkAfterAuthenticateGoogleCallbackFn cb,
+														  NkString *outerror);
+
+	typedef struct NkAuthenticateSteamRequest
+	{
+		const void *ptr;
+	} NkAuthenticateSteamRequest;
+
+	typedef int (*NkBeforeAuthenticateSteamCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													   NkModule nk, NkAuthenticateSteamRequest req,
+													   NkAuthenticateSteamRequest *outreq,
+													   NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAuthenticateSteamFn)(const void *ptr,
+														  const NkBeforeAuthenticateSteamCallbackFn cb,
+														  NkString *outerror);
+
+	typedef int (*NkAfterAuthenticateSteamCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													  NkModule nk, NkSession session,
+													  NkAuthenticateSteamRequest req,
+													  NkString *outerror);
+
+	typedef int (*NkInitializerAfterAuthenticateSteamFn)(const void *ptr,
+														 const NkAfterAuthenticateSteamCallbackFn cb,
+														 NkString *outerror);
+
+	typedef struct NkListChannelMessagesRequest
+	{
+		const void *ptr;
+	} NkListChannelMessagesRequest;
+
+	typedef int (*NkBeforeListChannelMessagesCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														 NkModule nk,
+														 NkListChannelMessagesRequest req,
+														 NkListChannelMessagesRequest *outreq,
+														 NkString *outerror);
+
+	typedef int (*NkInitializerBeforeListChannelMessagesFn)(const void *ptr,
+															const NkBeforeListChannelMessagesCallbackFn cb,
+															NkString *outerror);
+
+	typedef struct NkChannelMessageList
+	{
+		const void *ptr;
+	} NkChannelMessageList;
+
+	typedef int (*NkAfterListChannelMessagesCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														NkModule nk, NkChannelMessageList msgs,
+														NkListChannelMessagesRequest req,
+														NkString *outerror);
+
+	typedef int (*NkInitializerAfterListChannelMessagesFn)(const void *ptr,
+														   const NkAfterListChannelMessagesCallbackFn cb,
+														   NkString *outerror);
+
+	typedef struct NkListFriendsRequest
+	{
+		const void *ptr;
+	} NkListFriendsRequest;
+
+	typedef int (*NkBeforeListFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												 NkModule nk, NkListFriendsRequest req,
+												 NkListFriendsRequest *outreq, NkString *outerror);
+
+	typedef int (*NkInitializerBeforeListFriendsFn)(const void *ptr,
+													const NkBeforeListFriendsCallbackFn cb,
+													NkString *outerror);
+
+	typedef struct NkFriendList
+	{
+		const void *ptr;
+	} NkFriendList;
+
+	typedef int (*NkAfterListFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												NkModule nk, NkFriendList friends,
+												NkString *outerror);
+
+	typedef int (*NkInitializerAfterListFriendsFn)(const void *ptr,
+												   const NkAfterListFriendsCallbackFn cb,
+												   NkString *outerror);
+
+	typedef struct NkAddFriendsRequest
+	{
+		const void *ptr;
+	} NkAddFriendsRequest;
+
+	typedef int (*NkBeforeAddFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												NkModule nk, NkAddFriendsRequest req,
+												NkAddFriendsRequest *outreq, NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAddFriendsFn)(const void *ptr,
+												   const NkBeforeAddFriendsCallbackFn cb,
+												   NkString *outerror);
+
+	typedef int (*NkAfterAddFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+											   NkModule nk, NkAddFriendsRequest req,
+											   NkString *outerror);
+
+	typedef int (*NkInitializerAfterAddFriendsFn)(const void *ptr,
+												  const NkAfterAddFriendsCallbackFn cb,
+												  NkString *outerror);
+
+	typedef struct NkDeleteFriendsRequest
+	{
+		const void *ptr;
+	} NkDeleteFriendsRequest;
+
+	typedef int (*NkBeforeDeleteFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												   NkModule nk, NkDeleteFriendsRequest req,
+												   NkDeleteFriendsRequest *outreq,
+												   NkString *outerror);
+
+	typedef int (*NkInitializerBeforeDeleteFriendsFn)(const void *ptr,
+													  const NkBeforeDeleteFriendsCallbackFn cb,
+													  NkString *outerror);
+
+	typedef int (*NkAfterDeleteFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												  NkModule nk, NkDeleteFriendsRequest req,
+												  NkString *outerror);
+
+	typedef int (*NkInitializerAfterDeleteFriendsFn)(const void *ptr,
+													 const NkAfterDeleteFriendsCallbackFn cb,
+													 NkString *outerror);
+
+	typedef struct NkBlockFriendsRequest
+	{
+		const void *ptr;
+	} NkBlockFriendsRequest;
+
+	typedef int (*NkBeforeBlockFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												  NkModule nk, NkBlockFriendsRequest req,
+												  NkBlockFriendsRequest *outreq,
+												  NkString *outerror);
+
+	typedef int (*NkInitializerBeforeBlockFriendsFn)(const void *ptr,
+													 const NkBeforeBlockFriendsCallbackFn cb,
+													 NkString *outerror);
+
+	typedef int (*NkAfterBlockFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												 NkModule nk, NkBlockFriendsRequest req,
+												 NkString *outerror);
+
+	typedef int (*NkInitializerAfterBlockFriendsFn)(const void *ptr,
+													const NkAfterBlockFriendsCallbackFn cb,
+													NkString *outerror);
+
+	typedef struct NkImportFacebookFriendsRequest
+	{
+		const void *ptr;
+	} NkImportFacebookFriendsRequest;
+
+	typedef int (*NkBeforeImportFacebookFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														   NkModule nk,
+														   NkImportFacebookFriendsRequest req,
+														   NkImportFacebookFriendsRequest *outreq,
+														   NkString *outerror);
+
+	typedef int (*NkInitializerBeforeImportFacebookFriendsFn)(const void *ptr,
+															  const NkBeforeImportFacebookFriendsCallbackFn cb,
+															  NkString *outerror);
+
+	typedef int (*NkAfterImportFacebookFriendsCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+														  NkModule nk,
+														  NkImportFacebookFriendsRequest req,
+														  NkString *outerror);
+
+	typedef int (*NkInitializerAfterImportFacebookFriendsFn)(const void *ptr,
+															 const NkAfterImportFacebookFriendsCallbackFn cb,
+															 NkString *outerror);
+
+	typedef struct NkCreateGroupRequest
+	{
+		const void *ptr;
+	} NkCreateGroupRequest;
+
+	typedef int (*NkBeforeCreateGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												 NkModule nk, NkCreateGroupRequest req,
+												 NkCreateGroupRequest *outreq, NkString *outerror);
+
+	typedef int (*NkInitializerBeforeCreateGroupFn)(const void *ptr,
+													const NkBeforeCreateGroupCallbackFn cb,
+													NkString *outerror);
+
+	typedef struct NkGroup
+	{
+		const void *ptr;
+	} NkGroup;
+
+	typedef int (*NkAfterCreateGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												NkModule nk, NkGroup group,
+												NkCreateGroupRequest req, NkString *outerror);
+
+	typedef int (*NkInitializerAfterCreateGroupFn)(const void *ptr,
+												   const NkAfterCreateGroupCallbackFn cb,
+												   NkString *outerror);
+
+	typedef struct NkUpdateGroupRequest
+	{
+		const void *ptr;
+	} NkUpdateGroupRequest;
+
+	typedef int (*NkBeforeUpdateGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												 NkModule nk, NkUpdateGroupRequest req,
+												 NkUpdateGroupRequest *outreq, NkString *outerror);
+
+	typedef int (*NkInitializerBeforeUpdateGroupFn)(const void *ptr,
+													const NkBeforeUpdateGroupCallbackFn cb,
+													NkString *outerror);
+
+	typedef int (*NkAfterUpdateGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												NkModule nk, NkUpdateGroupRequest req,
+												NkString *outerror);
+
+	typedef int (*NkInitializerAfterUpdateGroupFn)(const void *ptr,
+												   const NkAfterUpdateGroupCallbackFn cb,
+												   NkString *outerror);
+
+	typedef struct NkDeleteGroupRequest
+	{
+		const void *ptr;
+	} NkDeleteGroupRequest;
+
+	typedef int (*NkBeforeDeleteGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												 NkModule nk, NkDeleteGroupRequest req,
+												 NkDeleteGroupRequest *outreq, NkString *outerror);
+
+	typedef int (*NkInitializerBeforeDeleteGroupFn)(const void *ptr,
+													const NkBeforeDeleteGroupCallbackFn cb,
+													NkString *outerror);
+
+	typedef int (*NkAfterDeleteGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												NkModule nk, NkDeleteGroupRequest req,
+												NkString *outerror);
+
+	typedef int (*NkInitializerAfterDeleteGroupFn)(const void *ptr,
+												   const NkAfterDeleteGroupCallbackFn cb,
+												   NkString *outerror);
+
+	typedef struct NkJoinGroupRequest
+	{
+		const void *ptr;
+	} NkJoinGroupRequest;
+
+	typedef int (*NkBeforeJoinGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+											   NkModule nk, NkJoinGroupRequest req,
+											   NkJoinGroupRequest *outreq, NkString *outerror);
+
+	typedef int (*NkInitializerBeforeJoinGroupFn)(const void *ptr,
+												  const NkBeforeJoinGroupCallbackFn cb,
+												  NkString *outerror);
+
+	typedef int (*NkAfterJoinGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+											  NkModule nk, NkJoinGroupRequest req,
+											  NkString *outerror);
+
+	typedef int (*NkInitializerAfterJoinGroupFn)(const void *ptr,
+												 const NkAfterJoinGroupCallbackFn cb,
+												 NkString *outerror);
+
+	typedef struct NkLeaveGroupRequest
+	{
+		const void *ptr;
+	} NkLeaveGroupRequest;
+
+	typedef int (*NkBeforeLeaveGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												NkModule nk, NkLeaveGroupRequest req,
+												NkLeaveGroupRequest *outreq, NkString *outerror);
+
+	typedef int (*NkInitializerBeforeLeaveGroupFn)(const void *ptr,
+												   const NkBeforeLeaveGroupCallbackFn cb,
+												   NkString *outerror);
+
+	typedef int (*NkAfterLeaveGroupCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+											   NkModule nk, NkLeaveGroupRequest req,
+											   NkString *outerror);
+
+	typedef int (*NkInitializerAfterLeaveGroupFn)(const void *ptr,
+												  const NkAfterLeaveGroupCallbackFn cb,
+												  NkString *outerror);
+
+	typedef struct NkAddGroupUsersRequest
+	{
+		const void *ptr;
+	} NkAddGroupUsersRequest;
+
+	typedef int (*NkBeforeAddGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												   NkModule nk, NkAddGroupUsersRequest req,
+												   NkAddGroupUsersRequest *outreq,
+												   NkString *outerror);
+
+	typedef int (*NkInitializerBeforeAddGroupUsersFn)(const void *ptr,
+													  const NkBeforeAddGroupUsersCallbackFn cb,
+													  NkString *outerror);
+
+	typedef int (*NkAfterAddGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												  NkModule nk, NkAddGroupUsersRequest req,
+												  NkString *outerror);
+
+	typedef int (*NkInitializerAfterAddGroupUsersFn)(const void *ptr,
+													 const NkAfterAddGroupUsersCallbackFn cb,
+													 NkString *outerror);
+
+	typedef struct NkBanGroupUsersRequest
+	{
+		const void *ptr;
+	} NkBanGroupUsersRequest;
+
+	typedef int (*NkBeforeBanGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												   NkModule nk, NkBanGroupUsersRequest req,
+												   NkBanGroupUsersRequest *outreq,
+												   NkString *outerror);
+
+	typedef int (*NkInitializerBeforeBanGroupUsersFn)(const void *ptr,
+													  const NkBeforeBanGroupUsersCallbackFn cb,
+													  NkString *outerror);
+
+	typedef int (*NkAfterBanGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												  NkModule nk, NkBanGroupUsersRequest req,
+												  NkString *outerror);
+
+	typedef int (*NkInitializerAfterBanGroupUsersFn)(const void *ptr,
+													 const NkAfterBanGroupUsersCallbackFn cb,
+													 NkString *outerror);
+
+	typedef struct NkKickGroupUsersRequest
+	{
+		const void *ptr;
+	} NkKickGroupUsersRequest;
+
+	typedef int (*NkBeforeKickGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													NkModule nk, NkKickGroupUsersRequest req,
+													NkKickGroupUsersRequest *outreq,
+													NkString *outerror);
+
+	typedef int (*NkInitializerBeforeKickGroupUsersFn)(const void *ptr,
+													   const NkBeforeKickGroupUsersCallbackFn cb,
+													   NkString *outerror);
+
+	typedef int (*NkAfterKickGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+												   NkModule nk, NkKickGroupUsersRequest req,
+												   NkString *outerror);
+
+	typedef int (*NkInitializerAfterKickGroupUsersFn)(const void *ptr,
+													  const NkAfterKickGroupUsersCallbackFn cb,
+													  NkString *outerror);
+
+	typedef struct NkPromoteGroupUsersRequest
+	{
+		const void *ptr;
+	} NkPromoteGroupUsersRequest;
+
+	typedef int (*NkBeforePromoteGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													   NkModule nk, NkPromoteGroupUsersRequest req,
+													   NkPromoteGroupUsersRequest *outreq,
+													   NkString *outerror);
+
+	typedef int (*NkInitializerBeforePromoteGroupUsersFn)(const void *ptr,
+														  const NkBeforePromoteGroupUsersCallbackFn cb,
+														  NkString *outerror);
+
+	typedef int (*NkAfterPromoteGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													  NkModule nk, NkPromoteGroupUsersRequest req,
+													  NkString *outerror);
+
+	typedef int (*NkInitializerAfterPromoteGroupUsersFn)(const void *ptr,
+														 const NkAfterPromoteGroupUsersCallbackFn cb,
+														 NkString *outerror);
+
+	typedef struct NkDemoteGroupUsersRequest
+	{
+		const void *ptr;
+	} NkDemoteGroupUsersRequest;
+
+	typedef int (*NkBeforeDemoteGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													  NkModule nk, NkDemoteGroupUsersRequest req,
+													  NkDemoteGroupUsersRequest *outreq,
+													  NkString *outerror);
+
+	typedef int (*NkInitializerBeforeDemoteGroupUsersFn)(const void *ptr,
+														 const NkBeforeDemoteGroupUsersCallbackFn cb,
+														 NkString *outerror);
+
+	typedef int (*NkAfterDemoteGroupUsersCallbackFn)(NkContext ctx, NkLogger logger, NkDb db,
+													 NkModule nk, NkDemoteGroupUsersRequest req,
+													 NkString *outerror);
+
+	typedef int (*NkInitializerAfterDemoteGroupUsersFn)(const void *ptr,
+														const NkAfterDemoteGroupUsersCallbackFn cb,
+														NkString *outerror);
+
+	// RegisterBeforeListGroupUsers(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListGroupUsersRequest) (*api.ListGroupUsersRequest, error)) error
+	// RegisterAfterListGroupUsers(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.GroupUserList, in *api.ListGroupUsersRequest) error) error
+	// RegisterBeforeListUserGroups(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListUserGroupsRequest) (*api.ListUserGroupsRequest, error)) error
+	// RegisterAfterListUserGroups(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.UserGroupList, in *api.ListUserGroupsRequest) error) error
+	// RegisterBeforeListGroups(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListGroupsRequest) (*api.ListGroupsRequest, error)) error
+	// RegisterAfterListGroups(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.GroupList, in *api.ListGroupsRequest) error) error
+	// RegisterBeforeDeleteLeaderboardRecord(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.DeleteLeaderboardRecordRequest) (*api.DeleteLeaderboardRecordRequest, error)) error
+	// RegisterAfterDeleteLeaderboardRecord(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.DeleteLeaderboardRecordRequest) error) error
+	// RegisterBeforeListLeaderboardRecords(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListLeaderboardRecordsRequest) (*api.ListLeaderboardRecordsRequest, error)) error
+	// RegisterAfterListLeaderboardRecords(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.LeaderboardRecordList, in *api.ListLeaderboardRecordsRequest) error) error
+	// RegisterBeforeWriteLeaderboardRecord(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.WriteLeaderboardRecordRequest) (*api.WriteLeaderboardRecordRequest, error)) error
+	// RegisterAfterWriteLeaderboardRecord(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.LeaderboardRecord, in *api.WriteLeaderboardRecordRequest) error) error
+	// RegisterBeforeListLeaderboardRecordsAroundOwner(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListLeaderboardRecordsAroundOwnerRequest) (*api.ListLeaderboardRecordsAroundOwnerRequest, error)) error
+	// RegisterAfterListLeaderboardRecordsAroundOwner(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.LeaderboardRecordList, in *api.ListLeaderboardRecordsAroundOwnerRequest) error) error
+	// RegisterBeforeLinkApple(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountApple) (*api.AccountApple, error)) error
+	// RegisterAfterLinkApple(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountApple) error) error
+	// RegisterBeforeLinkCustom(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountCustom) (*api.AccountCustom, error)) error
+	// RegisterAfterLinkCustom(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountCustom) error) error
+	// RegisterBeforeLinkDevice(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountDevice) (*api.AccountDevice, error)) error
+	// RegisterAfterLinkDevice(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountDevice) error) error
+	// RegisterBeforeLinkEmail(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountEmail) (*api.AccountEmail, error)) error
+	// RegisterAfterLinkEmail(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountEmail) error) error
+	// RegisterBeforeLinkFacebook(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.LinkFacebookRequest) (*api.LinkFacebookRequest, error)) error
+	// RegisterAfterLinkFacebook(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.LinkFacebookRequest) error) error
+	// RegisterBeforeLinkFacebookInstantGame(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountFacebookInstantGame) (*api.AccountFacebookInstantGame, error)) error
+	// RegisterAfterLinkFacebookInstantGame(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountFacebookInstantGame) error) error
+	// RegisterBeforeLinkGameCenter(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountGameCenter) (*api.AccountGameCenter, error)) error
+	// RegisterAfterLinkGameCenter(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountGameCenter) error) error
+	// RegisterBeforeLinkGoogle(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountGoogle) (*api.AccountGoogle, error)) error
+	// RegisterAfterLinkGoogle(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountGoogle) error) error
+	// RegisterBeforeLinkSteam(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountSteam) (*api.AccountSteam, error)) error
+	// RegisterAfterLinkSteam(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountSteam) error) error
+	// RegisterBeforeListMatches(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListMatchesRequest) (*api.ListMatchesRequest, error)) error
+	// RegisterAfterListMatches(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.MatchList, in *api.ListMatchesRequest) error) error
+	// RegisterBeforeListNotifications(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListNotificationsRequest) (*api.ListNotificationsRequest, error)) error
+	// RegisterAfterListNotifications(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.NotificationList, in *api.ListNotificationsRequest) error) error
+	// RegisterBeforeDeleteNotification(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.DeleteNotificationsRequest) (*api.DeleteNotificationsRequest, error)) error
+	// RegisterAfterDeleteNotification(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.DeleteNotificationsRequest) error) error
+	// RegisterBeforeListStorageObjects(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListStorageObjectsRequest) (*api.ListStorageObjectsRequest, error)) error
+	// RegisterAfterListStorageObjects(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.StorageObjectList, in *api.ListStorageObjectsRequest) error) error
+	// RegisterBeforeReadStorageObjects(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ReadStorageObjectsRequest) (*api.ReadStorageObjectsRequest, error)) error
+	// RegisterAfterReadStorageObjects(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.StorageObjects, in *api.ReadStorageObjectsRequest) error) error
+	// RegisterBeforeWriteStorageObjects(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.WriteStorageObjectsRequest) (*api.WriteStorageObjectsRequest, error)) error
+	// RegisterAfterWriteStorageObjects(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.StorageObjectAcks, in *api.WriteStorageObjectsRequest) error) error
+	// RegisterBeforeDeleteStorageObjects(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.DeleteStorageObjectsRequest) (*api.DeleteStorageObjectsRequest, error)) error
+	// RegisterAfterDeleteStorageObjects(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.DeleteStorageObjectsRequest) error) error
+	// RegisterBeforeJoinTournament(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.JoinTournamentRequest) (*api.JoinTournamentRequest, error)) error
+	// RegisterAfterJoinTournament(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.JoinTournamentRequest) error) error
+	// RegisterBeforeListTournamentRecords(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListTournamentRecordsRequest) (*api.ListTournamentRecordsRequest, error)) error
+	// RegisterAfterListTournamentRecords(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.TournamentRecordList, in *api.ListTournamentRecordsRequest) error) error
+	// RegisterBeforeListTournaments(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListTournamentsRequest) (*api.ListTournamentsRequest, error)) error
+	// RegisterAfterListTournaments(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.TournamentList, in *api.ListTournamentsRequest) error) error
+	// RegisterBeforeWriteTournamentRecord(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.WriteTournamentRecordRequest) (*api.WriteTournamentRecordRequest, error)) error
+	// RegisterAfterWriteTournamentRecord(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.LeaderboardRecord, in *api.WriteTournamentRecordRequest) error) error
+	// RegisterBeforeListTournamentRecordsAroundOwner(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.ListTournamentRecordsAroundOwnerRequest) (*api.ListTournamentRecordsAroundOwnerRequest, error)) error
+	// RegisterAfterListTournamentRecordsAroundOwner(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.TournamentRecordList, in *api.ListTournamentRecordsAroundOwnerRequest) error) error
+	// RegisterBeforeUnlinkApple(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountApple) (*api.AccountApple, error)) error
+	// RegisterAfterUnlinkApple(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountApple) error) error
+	// RegisterBeforeUnlinkCustom(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountCustom) (*api.AccountCustom, error)) error
+	// RegisterAfterUnlinkCustom(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountCustom) error) error
+	// RegisterBeforeUnlinkDevice(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountDevice) (*api.AccountDevice, error)) error
+	// RegisterAfterUnlinkDevice(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountDevice) error) error
+	// RegisterBeforeUnlinkEmail(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountEmail) (*api.AccountEmail, error)) error
+	// RegisterAfterUnlinkEmail(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountEmail) error) error
+	// RegisterBeforeUnlinkFacebook(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountFacebook) (*api.AccountFacebook, error)) error
+	// RegisterAfterUnlinkFacebook(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountFacebook) error) error
+	// RegisterBeforeUnlinkFacebookInstantGame(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountFacebookInstantGame) (*api.AccountFacebookInstantGame, error)) error
+	// RegisterAfterUnlinkFacebookInstantGame(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountFacebookInstantGame) error) error
+	// RegisterBeforeUnlinkGameCenter(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountGameCenter) (*api.AccountGameCenter, error)) error
+	// RegisterAfterUnlinkGameCenter(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountGameCenter) error) error
+	// RegisterBeforeUnlinkGoogle(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountGoogle) (*api.AccountGoogle, error)) error
+	// RegisterAfterUnlinkGoogle(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountGoogle) error) error
+	// RegisterBeforeUnlinkSteam(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountSteam) (*api.AccountSteam, error)) error
+	// RegisterAfterUnlinkSteam(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.AccountSteam) error) error
+	// RegisterBeforeGetUsers(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, in *api.GetUsersRequest) (*api.GetUsersRequest, error)) error
+	// RegisterAfterGetUsers(fn func(ctx context.Context, logger Logger, db *sql.DB, nk NakamaModule, out *api.Users, in *api.GetUsersRequest) error) error
+	// RegisterEvent(fn func(ctx context.Context, logger Logger, evt *api.Event)) error
+	// RegisterEventSessionStart(fn func(ctx context.Context, logger Logger, evt *api.Event)) error
+	// RegisterEventSessionEnd(fn func(ctx context.Context, logger Logger, evt *api.Event)) error
+
 	typedef struct
 	{
 		const void *ptr;
+
+		// registerrpc registers a function with the given ID. This ID can be used within client
+		// code to send an RPC message to execute the function and return the result. Results are
+		// always returned as a JSON string (or optionally empty string).
+		//
+		// If there is an issue with the RPC call, return an empty string and the associated error
+		// which will be returned to the client.
+		NkInitializerRpcFn registerrpc;
+
+		// registerbeforert registers a function for a message. The registered function will be
+		// called after the message has been processed in the pipeline.
+		//
+		// The custom code will be executed asynchronously after the response message has been sent
+		// to a client
+		//
+		// Message names can be found here:
+		// https://heroiclabs.com/docs/runtime-code-basics/#message-names
+		NkInitializerBeforeRtFn registerbeforert;
+
+		// registerafterrt registers a function for a message. Any function may be registered to
+		// intercept a message received from a client and operate on it (or reject it) based on
+		// custom logic.
+		//
+		// This is useful to enforce specific rules on top of the standard features in the server.
+		//
+		// You can return `NULL` instead of the `rtapi.Envelope` and this will disable disable that
+		// particular server functionality.
+		//
+		// Message names can be found here:
+		// https://heroiclabs.com/docs/runtime-code-basics/#message-names
+		NkInitializerAfterRtFn registerafterrt;
+
+		NkInitializerMatchmakerMatchedFn registermatchmakermatched;
+		NkInitializerMatchFn registermatch;
+		NkInitializerTournamentFn registertournamentend;
+		NkInitializerTournamentFn registertournamentreset;
+		NkInitializerLeaderBoardFn registerleaderboardreset;
+		NkInitializerBeforeGetAccountFn registerbeforegetaccount;
+		NkInitializerAfterGetAccountFn registeraftergetaccount;
+		NkInitializerBeforeUpdateAccountFn registerbeforeupdateaccount;
+		NkInitializerAfterUpdateAccountFn registerafterupdateaccount;
+		NkInitializerBeforeSessionRefreshFn registerbeforesessionrefresh;
+		NkInitializerAfterSessionRefreshFn registeraftersessionrefresh;
+		NkInitializerBeforeAuthenticateAppleFn registerbeforeauthenticateapple;
+		NkInitializerAfterAuthenticateAppleFn registerafterauthenticateapple;
+
+		// RegisterBeforeAuthenticateCustom can be used to perform pre-authentication checks.
+		//
+		// You can use this to process the input (such as decoding custom tokens) and ensure
+		// inter-compatibility between Nakama and your own custom system.
+		NkInitializerBeforeAuthenticateCustomFn registerbeforeauthenticatecustom;
+
+		// RegisterAfterAuthenticateCustom can be used to perform after successful authentication
+		// checks.
+		//
+		// For instance, you can run special logic if the account was just created like adding them
+		// to newcomers leaderboard.
+		NkInitializerAfterAuthenticateCustomFn registerafterauthenticatecustom;
+
+		NkInitializerBeforeAuthenticateDeviceFn registerbeforeauthenticatedevice;
+		NkInitializerAfterAuthenticateDeviceFn registerafterauthenticatedevice;
+		NkInitializerBeforeAuthenticateEmailFn registerbeforeauthenticateemail;
+		NkInitializerAfterAuthenticateEmailFn registerafterauthenticateemail;
+		NkInitializerBeforeAuthenticateFacebookFn registerbeforeauthenticatefacebook;
+		NkInitializerAfterAuthenticateFacebookFn registerafterauthenticatefacebook;
+		NkInitializerBeforeAuthenticateFacebookInstantGameFn registerbeforeauthenticatefacebookinstantgame;
+		NkInitializerAfterAuthenticateFacebookInstantGameFn registerafterauthenticatefacebookinstantgame;
+		NkInitializerBeforeAuthenticateGameCenterFn registerbeforeauthenticategamecenter;
+		NkInitializerAfterAuthenticateGameCenterFn registerafterauthenticategamecenter;
+		NkInitializerBeforeAuthenticateGoogleFn registerbeforeauthenticategoogle;
+		NkInitializerAfterAuthenticateGoogleFn registerafterauthenticategoogle;
+		NkInitializerBeforeAuthenticateSteamFn registerbeforeauthenticatesteam;
+		NkInitializerAfterAuthenticateSteamFn registerafterauthenticatesteam;
+		NkInitializerBeforeListChannelMessagesFn registerbeforelistchannelmessages;
+		NkInitializerAfterListChannelMessagesFn registerafterlistchannelmessages;
+		NkInitializerBeforeListFriendsFn registerbeforelistfriends;
+		NkInitializerAfterListFriendsFn registerafterlistfriends;
+		NkInitializerBeforeAddFriendsFn registerbeforeaddfriends;
+		NkInitializerAfterAddFriendsFn registerafteraddfriends;
+		NkInitializerBeforeDeleteFriendsFn registerbeforedeletefriends;
+		NkInitializerAfterDeleteFriendsFn registerafterdeletefriends;
+		NkInitializerBeforeBlockFriendsFn registerbeforeblockfriends;
+		NkInitializerAfterBlockFriendsFn registerafterblockfriends;
+		NkInitializerBeforeImportFacebookFriendsFn registerbeforeimportfacebookfriends;
+		NkInitializerAfterImportFacebookFriendsFn registerafterimportfacebookfriends;
+		NkInitializerBeforeCreateGroupFn registerbeforecreategroup;
+		NkInitializerAfterCreateGroupFn registeraftercreategroup;
+		NkInitializerBeforeUpdateGroupFn registerbeforeupdategroup;
+		NkInitializerAfterUpdateGroupFn registerafterupdategroup;
+		NkInitializerBeforeDeleteGroupFn registerbeforedeletegroup;
+		NkInitializerAfterDeleteGroupFn registerafterdeletegroup;
+		NkInitializerBeforeJoinGroupFn registerbeforejoingroup;
+		NkInitializerAfterJoinGroupFn registerafterjoingroup;
+		NkInitializerBeforeLeaveGroupFn registerbeforeleavegroup;
+		NkInitializerAfterLeaveGroupFn registerafterleavegroup;
+		NkInitializerBeforeAddGroupUsersFn registerbeforeaddgroupusers;
+		NkInitializerAfterAddGroupUsersFn registerafteraddgroupusers;
+		NkInitializerBeforeBanGroupUsersFn registerbeforebangroupusers;
+		NkInitializerAfterBanGroupUsersFn registerafterbangroupusers;
+		NkInitializerBeforeKickGroupUsersFn registerbeforekickgroupusers;
+		NkInitializerAfterKickGroupUsersFn registerafterkickgroupusers;
+		NkInitializerBeforePromoteGroupUsersFn registerbeforepromotegroupusers;
+		NkInitializerAfterPromoteGroupUsersFn registerafterpromotegroupusers;
+		NkInitializerBeforeDemoteGroupUsersFn registerbeforedemotegroupusers;
+		NkInitializerAfterDemoteGroupUsersFn registerafterdemotegroupusers;
+		NkInitializerBeforeListGroupUsersFn registerbeforelistgroupusers;
+		NkInitializerAfterListGroupUsersFn registerafterlistgroupusers;
+		NkInitializerBeforeListUserGroupsFn registerbeforelistusergroups;
+		NkInitializerAfterListUserGroupsFn registerafterlistusergroups;
+		NkInitializerBeforeListGroupsFn registerbeforelistgroups;
+		NkInitializerAfterListGroupsFn registerafterlistgroups;
+		NkInitializerBeforeDeleteLeaderboardRecordFn registerbeforedeleteleaderboardrecord;
+		NkInitializerAfterDeleteLeaderboardRecordFn registerafterdeleteleaderboardrecord;
+		NkInitializerBeforeListLeaderboardRecordsFn registerbeforelistleaderboardrecords;
+		NkInitializerAfterListLeaderboardRecordsFn registerafterlistleaderboardrecords;
+		NkInitializerBeforeWriteLeaderboardRecordFn registerbeforewriteleaderboardrecord;
+		NkInitializerAfterWriteLeaderboardRecordFn registerafterwriteleaderboardrecord;
+		NkInitializerBeforeListLeaderboardRecordsAroundOwnerFn registerbeforelistleaderboardrecordsaroundowner;
+		NkInitializerAfterListLeaderboardRecordsAroundOwnerFn registerafterlistleaderboardrecordsaroundowner;
+		NkInitializerBeforeLinkAppleFn registerbeforelinkapple;
+		NkInitializerAfterLinkAppleFn registerafterlinkapple;
+		NkInitializerBeforeLinkCustomFn registerbeforelinkcustom;
+		NkInitializerAfterLinkCustomFn registerafterlinkcustom;
+		NkInitializerBeforeLinkDeviceFn registerbeforelinkdevice;
+		NkInitializerAfterLinkDeviceFn registerafterlinkdevice;
+		NkInitializerBeforeLinkEmailFn registerbeforelinkemail;
+		NkInitializerAfterLinkEmailFn registerafterlinkemail;
+		NkInitializerBeforeLinkFacebookFn registerbeforelinkfacebook;
+		NkInitializerAfterLinkFacebookFn registerafterlinkfacebook;
+		NkInitializerBeforeLinkFacebookInstantGameFn registerbeforelinkfacebookinstantgame;
+		NkInitializerAfterLinkFacebookInstantGameFn registerafterlinkfacebookinstantgame;
+		NkInitializerBeforeLinkGameCenterFn registerbeforelinkgamecenter;
+		NkInitializerAfterLinkGameCenterFn registerafterlinkgamecenter;
+		NkInitializerBeforeLinkGoogleFn registerbeforelinkgoogle;
+		NkInitializerAfterLinkGoogleFn registerafterlinkgoogle;
+		NkInitializerBeforeLinkSteamFn registerbeforelinksteam;
+		NkInitializerAfterLinkSteamFn registerafterlinksteam;
+		NkInitializerBeforeListMatchesFn registerbeforelistmatches;
+		NkInitializerAfterListMatchesFn registerafterlistmatches;
+		NkInitializerBeforeListNotificationsFn registerbeforelistnotifications;
+		NkInitializerAfterListNotificationsFn registerafterlistnotifications;
+		NkInitializerBeforeDeleteNotificationFn registerbeforedeletenotification;
+		NkInitializerAfterDeleteNotificationFn registerafterdeletenotification;
+		NkInitializerBeforeListStorageObjectsFn registerbeforeliststorageobjects;
+		NkInitializerAfterListStorageObjectsFn registerafterliststorageobjects;
+		NkInitializerBeforeReadStorageObjectsFn registerbeforereadstorageobjects;
+		NkInitializerAfterReadStorageObjectsFn registerafterreadstorageobjects;
+		NkInitializerBeforeWriteStorageObjectsFn registerbeforewritestorageobjects;
+		NkInitializerAfterWriteStorageObjectsFn registerafterwritestorageobjects;
+		NkInitializerBeforeDeleteStorageObjectsFn registerbeforedeletestorageobjects;
+		NkInitializerAfterDeleteStorageObjectsFn registerafterdeletestorageobjects;
+		NkInitializerBeforeJoinTournamentFn registerbeforejointournament;
+		NkInitializerAfterJoinTournamentFn registerafterjointournament;
+		NkInitializerBeforeListTournamentRecordsFn registerbeforelisttournamentrecords;
+		NkInitializerAfterListTournamentRecordsFn registerafterlisttournamentrecords;
+		NkInitializerBeforeListTournamentsFn registerbeforelisttournaments;
+		NkInitializerAfterListTournamentsFn registerafterlisttournaments;
+		NkInitializerBeforeWriteTournamentRecordFn registerbeforewritetournamentrecord;
+		NkInitializerAfterWriteTournamentRecordFn registerafterwritetournamentrecord;
+		NkInitializerBeforeListTournamentRecordsAroundOwnerFn registerbeforelisttournamentrecordsaroundowner;
+		NkInitializerAfterListTournamentRecordsAroundOwnerFn registerafterlisttournamentrecordsaroundowner;
+		NkInitializerBeforeUnlinkAppleFn registerbeforeunlinkapple;
+		NkInitializerAfterUnlinkAppleFn registerafterunlinkapple;
+		NkInitializerBeforeUnlinkCustomFn registerbeforeunlinkcustom;
+		NkInitializerAfterUnlinkCustomFn registerafterunlinkcustom;
+		NkInitializerBeforeUnlinkDeviceFn registerbeforeunlinkdevice;
+		NkInitializerAfterUnlinkDeviceFn registerafterunlinkdevice;
+		NkInitializerBeforeUnlinkEmailFn registerbeforeunlinkemail;
+		NkInitializerAfterUnlinkEmailFn registerafterunlinkemail;
+		NkInitializerBeforeUnlinkFacebookFn registerbeforeunlinkfacebook;
+		NkInitializerAfterUnlinkFacebookFn registerafterunlinkfacebook;
+		NkInitializerBeforeUnlinkFacebookInstantGameFn registerbeforeunlinkfacebookinstantgame;
+		NkInitializerAfterUnlinkFacebookInstantGameFn registerafterunlinkfacebookinstantgame;
+		NkInitializerBeforeUnlinkGameCenterFn registerbeforeunlinkgamecenter;
+		NkInitializerAfterUnlinkGameCenterFn registerafterunlinkgamecenter;
+		NkInitializerBeforeUnlinkGoogleFn registerbeforeunlinkgoogle;
+		NkInitializerAfterUnlinkGoogleFn registerafterunlinkgoogle;
+		NkInitializerBeforeUnlinkSteamFn registerbeforeunlinksteam;
+		NkInitializerAfterUnlinkSteamFn registerafterunlinksteam;
+		NkInitializerBeforeGetUsersFn registerbeforegetusers;
+		NkInitializerAfterGetUsersFn registeraftergetusers;
+		NkInitializerEventFn registerevent;
+		NkInitializerEventSessionStartFn registereventsessionstart;
+		NkInitializerEventSessionEndFn registereventsessionend;
 	} NkInitializer;
 
 #ifdef __cplusplus
