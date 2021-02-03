@@ -18,24 +18,1452 @@ package server
 #include <stdlib.h>
 #include "../include/nakama.h"
 
-extern int initmodule(const void *, NkContext, NkLogger, NkDb, NkModule, NkInitializer);
+extern int initmodule(
+	const void *ptr,
+	NkContext,
+	NkLogger,
+	NkDb,
+	NkModule,
+	NkInitializer);
 
-extern NkString contextvalue(const void *, NkString key);
+extern NkString contextvalue(
+	const void * ptr,
+	NkString key);
 
-extern void loggerdebug(const void *, NkString);
-extern void loggererror(const void *, NkString);
-extern void loggerinfo(const void *, NkString);
-extern void loggerwarn(const void *, NkString);
+extern void loggerdebug(
+	const void * ptr,
+	NkString s);
 
-extern int moduleauthenticateapple(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticatecustom(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticatedevice(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticateemail(const void *, NkContext, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticatefacebook(const void *, NkContext, NkString, bool, NkString, bool, NkString *, NkString *, NkString *, bool *l);
-extern int moduleauthenticatefacebookinstantgame(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticategamecenter(const void *, NkContext, NkString, NkString, NkI64, NkString, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticategoogle(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int moduleauthenticatesteam(const void *, NkContext, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern void loggererror(
+	const void * ptr,
+	NkString s);
+
+extern void loggerinfo(
+	const void * ptr,
+	NkString s);
+
+extern void loggerwarn(
+	const void * ptr,
+	NkString s);
+
+extern int moduleauthenticateapple(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString **outuserid,
+	NkString **outusername,
+	NkString **outerror,
+	bool **outcreated);
+
+extern int moduleauthenticatecustom(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString **outuserid,
+	NkString **outusername,
+	NkString **outerror,
+	bool **outcreated);
+
+extern int moduleauthenticatedevice(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString **outuserid,
+	NkString **outusername,
+	NkString **outerror,
+	bool **outcreated);
+
+extern int moduleauthenticateemail(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString email,
+	NkString password,
+	NkString username,
+	bool create,
+	NkString **outuserid,
+	NkString **outusername,
+	NkString **outerror,
+	bool **outcreated);
+
+extern int moduleauthenticatefacebook(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString token,
+	bool importfriends,
+	NkString username,
+	bool create,
+	NkString **outuserid,
+	NkString **outusername,
+	NkString **outerror,
+	bool **outcreated);
+
+extern int moduleauthenticatefacebookinstantgame(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString **outuserid,
+	NkString **outusername,
+	NkString **outerror,
+	bool **outcreated);
+
+extern int moduleauthenticategamecenter(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString playerid,
+	NkString bundleid,
+	NkI64 timestamp,
+	NkString salt,
+	NkString signature,
+	NkString publickeyurl,
+	NkString username,
+	bool create,
+	NkString **outuserid,
+	NkString **outusername,
+	NkString **outerror,
+	bool **outcreated);
+
+extern int moduleauthenticategoogle(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString **outuserid,
+	NkString **outusername,
+	NkString **outerror,
+	bool **outcreated);
+
+extern int moduleauthenticatesteam(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString **outuserid,
+	NkString **outusername,
+	NkString **outerror,
+	bool **outcreated);
+
+extern int moduleauthenticategeneratetoken(
+	const void *ptr,
+	NkString userid,
+	NkString username,
+	NkI64 expiry,
+	NkMapString vars,
+	NkString **outtoken,
+	NkI64 **outexpiry,
+	NkString **outerror);
+
+extern int moduleaccountgetid(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkAccount **outaccount,
+	NkString **outerror);
+
+extern int moduleaccountsgetid(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString *userids,
+	NkU32 numuserids,
+	NkAccount **outaccounts,
+	NkU32 **outnumaccounts,
+	NkString **outerror);
+
+extern int moduleaccountupdateid(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString username,
+	NkMapAny metadata,
+	NkString displayname,
+	NkString timezone,
+	NkString location,
+	NkString langtag,
+	NkString avatarurl,
+	NkString **outerror);
+
+extern int ModuleAccountDeleteId(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	bool recorded,
+	NkString **outerror);
+
+extern int moduleaccountexportid(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString **outaccount,
+	NkString **outerror);
+
+extern int moduleusersget(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString *keys,
+	NkU32 numkeys,
+	NkUser **outusers,
+	NkU32 **outnumusers,
+	NkString **outerror);
+
+extern int moduleusersban(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString *userids,
+	NkU32 numids,
+	NkString **outerror);
+
+extern int modulelink(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int modulelinkemail(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString email,
+	NkString password,
+	NkString **outerror);
+
+extern int modulelinkfacebook(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString username,
+	NkString token,
+	bool importfriends,
+	NkString **outerror);
+
+extern int modulelinkgamecenter(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString playerid,
+	NkString bundleid,
+	NkI64 timestamp,
+	NkString salt,
+	NkString signature,
+	NkString publickeyurl,
+	NkString **outerror);
+
+extern int modulestreamuserlist(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	bool includehidden,
+	bool includenothidden,
+	NkPresence **outpresences,
+	NkU32 **outnumpresences,
+	NkString **outerror);
+
+extern int modulestreamuserget(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	NkString userid,
+	NkString sessionid,
+	NkPresenceMeta **outmeta,
+	NkString **outerror);
+
+extern int modulestreamuserjoin(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	NkString userid,
+	NkString sessionid,
+	bool hidden,
+	bool persistence,
+	NkString status,
+	bool **outjoined,
+	NkString **outerror);
+
+extern int modulestreamuserupdate(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	NkString userid,
+	NkString sessionid,
+	bool hidden,
+	bool persistence,
+	NkString status,
+	NkString **outerror);
+
+extern int modulestreamuserleave(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	NkString userid,
+	NkString sessionid,
+	NkString **outerror);
+
+extern int modulestreamuserkick(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	NkPresence presence,
+	NkString **outerror);
+
+extern int modulestreamcount(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	NkU64 **outcount,
+	NkString **outerror);
+
+extern int modulestreamclose(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	NkString **outerror);
+
+extern int modulestreamsend(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	NkString data,
+	NkPresence *presences,
+	NkU32 numpresences,
+	bool reliable,
+	NkString **outerror);
+
+extern int modulestreamsendraw(
+	const void *ptr,
+	NkU8 mode,
+	NkString subject,
+	NkString subcontext,
+	NkString label,
+	NkEnvelope msg,
+	NkPresence *presences,
+	NkU32 numpresences,
+	bool reliable,
+	NkString **outerror);
+
+extern int modulesessiondisconnect(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString sessionid,
+	NkString **outerror);
+
+extern int modulematchcreate(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString module,
+	NkMapAny params,
+	NkString **outmatchid,
+	NkString **outerror);
+
+extern int modulematchget(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkMatch **outmatch,
+	NkString **outerror);
+
+extern int modulematchlist(
+	const void *ptr,
+	const NkContext *ctx,
+	NkU32 limit,
+	bool authoritative,
+	NkString label,
+	const NkU32 *minsize,
+	const NkU32 *maxsize,
+	NkString query,
+	NkMatch **outmatches,
+	NkU32 **outnummatches,
+	NkString **outerror);
+
+extern int modulenotificationsend(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString subject,
+	NkMapAny content,
+	NkU64 code,
+	NkString sender,
+	bool persistent,
+	NkString **outerror);
+
+extern int modulenotificationssend(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkNotificationSend *notifications,
+	NkU32 numnotifications,
+	NkString **outerror);
+
+extern int modulewalletupdate(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkMapI64 changeset,
+	NkMapAny metadata,
+	bool updateledger,
+	NkMapI64 **outupdated,
+	NkMapI64 **outprevious,
+	NkString **outerror);
+
+extern int modulewalletsupdate(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkWalletUpdate *updates,
+	NkU32 numupdates,
+	bool updateledger,
+	NkWalletUpdateResult **outresults,
+	NkU32 **outnumresults,
+	NkString **outerror);
+
+extern int modulewalletledgerupdate(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString itemid,
+	NkMapAny metadata,
+	NkWalletLedgerItem **outitem,
+	NkString **outerror);
+
+extern int modulewalletledgerlist(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkU32 limit,
+	NkString cursor,
+	NkWalletLedgerItem **outitems,
+	NkU32 **outnumitems,
+	NkString **outcursor,
+	NkString **outerror);
+
+extern int modulestoragelist(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString collection,
+	NkU32 limit,
+	NkString cursor,
+	NkStorageObject **outobjs,
+	NkU32 **outnumobjs,
+	NkString **outcursor,
+	NkString **outerror);
+
+extern int modulestorageread(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkStorageRead *reads,
+	NkU32 numreads,
+	NkStorageObject **outobjs,
+	NkU32 **outnumobjs,
+	NkString **outerror);
+
+extern int modulestoragewrite(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkStorageWrite *writes,
+	NkU32 numwrites,
+	NkStorageObjectAck **outacks,
+	NkU32 **outnumacks,
+	NkString **outerror);
+
+extern int modulestoragedelete(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkStorageDelete *deletes,
+	NkU32 numdeletes,
+	NkString **outerror);
+
+extern int modulemultiupdate(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkAccountUpdate *accountupdates,
+	NkU32 numaccountupdates,
+	const NkStorageWrite *storagewrites,
+	NkU32 numstoragewrites,
+	const NkWalletUpdate *walletupdates,
+	NkU32 numwalletupdates,
+	bool updateledger,
+	NkStorageObjectAck **outacks,
+	NkU32 **outnumacks,
+	NkWalletUpdateResult **outresults,
+	NkU32 **outnumresults,
+	NkString **outerror);
+
+extern int moduleleaderboardcreate(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	bool authoritative,
+	NkString sortorder,
+	NkString op,
+	NkString resetschedule,
+	NkMapAny metadata,
+	NkString **outerror);
+
+extern int moduleleaderboardrecordslist(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	const NkString *ownerids,
+	NkU32 numownerids,
+	NkU32 limit,
+	NkString cursor,
+	NkI64 expiry,
+	NkLeaderboardRecord **outrecords,
+	NkU32 **outnumrecords,
+	NkLeaderboardRecord **outownerrecords,
+	NkU32 **outnumownerrecords,
+	NkString **outnextcursor,
+	NkString **outprevcursor,
+	NkString **outerror);
+
+extern int moduleleaderboardrecordwrite(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkI64 score,
+	NkI64 subscore,
+	NkMapAny metadata,
+	NkLeaderboardRecord **outrecord,
+	NkString **outerror);
+
+extern int moduledelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkString **outerror);
+
+extern int moduletournamentcreate(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString sortorder,
+	NkString resetschedule,
+	NkMapAny metadata,
+	NkString title,
+	NkString description,
+	NkU32 category,
+	NkU32 starttime,
+	NkU32 endtime,
+	NkU32 duration,
+	NkU32 maxsize,
+	NkU32 maxnumscore,
+	bool joinrequired,
+	NkString **outerror);
+
+extern int moduletournamentaddattempt(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkU64 count,
+	NkString **outerror);
+
+extern int moduletournamentjoin(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkString username,
+	NkString **outerror);
+
+extern int moduletournamentsgetid(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkString *tournamentids,
+	NkU32 numtournamentids,
+	NkTournament **outtournaments,
+	NkU32 **outnumtournaments,
+	NkString **outerror);
+
+extern int moduletournamentlist(
+	const void *ptr,
+	const NkContext *ctx,
+	NkU64 catstart,
+	NkU64 catend,
+	NkU64 starttime,
+	NkU64 endtime,
+	NkU32 limit,
+	NkString cursor,
+	NkString id,
+	NkTournamentList **outtournaments,
+	NkU32 **outnumtournaments,
+	NkString **outerror);
+
+extern int moduletournamentrecordslist(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString tournamentid,
+	const NkString *ownerids,
+	NkU32 numownerids,
+	NkU32 limit,
+	NkString cursor,
+	NkI64 overrideexpiry,
+	NkLeaderboardRecord **outrecords,
+	NkU32 **outnumrecords,
+	NkLeaderboardRecord **outownerrecords,
+	NkU32 **outnumownerrecords,
+	NkString **outnextcursor,
+	NkString **outprevcursor,
+	NkString **outerror);
+
+extern int moduletournamentrecordwrite(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkString username,
+	NkI64 score,
+	NkI64 subscore,
+	NkMapAny metadata,
+	NkLeaderboardRecord **outrecord,
+	NkString **outerror);
+
+extern int moduletournamentrecordshaystack(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkU32 limit,
+	NkI64 expiry,
+	NkLeaderboardRecord **outrecords,
+	NkU32 **outnumrecords,
+	NkString **outerror);
+
+extern int modulegroupsgetid(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkString *groupids,
+	NkU32 numgroupids,
+	NkGroup **outgroups,
+	NkU32 **outnumgroups,
+	NkString **outerror);
+
+extern int modulegroupcreate(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString name,
+	NkString creatorid,
+	NkString langtag,
+	NkString description,
+	NkString avatarurl,
+	bool open,
+	NkMapAny metadata,
+	NkU32 maxcount,
+	NkGroup **outgroup,
+	NkString **outerror);
+
+extern int modulegroupupdate(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString name,
+	NkString creatorid,
+	NkString langtag,
+	NkString description,
+	NkString avatarurl,
+	bool open,
+	NkMapAny metadata,
+	NkU32 maxcount,
+	NkString **outerror);
+
+extern int modulegroupuser(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	NkString userid,
+	NkString username,
+	NkString **outerror);
+
+extern int modulegroupusers(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	NkString **outerror);
+
+extern int modulegroupuserslist(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	NkU32 limit,
+	NkU32 state,
+	NkString cursor,
+	NkGroupUserListGroupUser **outusers,
+	NkU32 **outnumusers,
+	NkString **outcursor,
+	NkString **outerror);
+
+extern int moduleusergroupslist(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkU32 limit,
+	NkU32 state,
+	NkString cursor,
+	NkUserGroupListUserGroup **outusers,
+	NkU32 **outnumusers,
+	NkString **outcursor,
+	NkString **outerror);
+
+extern int modulefriendslist(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkU32 limit,
+	NkU32 state,
+	NkString cursor,
+	NkFriend **outfriends,
+	NkU32 **outnumfriends,
+	NkString **outcursor,
+	NkString **outerror);
+
+extern int moduleevent(
+	const void *ptr,
+	const NkContext *ctx,
+	NkEvent evt,
+	NkString **outerror);
+
+extern int initializerrpc(
+	const void *ptr,
+	NkString id,
+	const NkRpcFn fn,
+	NkString **outerror);
+
+extern int initializerbeforert(
+	const void *ptr,
+	NkString id,
+	const NkBeforeRtCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterrt(
+	const void *ptr,
+	NkString id,
+	const NkAfterRtCallbackFn cb,
+	NkString **outerror);
+
+extern int initializermatchmakermatched(
+	const void *ptr,
+	const NkMatchmakerMatchedCallbackFn cb,
+	NkString **outerror);
+
+extern int initializermatch(
+	const void *ptr,
+	NkString name,
+	const NkMatchCallbackFn cb,
+	NkString **outerror);
+
+extern int initializertournament(
+	const void *ptr,
+	const NkTournamentCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerleaderboard(
+	const void *ptr,
+	const NkLeaderBoardCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforegetaccount(
+	const void *ptr,
+	const NkCallbackFn cb,
+	NkString **outerror);
+
+extern int initializeraftergetaccount(
+	const void *ptr,
+	const NkAfterGetAccountCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeupdateaccount(
+	const void *ptr,
+	const NkBeforeUpdateAccountCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterupdateaccount(
+	const void *ptr,
+	const NkAfterUpdateAccountCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforesessionrefresh(
+	const void *ptr,
+	const NkBeforeSessionRefreshCallbackFn cb,
+	NkString **outerror);
+
+extern int initializeraftersessionrefresh(
+	const void *ptr,
+	const NkAfterSessionRefreshCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeauthenticateapple(
+	const void *ptr,
+	const NkBeforeAuthenticateAppleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterauthenticateapple(
+	const void *ptr,
+	const NkAfterAuthenticateAppleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeauthenticatecustom(
+	const void *ptr,
+	const NkBeforeAuthenticateCustomCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterauthenticatecustom(
+	const void *ptr,
+	const NkAfterAuthenticateCustomCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeauthenticatedevice(
+	const void *ptr,
+	const NkBeforeAuthenticateDeviceCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterauthenticatedevice(
+	const void *ptr,
+	const NkAfterAuthenticateDeviceCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeauthenticateemail(
+	const void *ptr,
+	const NkBeforeAuthenticateEmailCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterauthenticateemail(
+	const void *ptr,
+	const NkAfterAuthenticateEmailCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeauthenticatefacebook(
+	const void *ptr,
+	const NkBeforeAuthenticateFacebookCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterauthenticatefacebook(
+	const void *ptr,
+	const NkAfterAuthenticateFacebookCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeauthenticatefacebookinstantgame(
+	const void *ptr,
+	const NkBeforeAuthenticateFacebookInstantGameCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterauthenticatefacebookinstantgame(
+	const void *ptr,
+	const NkAfterAuthenticateFacebookInstantGameCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeauthenticategamecenter(
+	const void *ptr,
+	const NkBeforeAuthenticateGameCenterCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterauthenticategamecenter(
+	const void *ptr,
+	const NkAfterAuthenticateGameCenterCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeauthenticategoogle(
+	const void *ptr,
+	const NkBeforeAuthenticateGoogleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterauthenticategoogle(
+	const void *ptr,
+	const NkAfterAuthenticateGoogleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeauthenticatesteam(
+	const void *ptr,
+	const NkBeforeAuthenticateSteamCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterauthenticatesteam(
+	const void *ptr,
+	const NkAfterAuthenticateSteamCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelistchannelmessages(
+	const void *ptr,
+	const NkBeforeListChannelMessagesCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlistchannelmessages(
+	const void *ptr,
+	const NkAfterListChannelMessagesCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelistfriends(
+	const void *ptr,
+	const NkBeforeListFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlistfriends(
+	const void *ptr,
+	const NkAfterListFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeaddfriends(
+	const void *ptr,
+	const NkBeforeAddFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafteraddfriends(
+	const void *ptr,
+	const NkAfterAddFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforedeletefriends(
+	const void *ptr,
+	const NkBeforeDeleteFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterdeletefriends(
+	const void *ptr,
+	const NkAfterDeleteFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeblockfriends(
+	const void *ptr,
+	const NkBeforeBlockFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterblockfriends(
+	const void *ptr,
+	const NkAfterBlockFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeimportfacebookfriends(
+	const void *ptr,
+	const NkBeforeImportFacebookFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterimportfacebookfriends(
+	const void *ptr,
+	const NkAfterImportFacebookFriendsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforecreategroup(
+	const void *ptr,
+	const NkBeforeCreateGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializeraftercreategroup(
+	const void *ptr,
+	const NkAfterCreateGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeupdategroup(
+	const void *ptr,
+	const NkBeforeUpdateGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterupdategroup(
+	const void *ptr,
+	const NkAfterUpdateGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforedeletegroup(
+	const void *ptr,
+	const NkBeforeDeleteGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterdeletegroup(
+	const void *ptr,
+	const NkAfterDeleteGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforejoingroup(
+	const void *ptr,
+	const NkBeforeJoinGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterjoingroup(
+	const void *ptr,
+	const NkAfterJoinGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeleavegroup(
+	const void *ptr,
+	const NkBeforeLeaveGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterleavegroup(
+	const void *ptr,
+	const NkAfterLeaveGroupCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeaddgroupusers(
+	const void *ptr,
+	const NkBeforeAddGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafteraddgroupusers(
+	const void *ptr,
+	const NkAfterAddGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforebangroupusers(
+	const void *ptr,
+	const NkBeforeBanGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterbangroupusers(
+	const void *ptr,
+	const NkAfterBanGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforekickgroupusers(
+	const void *ptr,
+	const NkBeforeKickGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterkickgroupusers(
+	const void *ptr,
+	const NkAfterKickGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforepromotegroupusers(
+	const void *ptr,
+	const NkBeforePromoteGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterpromotegroupusers(
+	const void *ptr,
+	const NkAfterPromoteGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforedemotegroupusers(
+	const void *ptr,
+	const NkBeforeDemoteGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterdemotegroupusers(
+	const void *ptr,
+	const NkAfterDemoteGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelistgroupusers(
+	const void *ptr,
+	const NkBeforeListGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlistgroupusers(
+	const void *ptr,
+	const NkAfterListGroupUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelistusergroups(
+	const void *ptr,
+	const NkBeforeListUserGroupsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlistusergroups(
+	const void *ptr,
+	const NkAfterListUserGroupsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelistgroups(
+	const void *ptr,
+	const NkBeforeListGroupsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlistgroups(
+	const void *ptr,
+	const NkAfterListGroupsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforedeleteleaderboardrecord(
+	const void *ptr,
+	const NkBeforeDeleteLeaderboardRecordCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterdeleteleaderboardrecord(
+	const void *ptr,
+	const NkAfterDeleteLeaderboardRecordCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelistleaderboardrecords(
+	const void *ptr,
+	const NkBeforeListLeaderboardRecordsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlistleaderboardrecords(
+	const void *ptr,
+	const NkAfterListLeaderboardRecordsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforewriteleaderboardrecord(
+	const void *ptr,
+	const NkBeforeWriteLeaderboardRecordCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterwriteleaderboardrecord(
+	const void *ptr,
+	const NkAfterWriteLeaderboardRecordCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelistleaderboardrecordsaroundowner(
+	const void *ptr,
+	const NkBeforeListLeaderboardRecordsAroundOwnerCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlistleaderboardrecordsaroundowner(
+	const void *ptr,
+	const NkAfterListLeaderboardRecordsAroundOwnerCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelinkapple(
+	const void *ptr,
+	const NkBeforeLinkAppleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlinkapple(
+	const void *ptr,
+	const NkAfterLinkAppleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelinkcustom(
+	const void *ptr,
+	const NkBeforeLinkCustomCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlinkcustom(
+	const void *ptr,
+	const NkAfterLinkCustomCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelinkdevice(
+	const void *ptr,
+	const NkBeforeLinkDeviceCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlinkdevice(
+	const void *ptr,
+	const NkAfterLinkDeviceCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelinkemail(
+	const void *ptr,
+	const NkBeforeLinkEmailCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlinkemail(
+	const void *ptr,
+	const NkAfterLinkEmailCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelinkfacebook(
+	const void *ptr,
+	const NkBeforeLinkFacebookCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlinkfacebook(
+	const void *ptr,
+	const NkAfterLinkFacebookCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelinkfacebookinstantgame(
+	const void *ptr,
+	const NkBeforeLinkFacebookInstantGameCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlinkfacebookinstantgame(
+	const void *ptr,
+	const NkAfterLinkFacebookInstantGameCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelinkgamecenter(
+	const void *ptr,
+	const NkBeforeLinkGameCenterCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlinkgamecenter(
+	const void *ptr,
+	const NkAfterLinkGameCenterCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelinkgoogle(
+	const void *ptr,
+	const NkBeforeLinkGoogleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlinkgoogle(
+	const void *ptr,
+	const NkAfterLinkGoogleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelinksteam(
+	const void *ptr,
+	const NkBeforeLinkSteamCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlinksteam(
+	const void *ptr,
+	const NkAfterLinkSteamCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelistmatches(
+	const void *ptr,
+	const NkBeforeListMatchesCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlistmatches(
+	const void *ptr,
+	const NkAfterListMatchesCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelistnotifications(
+	const void *ptr,
+	const NkBeforeListNotificationsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlistnotifications(
+	const void *ptr,
+	const NkAfterListNotificationsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforedeletenotifications(
+	const void *ptr,
+	const NkBeforeDeleteNotificationsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterdeletenotifications(
+	const void *ptr,
+	const NkAfterDeleteNotificationsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeliststorageobjects(
+	const void *ptr,
+	const NkBeforeListStorageObjectsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterliststorageobjects(
+	const void *ptr,
+	const NkAfterListStorageObjectsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforereadstorageobjects(
+	const void *ptr,
+	const NkBeforeReadStorageObjectsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterreadstorageobjects(
+	const void *ptr,
+	const NkAfterReadStorageObjectsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforewritestorageobjects(
+	const void *ptr,
+	const NkBeforeWriteStorageObjectsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterwritestorageobjects(
+	const void *ptr,
+	const NkAfterWriteStorageObjectsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforedeletestorageobjects(
+	const void *ptr,
+	const NkBeforeDeleteStorageObjectsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterdeletestorageobjects(
+	const void *ptr,
+	const NkAfterDeleteStorageObjectsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforejointournament(
+	const void *ptr,
+	const NkBeforeJoinTournamentCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterjointournament(
+	const void *ptr,
+	const NkAfterJoinTournamentCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelisttournamentrecords(
+	const void *ptr,
+	const NkBeforeListTournamentRecordsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlisttournamentrecords(
+	const void *ptr,
+	const NkAfterListTournamentRecordsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelisttournaments(
+	const void *ptr,
+	const NkBeforeListTournamentsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlisttournaments(
+	const void *ptr,
+	const NkAfterListTournamentsCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforewritetournamentrecord(
+	const void *ptr,
+	const NkBeforeWriteTournamentRecordCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterwritetournamentrecord(
+	const void *ptr,
+	const NkAfterWriteTournamentRecordCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforelisttournamentrecordsaroundowner(
+	const void *ptr,
+	const NkBeforeListTournamentRecordsAroundOwnerCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterlisttournamentrecordsaroundowner(
+	const void *ptr,
+	const NkAfterListTournamentRecordsAroundOwnerCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeunlinkapple(
+	const void *ptr,
+	const NkBeforeUnlinkAppleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterunlinkapple(
+	const void *ptr,
+	const NkAfterUnlinkAppleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeunlinkcustom(
+	const void *ptr,
+	const NkBeforeUnlinkCustomCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterunlinkcustom(
+	const void *ptr,
+	const NkAfterUnlinkCustomCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeunlinkdevice(
+	const void *ptr,
+	const NkBeforeUnlinkDeviceCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterunlinkdevice(
+	const void *ptr,
+	const NkAfterUnlinkDeviceCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeunlinkemail(
+	const void *ptr,
+	const NkBeforeUnlinkEmailCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterunlinkemail(
+	const void *ptr,
+	const NkAfterUnlinkEmailCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeunlinkfacebook(
+	const void *ptr,
+	const NkBeforeUnlinkFacebookCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterunlinkfacebook(
+	const void *ptr,
+	const NkAfterUnlinkFacebookCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeunlinkfacebookinstantgame(
+	const void *ptr,
+	const NkBeforeUnlinkFacebookInstantGameCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterunlinkfacebookinstantgame(
+	const void *ptr,
+	const NkAfterUnlinkFacebookInstantGameCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeunlinkgamecenter(
+	const void *ptr,
+	const NkBeforeUnlinkGameCenterCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterunlinkgamecenter(
+	const void *ptr,
+	const NkAfterUnlinkGameCenterCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeunlinkgoogle(
+	const void *ptr,
+	const NkBeforeUnlinkGoogleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterunlinkgoogle(
+	const void *ptr,
+	const NkAfterUnlinkGoogleCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforeunlinksteam(
+	const void *ptr,
+	const NkBeforeUnlinkSteamCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerafterunlinksteam(
+	const void *ptr,
+	const NkAfterUnlinkSteamCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerbeforegetusers(
+	const void *ptr,
+	const NkBeforeGetUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializeraftergetusers(
+	const void *ptr,
+	const NkAfterGetUsersCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerevent(
+	const void *ptr,
+	const NkEventCallbackFn cb,
+	NkString **outerror);
+
+extern int initializereventsessionstart(
+	const void *ptr,
+	const NkEventCallbackFn cb,
+	NkString **outerror);
+
+extern int initializereventsessionend(
+	const void *ptr,
+	const NkEventCallbackFn cb,
+	NkString **outerror);
 
 */
 import "C"
