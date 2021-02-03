@@ -117,12 +117,12 @@ extern "C"
 		const void *ptr,
 		NkString s);
 
-	typedef NkLogger (*NkLoggerWithFieldFn)(
+	typedef struct NkLogger (*NkLoggerWithFieldFn)(
 		const void *ptr,
 		NkString key,
 		NkString value);
 
-	typedef NkLogger (*NkLoggerWithFieldsFn)(
+	typedef struct NkLogger (*NkLoggerWithFieldsFn)(
 		const void *ptr,
 		NkMapAny fields);
 
@@ -644,6 +644,11 @@ extern "C"
 		NkMapAny metadata,
 		NkString **outerror);
 
+	typedef struct NkLeaderboardRecord
+	{
+		const void *ptr;
+	} NkLeaderboardRecord;
+
 	typedef int (*NkModuleLeaderboardRecordsListFn)(
 		const void *ptr,
 		const NkContext *ctx,
@@ -745,11 +750,6 @@ extern "C"
 		NkTournamentList **outtournaments,
 		NkU32 **outnumtournaments,
 		NkString **outerror);
-
-	typedef struct NkLeaderboardRecord
-	{
-		const void *ptr;
-	} NkLeaderboardRecord;
 
 	typedef int (*NkModuleTournamentRecordsListFn)(
 		const void *ptr,
@@ -1131,11 +1131,6 @@ extern "C"
 		const void *ptr,
 		const NkCallbackFn cb,
 		NkString **outerror);
-
-	typedef struct NkAccount
-	{
-		const void *ptr;
-	} NkAccount;
 
 	typedef int (*NkAfterGetAccountCallbackFn)(
 		NkContext ctx,
@@ -2044,7 +2039,7 @@ extern "C"
 	typedef struct NkListGroupUsersRequest
 	{
 		const void *ptr;
-	} NkCreateGroupRequeNkListGroupUsersRequestst;
+	} NkListGroupUsersRequest;
 
 	typedef int (*NkBeforeListGroupUsersCallbackFn)(
 		NkContext ctx,
