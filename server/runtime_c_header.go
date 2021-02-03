@@ -784,7 +784,12 @@ extern int cInitializerTournament(
 	const NkTournamentCallbackFn cb,
 	NkString **outerror);
 
-extern int cInitializerLeaderBoard(
+extern int cInitializerLeaderBoardEnd(
+	const void *ptr,
+	const NkLeaderBoardCallbackFn cb,
+	NkString **outerror);
+
+extern int cInitializerLeaderBoardReset(
 	const void *ptr,
 	const NkLeaderBoardCallbackFn cb,
 	NkString **outerror);
@@ -1749,7 +1754,7 @@ int moduleauthenticatesteam(
 		outcreated);
 }
 
-int moduleauthenticategeneratetoken(
+int moduleauthenticatetokengenerate(
 	const void *ptr,
 	NkString userid,
 	NkString username,
@@ -1759,7 +1764,7 @@ int moduleauthenticategeneratetoken(
 	NkI64 **outexpiry,
 	NkString **outerror)
 {
-	return cModuleAuthenticateGenerateToken(
+	return cModuleAuthenticateTokenGenerate(
 		ptr,
 		userid,
 		username,
@@ -1861,7 +1866,7 @@ int moduleaccountexportid(
 		outerror);
 }
 
-int moduleusersget(
+int moduleusersgetid(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString *keys,
@@ -1870,7 +1875,7 @@ int moduleusersget(
 	NkU32 **outnumusers,
 	NkString **outerror)
 {
-	return cModuleUsersGet(
+	return cModuleUsersGetId(
 		ptr,
 		ctx,
 		keys,
@@ -1880,14 +1885,33 @@ int moduleusersget(
 		outerror);
 }
 
-int moduleusersban(
+int moduleusersgetusername(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString *keys,
+	NkU32 numkeys,
+	NkUser **outusers,
+	NkU32 **outnumusers,
+	NkString **outerror)
+{
+	return cModuleUsersGetUsername(
+		ptr,
+		ctx,
+		keys,
+		numkeys,
+		outusers,
+		outnumusers,
+		outerror);
+}
+
+int moduleusersbanid(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString *userids,
 	NkU32 numids,
 	NkString **outerror)
 {
-	return cModuleUsersBan(
+	return cModuleUsersBanId(
 		ptr,
 		ctx,
 		userids,
@@ -1895,14 +1919,249 @@ int moduleusersban(
 		outerror);
 }
 
-int modulelink(
+int moduleusersunbanid(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString *userids,
+	NkU32 numids,
+	NkString **outerror)
+{
+	return cModuleUsersUnbanId(
+		ptr,
+		ctx,
+		userids,
+		numids,
+		outerror);
+}
+
+int modulelinkapple(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
 	NkString **outerror)
 {
-	return cModuleLink(
+	return cModuleLinkApple(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int modulelinkcustom(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleLinkCustom(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int modulelinkdevice(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleLinkDevice(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int modulelinkfacebookinstantgame(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleLinkFacebookInstantGame(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int modulelinkgoogle(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleLinkGoogle(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int modulelinksteam(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleLinkSteam(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int moduleunlinkapple(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleUnlinkApple(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int moduleunlinkcustom(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleUnlinkCustom(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int moduleunlinkdevice(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleUnlinkDevice(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int moduleunlinkemail(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleUnlinkEmail(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int moduleunlinkfacebook(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleUnlinkFacebook(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int moduleunlinkfacebookinstantgame(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleUnlinkFacebookInstantGame(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int moduleunlinkgamecenter(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString playerid,
+	NkString bundleid,
+	NkI64 timestamp,
+	NkString salt,
+	NkString signature,
+	NkString publickeyurl,
+	NkString **outerror)
+{
+	return cModuleUnlinkGameCenter(
+		ptr,
+		ctx,
+		userid,
+		playerid,
+		bundleid,
+		timestamp,
+		salt,
+		signature,
+		publickeyurl,
+		outerror);
+}
+
+int moduleunlinkgoogle(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleUnlinkGoogle(
+		ptr,
+		ctx,
+		userid,
+		linkid,
+		outerror);
+}
+
+int moduleunlinksteam(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror)
+{
+	return cModuleUnlinkSteam(
 		ptr,
 		ctx,
 		userid,
@@ -2588,14 +2847,59 @@ int moduleleaderboardrecordwrite(
 		outerror);
 }
 
-int moduledelete(
+int moduleleaderboarddelete(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
 	NkString ownerid,
 	NkString **outerror)
 {
-	return cModuleDelete(
+	return cModuleLeaderboardDelete(
+		ptr,
+		ctx,
+		id,
+		ownerid,
+		outerror);
+}
+
+int moduleleaderboardrecorddelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkString **outerror)
+{
+	return cModuleLeaderboardRecordDelete(
+		ptr,
+		ctx,
+		id,
+		ownerid,
+		outerror);
+}
+
+int moduletournamentdelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkString **outerror)
+{
+	return cModuleTournamentDelete(
+		ptr,
+		ctx,
+		id,
+		ownerid,
+		outerror);
+}
+
+int modulegroupdelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkString **outerror)
+{
+	return cModuleGroupDelete(
 		ptr,
 		ctx,
 		id,
@@ -2884,7 +3188,7 @@ int modulegroupupdate(
 		outerror);
 }
 
-int modulegroupuser(
+int modulegroupuserjoin(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString groupid,
@@ -2892,7 +3196,7 @@ int modulegroupuser(
 	NkString username,
 	NkString **outerror)
 {
-	return cModuleGroupUser(
+	return cModuleGroupUserJoin(
 		ptr,
 		ctx,
 		groupid,
@@ -2901,7 +3205,24 @@ int modulegroupuser(
 		outerror);
 }
 
-int modulegroupusers(
+int modulegroupuserleave(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	NkString userid,
+	NkString username,
+	NkString **outerror)
+{
+	return cModuleGroupUserLeave(
+		ptr,
+		ctx,
+		groupid,
+		userid,
+		username,
+		outerror);
+}
+
+int modulegroupusersadd(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString groupid,
@@ -2909,7 +3230,58 @@ int modulegroupusers(
 	NkU32 numuserids,
 	NkString **outerror)
 {
-	return cModuleGroupUsers(
+	return cModuleGroupUsersAdd(
+		ptr,
+		ctx,
+		groupid,
+		userids,
+		numuserids,
+		outerror);
+}
+
+int modulegroupusersdemote(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	NkString **outerror)
+{
+	return cModuleGroupUsersDemote(
+		ptr,
+		ctx,
+		groupid,
+		userids,
+		numuserids,
+		outerror);
+}
+
+int modulegroupuserskick(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	NkString **outerror)
+{
+	return cModuleGroupUsersKick(
+		ptr,
+		ctx,
+		groupid,
+		userids,
+		numuserids,
+		outerror);
+}
+
+int modulegroupuserspromote(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	NkString **outerror)
+{
+	return cModuleGroupUsersPromote(
 		ptr,
 		ctx,
 		groupid,
@@ -3006,7 +3378,7 @@ int moduleevent(
 		outerror);
 }
 
-int initializerrpc(
+int initializerregisterrpc(
 	const void *ptr,
 	NkString id,
 	const NkRpcFn fn,
@@ -3019,7 +3391,7 @@ int initializerrpc(
 		outerror);
 }
 
-int initializerbeforert(
+int initializerregisterbeforert(
 	const void *ptr,
 	NkString id,
 	const NkBeforeRtCallbackFn cb,
@@ -3032,7 +3404,7 @@ int initializerbeforert(
 		outerror);
 }
 
-int initializerafterrt(
+int initializerregisterafterrt(
 	const void *ptr,
 	NkString id,
 	const NkAfterRtCallbackFn cb,
@@ -3045,7 +3417,7 @@ int initializerafterrt(
 		outerror);
 }
 
-int initializermatchmakermatched(
+int initializerregistermatchmakermatched(
 	const void *ptr,
 	const NkMatchmakerMatchedCallbackFn cb,
 	NkString **outerror)
@@ -3056,7 +3428,7 @@ int initializermatchmakermatched(
 		outerror);
 }
 
-int initializermatch(
+int initializerregistermatch(
 	const void *ptr,
 	NkString name,
 	const NkMatchCallbackFn cb,
@@ -3069,29 +3441,51 @@ int initializermatch(
 		outerror);
 }
 
-int initializertournament(
+int initializerregistertournamentend(
 	const void *ptr,
 	const NkTournamentCallbackFn cb,
 	NkString **outerror)
 {
-	return cInitializerTournament(
+	return cInitializerTournamentEnd(
 		ptr,
 		cb,
 		outerror);
 }
 
-int initializerleaderboard(
+int initializerregistertournamentreset(
+	const void *ptr,
+	const NkTournamentCallbackFn cb,
+	NkString **outerror)
+{
+	return cInitializerTournamentReset(
+		ptr,
+		cb,
+		outerror);
+}
+
+int initializerregisterleaderboardend(
 	const void *ptr,
 	const NkLeaderBoardCallbackFn cb,
 	NkString **outerror)
 {
-	return cInitializerLeaderBoard(
+	return cInitializerLeaderBoardEnd(
 		ptr,
 		cb,
 		outerror);
 }
 
-int initializerbeforegetaccount(
+int initializerregisterleaderboardreset(
+	const void *ptr,
+	const NkLeaderBoardCallbackFn cb,
+	NkString **outerror)
+{
+	return cInitializerLeaderBoardReset(
+		ptr,
+		cb,
+		outerror);
+}
+
+int initializerregisterbeforegetaccount(
 	const void *ptr,
 	const NkCallbackFn cb,
 	NkString **outerror)
@@ -3102,7 +3496,7 @@ int initializerbeforegetaccount(
 		outerror);
 }
 
-int initializeraftergetaccount(
+int initializerregisteraftergetaccount(
 	const void *ptr,
 	const NkAfterGetAccountCallbackFn cb,
 	NkString **outerror)
@@ -3113,7 +3507,7 @@ int initializeraftergetaccount(
 		outerror);
 }
 
-int initializerbeforeupdateaccount(
+int initializerregisterbeforeupdateaccount(
 	const void *ptr,
 	const NkBeforeUpdateAccountCallbackFn cb,
 	NkString **outerror)
@@ -3124,7 +3518,7 @@ int initializerbeforeupdateaccount(
 		outerror);
 }
 
-int initializerafterupdateaccount(
+int initializerregisterafterupdateaccount(
 	const void *ptr,
 	const NkAfterUpdateAccountCallbackFn cb,
 	NkString **outerror)
@@ -3135,7 +3529,7 @@ int initializerafterupdateaccount(
 		outerror);
 }
 
-int initializerbeforesessionrefresh(
+int initializerregisterbeforesessionrefresh(
 	const void *ptr,
 	const NkBeforeSessionRefreshCallbackFn cb,
 	NkString **outerror)
@@ -3146,7 +3540,7 @@ int initializerbeforesessionrefresh(
 		outerror);
 }
 
-int initializeraftersessionrefresh(
+int initializerregisteraftersessionrefresh(
 	const void *ptr,
 	const NkAfterSessionRefreshCallbackFn cb,
 	NkString **outerror)
@@ -3157,7 +3551,7 @@ int initializeraftersessionrefresh(
 		outerror);
 }
 
-int initializerbeforeauthenticateapple(
+int initializerregisterbeforeauthenticateapple(
 	const void *ptr,
 	const NkBeforeAuthenticateAppleCallbackFn cb,
 	NkString **outerror)
@@ -3168,7 +3562,7 @@ int initializerbeforeauthenticateapple(
 		outerror);
 }
 
-int initializerafterauthenticateapple(
+int initializerregisterafterauthenticateapple(
 	const void *ptr,
 	const NkAfterAuthenticateAppleCallbackFn cb,
 	NkString **outerror)
@@ -3179,7 +3573,7 @@ int initializerafterauthenticateapple(
 		outerror);
 }
 
-int initializerbeforeauthenticatecustom(
+int initializerregisterbeforeauthenticatecustom(
 	const void *ptr,
 	const NkBeforeAuthenticateCustomCallbackFn cb,
 	NkString **outerror)
@@ -3190,7 +3584,7 @@ int initializerbeforeauthenticatecustom(
 		outerror);
 }
 
-int initializerafterauthenticatecustom(
+int initializerregisterafterauthenticatecustom(
 	const void *ptr,
 	const NkAfterAuthenticateCustomCallbackFn cb,
 	NkString **outerror)
@@ -3201,7 +3595,7 @@ int initializerafterauthenticatecustom(
 		outerror);
 }
 
-int initializerbeforeauthenticatedevice(
+int initializerregisterbeforeauthenticatedevice(
 	const void *ptr,
 	const NkBeforeAuthenticateDeviceCallbackFn cb,
 	NkString **outerror)
@@ -3212,7 +3606,7 @@ int initializerbeforeauthenticatedevice(
 		outerror);
 }
 
-int initializerafterauthenticatedevice(
+int initializerregisterafterauthenticatedevice(
 	const void *ptr,
 	const NkAfterAuthenticateDeviceCallbackFn cb,
 	NkString **outerror)
@@ -3223,15 +3617,15 @@ int initializerafterauthenticatedevice(
 		outerror);
 }
 
-int initializerbeforeauthenticateemail(
+int initializerregisterbeforeauthenticateemail(
 	const void *ptr,
 	const NkBeforeAuthenticateEmailCallbackFn cb,
 	NkString **outerror)
 {
-	
+
 }
 
-int initializerafterauthenticateemail(
+int initializerregisterafterauthenticateemail(
 	const void *ptr,
 	const NkAfterAuthenticateEmailCallbackFn cb,
 	NkString **outerror)
@@ -3242,7 +3636,7 @@ int initializerafterauthenticateemail(
 		outerror);
 }
 
-int initializerbeforeauthenticatefacebook(
+int initializerregisterbeforeauthenticatefacebook(
 	const void *ptr,
 	const NkBeforeAuthenticateFacebookCallbackFn cb,
 	NkString **outerror)
@@ -3253,7 +3647,7 @@ int initializerbeforeauthenticatefacebook(
 		outerror);
 }
 
-int initializerafterauthenticatefacebook(
+int initializerregisterafterauthenticatefacebook(
 	const void *ptr,
 	const NkAfterAuthenticateFacebookCallbackFn cb,
 	NkString **outerror)
@@ -3264,7 +3658,7 @@ int initializerafterauthenticatefacebook(
 		outerror);
 }
 
-int initializerbeforeauthenticatefacebookinstantgame(
+int initializerregisterbeforeauthenticatefacebookinstantgame(
 	const void *ptr,
 	const NkBeforeAuthenticateFacebookInstantGameCallbackFn cb,
 	NkString **outerror)
@@ -3275,7 +3669,7 @@ int initializerbeforeauthenticatefacebookinstantgame(
 		outerror);
 }
 
-int initializerafterauthenticatefacebookinstantgame(
+int initializerregisterafterauthenticatefacebookinstantgame(
 	const void *ptr,
 	const NkAfterAuthenticateFacebookInstantGameCallbackFn cb,
 	NkString **outerror)
@@ -3286,7 +3680,7 @@ int initializerafterauthenticatefacebookinstantgame(
 		outerror);
 }
 
-int initializerbeforeauthenticategamecenter(
+int initializerregisterbeforeauthenticategamecenter(
 	const void *ptr,
 	const NkBeforeAuthenticateGameCenterCallbackFn cb,
 	NkString **outerror)
@@ -3297,7 +3691,7 @@ int initializerbeforeauthenticategamecenter(
 		outerror);
 }
 
-int initializerafterauthenticategamecenter(
+int initializerregisterafterauthenticategamecenter(
 	const void *ptr,
 	const NkAfterAuthenticateGameCenterCallbackFn cb,
 	NkString **outerror)
@@ -3308,7 +3702,7 @@ int initializerafterauthenticategamecenter(
 		outerror);
 }
 
-int initializerbeforeauthenticategoogle(
+int initializerregisterbeforeauthenticategoogle(
 	const void *ptr,
 	const NkBeforeAuthenticateGoogleCallbackFn cb,
 	NkString **outerror)
@@ -3319,7 +3713,7 @@ int initializerbeforeauthenticategoogle(
 		outerror);
 }
 
-int initializerafterauthenticategoogle(
+int initializerregisterafterauthenticategoogle(
 	const void *ptr,
 	const NkAfterAuthenticateGoogleCallbackFn cb,
 	NkString **outerror)
@@ -3330,7 +3724,7 @@ int initializerafterauthenticategoogle(
 		outerror);
 }
 
-int initializerbeforeauthenticatesteam(
+int initializerregisterbeforeauthenticatesteam(
 	const void *ptr,
 	const NkBeforeAuthenticateSteamCallbackFn cb,
 	NkString **outerror)
@@ -3341,7 +3735,7 @@ int initializerbeforeauthenticatesteam(
 		outerror);
 }
 
-int initializerafterauthenticatesteam(
+int initializerregisterafterauthenticatesteam(
 	const void *ptr,
 	const NkAfterAuthenticateSteamCallbackFn cb,
 	NkString **outerror)
@@ -3352,7 +3746,7 @@ int initializerafterauthenticatesteam(
 		outerror);
 }
 
-int initializerbeforelistchannelmessages(
+int initializerregisterbeforelistchannelmessages(
 	const void *ptr,
 	const NkBeforeListChannelMessagesCallbackFn cb,
 	NkString **outerror)
@@ -3363,7 +3757,7 @@ int initializerbeforelistchannelmessages(
 		outerror);
 }
 
-int initializerafterlistchannelmessages(
+int initializerregisterafterlistchannelmessages(
 	const void *ptr,
 	const NkAfterListChannelMessagesCallbackFn cb,
 	NkString **outerror)
@@ -3374,7 +3768,7 @@ int initializerafterlistchannelmessages(
 		outerror);
 }
 
-int initializerbeforelistfriends(
+int initializerregisterbeforelistfriends(
 	const void *ptr,
 	const NkBeforeListFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3385,7 +3779,7 @@ int initializerbeforelistfriends(
 		outerror);
 }
 
-int initializerafterlistfriends(
+int initializerregisterafterlistfriends(
 	const void *ptr,
 	const NkAfterListFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3396,7 +3790,7 @@ int initializerafterlistfriends(
 		outerror);
 }
 
-int initializerbeforeaddfriends(
+int initializerregisterbeforeaddfriends(
 	const void *ptr,
 	const NkBeforeAddFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3407,7 +3801,7 @@ int initializerbeforeaddfriends(
 		outerror);
 }
 
-int initializerafteraddfriends(
+int initializerregisterafteraddfriends(
 	const void *ptr,
 	const NkAfterAddFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3418,7 +3812,7 @@ int initializerafteraddfriends(
 		outerror);
 }
 
-int initializerbeforedeletefriends(
+int initializerregisterbeforedeletefriends(
 	const void *ptr,
 	const NkBeforeDeleteFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3429,7 +3823,7 @@ int initializerbeforedeletefriends(
 		outerror);
 }
 
-int initializerafterdeletefriends(
+int initializerregisterafterdeletefriends(
 	const void *ptr,
 	const NkAfterDeleteFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3440,7 +3834,7 @@ int initializerafterdeletefriends(
 		outerror);
 }
 
-int initializerbeforeblockfriends(
+int initializerregisterbeforeblockfriends(
 	const void *ptr,
 	const NkBeforeBlockFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3451,7 +3845,7 @@ int initializerbeforeblockfriends(
 		outerror);
 }
 
-int initializerafterblockfriends(
+int initializerregisterafterblockfriends(
 	const void *ptr,
 	const NkAfterBlockFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3462,7 +3856,7 @@ int initializerafterblockfriends(
 		outerror);
 }
 
-int initializerbeforeimportfacebookfriends(
+int initializerregisterbeforeimportfacebookfriends(
 	const void *ptr,
 	const NkBeforeImportFacebookFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3473,7 +3867,7 @@ int initializerbeforeimportfacebookfriends(
 		outerror);
 }
 
-int initializerafterimportfacebookfriends(
+int initializerregisterafterimportfacebookfriends(
 	const void *ptr,
 	const NkAfterImportFacebookFriendsCallbackFn cb,
 	NkString **outerror)
@@ -3484,7 +3878,7 @@ int initializerafterimportfacebookfriends(
 		outerror);
 }
 
-int initializerbeforecreategroup(
+int initializerregisterbeforecreategroup(
 	const void *ptr,
 	const NkBeforeCreateGroupCallbackFn cb,
 	NkString **outerror)
@@ -3495,7 +3889,7 @@ int initializerbeforecreategroup(
 		outerror);
 }
 
-int initializeraftercreategroup(
+int initializerregisteraftercreategroup(
 	const void *ptr,
 	const NkAfterCreateGroupCallbackFn cb,
 	NkString **outerror)
@@ -3506,7 +3900,7 @@ int initializeraftercreategroup(
 		outerror);
 }
 
-int initializerbeforeupdategroup(
+int initializerregisterbeforeupdategroup(
 	const void *ptr,
 	const NkBeforeUpdateGroupCallbackFn cb,
 	NkString **outerror)
@@ -3517,7 +3911,7 @@ int initializerbeforeupdategroup(
 		outerror);
 }
 
-int initializerafterupdategroup(
+int initializerregisterafterupdategroup(
 	const void *ptr,
 	const NkAfterUpdateGroupCallbackFn cb,
 	NkString **outerror)
@@ -3528,7 +3922,7 @@ int initializerafterupdategroup(
 		outerror);
 }
 
-int initializerbeforedeletegroup(
+int initializerregisterbeforedeletegroup(
 	const void *ptr,
 	const NkBeforeDeleteGroupCallbackFn cb,
 	NkString **outerror)
@@ -3539,7 +3933,7 @@ int initializerbeforedeletegroup(
 		outerror);
 }
 
-int initializerafterdeletegroup(
+int initializerregisterafterdeletegroup(
 	const void *ptr,
 	const NkAfterDeleteGroupCallbackFn cb,
 	NkString **outerror)
@@ -3550,7 +3944,7 @@ int initializerafterdeletegroup(
 		outerror);
 }
 
-int initializerbeforejoingroup(
+int initializerregisterbeforejoingroup(
 	const void *ptr,
 	const NkBeforeJoinGroupCallbackFn cb,
 	NkString **outerror)
@@ -3561,7 +3955,7 @@ int initializerbeforejoingroup(
 		outerror);
 }
 
-int initializerafterjoingroup(
+int initializerregisterafterjoingroup(
 	const void *ptr,
 	const NkAfterJoinGroupCallbackFn cb,
 	NkString **outerror)
@@ -3572,7 +3966,7 @@ int initializerafterjoingroup(
 		outerror);
 }
 
-int initializerbeforeleavegroup(
+int initializerregisterbeforeleavegroup(
 	const void *ptr,
 	const NkBeforeLeaveGroupCallbackFn cb,
 	NkString **outerror)
@@ -3583,7 +3977,7 @@ int initializerbeforeleavegroup(
 		outerror);
 }
 
-int initializerafterleavegroup(
+int initializerregisterafterleavegroup(
 	const void *ptr,
 	const NkAfterLeaveGroupCallbackFn cb,
 	NkString **outerror)
@@ -3594,7 +3988,7 @@ int initializerafterleavegroup(
 		outerror);
 }
 
-int initializerbeforeaddgroupusers(
+int initializerregisterbeforeaddgroupusers(
 	const void *ptr,
 	const NkBeforeAddGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3605,7 +3999,7 @@ int initializerbeforeaddgroupusers(
 		outerror);
 }
 
-int initializerafteraddgroupusers(
+int initializerregisterafteraddgroupusers(
 	const void *ptr,
 	const NkAfterAddGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3616,7 +4010,7 @@ int initializerafteraddgroupusers(
 		outerror);
 }
 
-int initializerbeforebangroupusers(
+int initializerregisterbeforebangroupusers(
 	const void *ptr,
 	const NkBeforeBanGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3627,7 +4021,7 @@ int initializerbeforebangroupusers(
 		outerror);
 }
 
-int initializerafterbangroupusers(
+int initializerregisterafterbangroupusers(
 	const void *ptr,
 	const NkAfterBanGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3638,7 +4032,7 @@ int initializerafterbangroupusers(
 		outerror);
 }
 
-int initializerbeforekickgroupusers(
+int initializerregisterbeforekickgroupusers(
 	const void *ptr,
 	const NkBeforeKickGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3649,7 +4043,7 @@ int initializerbeforekickgroupusers(
 		outerror);
 }
 
-int initializerafterkickgroupusers(
+int initializerregisterafterkickgroupusers(
 	const void *ptr,
 	const NkAfterKickGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3671,7 +4065,7 @@ InitializerBeforePromoteGroupUsers(
 		outerror);
 }
 
-int initializerafterpromotegroupusers(
+int initializerregisterafterpromotegroupusers(
 	const void *ptr,
 	const NkAfterPromoteGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3682,7 +4076,7 @@ int initializerafterpromotegroupusers(
 		outerror);
 }
 
-int initializerbeforedemotegroupusers(
+int initializerregisterbeforedemotegroupusers(
 	const void *ptr,
 	const NkBeforeDemoteGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3693,7 +4087,7 @@ int initializerbeforedemotegroupusers(
 		outerror);
 }
 
-int initializerafterdemotegroupusers(
+int initializerregisterafterdemotegroupusers(
 	const void *ptr,
 	const NkAfterDemoteGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3705,7 +4099,7 @@ int initializerafterdemotegroupusers(
 }
 
 
-int initializerbeforelistgroupusers(
+int initializerregisterbeforelistgroupusers(
 	const void *ptr,
 	const NkBeforeListGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3716,7 +4110,7 @@ int initializerbeforelistgroupusers(
 		outerror);
 }
 
-int initializerafterlistgroupusers(
+int initializerregisterafterlistgroupusers(
 	const void *ptr,
 	const NkAfterListGroupUsersCallbackFn cb,
 	NkString **outerror)
@@ -3727,7 +4121,7 @@ int initializerafterlistgroupusers(
 		outerror);
 }
 
-int initializerbeforelistusergroups(
+int initializerregisterbeforelistusergroups(
 	const void *ptr,
 	const NkBeforeListUserGroupsCallbackFn cb,
 	NkString **outerror)
@@ -3738,7 +4132,7 @@ int initializerbeforelistusergroups(
 		outerror);
 }
 
-int initializerafterlistusergroups(
+int initializerregisterafterlistusergroups(
 	const void *ptr,
 	const NkAfterListUserGroupsCallbackFn cb,
 	NkString **outerror)
@@ -3749,7 +4143,7 @@ int initializerafterlistusergroups(
 		outerror);
 }
 
-int initializerbeforelistgroups(
+int initializerregisterbeforelistgroups(
 	const void *ptr,
 	const NkBeforeListGroupsCallbackFn cb,
 	NkString **outerror)
@@ -3760,7 +4154,7 @@ int initializerbeforelistgroups(
 		outerror);
 }
 
-int initializerafterlistgroups(
+int initializerregisterafterlistgroups(
 	const void *ptr,
 	const NkAfterListGroupsCallbackFn cb,
 	NkString **outerror)
@@ -3771,7 +4165,7 @@ int initializerafterlistgroups(
 		outerror);
 }
 
-int initializerbeforedeleteleaderboardrecord(
+int initializerregisterbeforedeleteleaderboardrecord(
 	const void *ptr,
 	const NkBeforeDeleteLeaderboardRecordCallbackFn cb,
 	NkString **outerror)
@@ -3782,7 +4176,7 @@ int initializerbeforedeleteleaderboardrecord(
 		outerror);
 }
 
-int initializerafterdeleteleaderboardrecord(
+int initializerregisterafterdeleteleaderboardrecord(
 	const void *ptr,
 	const NkAfterDeleteLeaderboardRecordCallbackFn cb,
 	NkString **outerror)
@@ -3793,7 +4187,7 @@ int initializerafterdeleteleaderboardrecord(
 		outerror);
 }
 
-int initializerbeforelistleaderboardrecords(
+int initializerregisterbeforelistleaderboardrecords(
 	const void *ptr,
 	const NkBeforeListLeaderboardRecordsCallbackFn cb,
 	NkString **outerror)
@@ -3804,7 +4198,7 @@ int initializerbeforelistleaderboardrecords(
 		outerror);
 }
 
-int initializerafterlistleaderboardrecords(
+int initializerregisterafterlistleaderboardrecords(
 	const void *ptr,
 	const NkAfterListLeaderboardRecordsCallbackFn cb,
 	NkString **outerror)
@@ -3815,7 +4209,7 @@ int initializerafterlistleaderboardrecords(
 		outerror);
 }
 
-int initializerbeforewriteleaderboardrecord(
+int initializerregisterbeforewriteleaderboardrecord(
 	const void *ptr,
 	const NkBeforeWriteLeaderboardRecordCallbackFn cb,
 	NkString **outerror)
@@ -3826,7 +4220,7 @@ int initializerbeforewriteleaderboardrecord(
 		outerror);
 }
 
-int initializerafterwriteleaderboardrecord(
+int initializerregisterafterwriteleaderboardrecord(
 	const void *ptr,
 	const NkAfterWriteLeaderboardRecordCallbackFn cb,
 	NkString **outerror)
@@ -3837,7 +4231,7 @@ int initializerafterwriteleaderboardrecord(
 		outerror);
 }
 
-int initializerbeforelistleaderboardrecordsaroundowner(
+int initializerregisterbeforelistleaderboardrecordsaroundowner(
 	const void *ptr,
 	const NkBeforeListLeaderboardRecordsAroundOwnerCallbackFn cb,
 	NkString **outerror)
@@ -3848,7 +4242,7 @@ int initializerbeforelistleaderboardrecordsaroundowner(
 		outerror);
 }
 
-int initializerafterlistleaderboardrecordsaroundowner(
+int initializerregisterafterlistleaderboardrecordsaroundowner(
 	const void *ptr,
 	const NkAfterListLeaderboardRecordsAroundOwnerCallbackFn cb,
 	NkString **outerror)
@@ -3859,7 +4253,7 @@ int initializerafterlistleaderboardrecordsaroundowner(
 		outerror);
 }
 
-int initializerbeforelinkapple(
+int initializerregisterbeforelinkapple(
 	const void *ptr,
 	const NkBeforeLinkAppleCallbackFn cb,
 	NkString **outerror)
@@ -3870,7 +4264,7 @@ int initializerbeforelinkapple(
 		outerror);
 }
 
-int initializerafterlinkapple(
+int initializerregisterafterlinkapple(
 	const void *ptr,
 	const NkAfterLinkAppleCallbackFn cb,
 	NkString **outerror)
@@ -3881,7 +4275,7 @@ int initializerafterlinkapple(
 		outerror);
 }
 
-int initializerbeforelinkcustom(
+int initializerregisterbeforelinkcustom(
 	const void *ptr,
 	const NkBeforeLinkCustomCallbackFn cb,
 	NkString **outerror)
@@ -3892,7 +4286,7 @@ int initializerbeforelinkcustom(
 		outerror);
 }
 
-int initializerafterlinkcustom(
+int initializerregisterafterlinkcustom(
 	const void *ptr,
 	const NkAfterLinkCustomCallbackFn cb,
 	NkString **outerror)
@@ -3903,7 +4297,7 @@ int initializerafterlinkcustom(
 		outerror);
 }
 
-int initializerbeforelinkdevice(
+int initializerregisterbeforelinkdevice(
 	const void *ptr,
 	const NkBeforeLinkDeviceCallbackFn cb,
 	NkString **outerror)
@@ -3914,7 +4308,7 @@ int initializerbeforelinkdevice(
 		outerror);
 }
 
-int initializerafterlinkdevice(
+int initializerregisterafterlinkdevice(
 	const void *ptr,
 	const NkAfterLinkDeviceCallbackFn cb,
 	NkString **outerror)
@@ -3925,7 +4319,7 @@ int initializerafterlinkdevice(
 		outerror);
 }
 
-int initializerbeforelinkemail(
+int initializerregisterbeforelinkemail(
 	const void *ptr,
 	const NkBeforeLinkEmailCallbackFn cb,
 	NkString **outerror)
@@ -3936,7 +4330,7 @@ int initializerbeforelinkemail(
 		outerror);
 }
 
-int initializerafterlinkemail(
+int initializerregisterafterlinkemail(
 	const void *ptr,
 	const NkAfterLinkEmailCallbackFn cb,
 	NkString **outerror)
@@ -3947,7 +4341,7 @@ int initializerafterlinkemail(
 		outerror);
 }
 
-int initializerbeforelinkfacebook(
+int initializerregisterbeforelinkfacebook(
 	const void *ptr,
 	const NkBeforeLinkFacebookCallbackFn cb,
 	NkString **outerror)
@@ -3958,7 +4352,7 @@ int initializerbeforelinkfacebook(
 		outerror);
 }
 
-int initializerafterlinkfacebook(
+int initializerregisterafterlinkfacebook(
 	const void *ptr,
 	const NkAfterLinkFacebookCallbackFn cb,
 	NkString **outerror)
@@ -3969,7 +4363,7 @@ int initializerafterlinkfacebook(
 		outerror);
 }
 
-int initializerbeforelinkfacebookinstantgame(
+int initializerregisterbeforelinkfacebookinstantgame(
 	const void *ptr,
 	const NkBeforeLinkFacebookInstantGameCallbackFn cb,
 	NkString **outerror)
@@ -3980,7 +4374,7 @@ int initializerbeforelinkfacebookinstantgame(
 		outerror);
 }
 
-int initializerafterlinkfacebookinstantgame(
+int initializerregisterafterlinkfacebookinstantgame(
 	const void *ptr,
 	const NkAfterLinkFacebookInstantGameCallbackFn cb,
 	NkString **outerror)
@@ -3991,7 +4385,7 @@ int initializerafterlinkfacebookinstantgame(
 		outerror);
 }
 
-int initializerbeforelinkgamecenter(
+int initializerregisterbeforelinkgamecenter(
 	const void *ptr,
 	const NkBeforeLinkGameCenterCallbackFn cb,
 	NkString **outerror)
@@ -4002,7 +4396,7 @@ int initializerbeforelinkgamecenter(
 		outerror);
 }
 
-int initializerafterlinkgamecenter(
+int initializerregisterafterlinkgamecenter(
 	const void *ptr,
 	const NkAfterLinkGameCenterCallbackFn cb,
 	NkString **outerror)
@@ -4013,7 +4407,7 @@ int initializerafterlinkgamecenter(
 		outerror);
 }
 
-int initializerbeforelinkgoogle(
+int initializerregisterbeforelinkgoogle(
 	const void *ptr,
 	const NkBeforeLinkGoogleCallbackFn cb,
 	NkString **outerror)
@@ -4024,7 +4418,7 @@ int initializerbeforelinkgoogle(
 		outerror);
 }
 
-int initializerafterlinkgoogle(
+int initializerregisterafterlinkgoogle(
 	const void *ptr,
 	const NkAfterLinkGoogleCallbackFn cb,
 	NkString **outerror)
@@ -4035,7 +4429,7 @@ int initializerafterlinkgoogle(
 		outerror);
 }
 
-int initializerbeforelinksteam(
+int initializerregisterbeforelinksteam(
 	const void *ptr,
 	const NkBeforeLinkSteamCallbackFn cb,
 	NkString **outerror)
@@ -4046,7 +4440,7 @@ int initializerbeforelinksteam(
 		outerror);
 }
 
-int initializerafterlinksteam(
+int initializerregisterafterlinksteam(
 	const void *ptr,
 	const NkAfterLinkSteamCallbackFn cb,
 	NkString **outerror)
@@ -4057,7 +4451,7 @@ int initializerafterlinksteam(
 		outerror);
 }
 
-int initializerbeforelistmatches(
+int initializerregisterbeforelistmatches(
 	const void *ptr,
 	const NkBeforeListMatchesCallbackFn cb,
 	NkString **outerror)
@@ -4068,7 +4462,7 @@ int initializerbeforelistmatches(
 		outerror);
 }
 
-int initializerafterlistmatches(
+int initializerregisterafterlistmatches(
 	const void *ptr,
 	const NkAfterListMatchesCallbackFn cb,
 	NkString **outerror)
@@ -4079,7 +4473,7 @@ int initializerafterlistmatches(
 		outerror);
 }
 
-int initializerbeforelistnotifications(
+int initializerregisterbeforelistnotifications(
 	const void *ptr,
 	const NkBeforeListNotificationsCallbackFn cb,
 	NkString **outerror)
@@ -4090,7 +4484,7 @@ int initializerbeforelistnotifications(
 		outerror);
 }
 
-int initializerafterlistnotifications(
+int initializerregisterafterlistnotifications(
 	const void *ptr,
 	const NkAfterListNotificationsCallbackFn cb,
 	NkString **outerror)
@@ -4101,7 +4495,7 @@ int initializerafterlistnotifications(
 		outerror);
 }
 
-int initializerbeforedeletenotifications(
+int initializerregisterbeforedeletenotifications(
 	const void *ptr,
 	const NkBeforeDeleteNotificationsCallbackFn cb,
 	NkString **outerror)
@@ -4112,7 +4506,7 @@ int initializerbeforedeletenotifications(
 		outerror);
 }
 
-int initializerafterdeletenotifications(
+int initializerregisterafterdeletenotifications(
 	const void *ptr,
 	const NkAfterDeleteNotificationsCallbackFn cb,
 	NkString **outerror)
@@ -4123,7 +4517,7 @@ int initializerafterdeletenotifications(
 		outerror);
 }
 
-int initializerbeforeliststorageobjects(
+int initializerregisterbeforeliststorageobjects(
 	const void *ptr,
 	const NkBeforeListStorageObjectsCallbackFn cb,
 	NkString **outerror)
@@ -4134,7 +4528,7 @@ int initializerbeforeliststorageobjects(
 		outerror);
 }
 
-int initializerafterliststorageobjects(
+int initializerregisterafterliststorageobjects(
 	const void *ptr,
 	const NkAfterListStorageObjectsCallbackFn cb,
 	NkString **outerror)
@@ -4145,7 +4539,7 @@ int initializerafterliststorageobjects(
 		outerror);
 }
 
-int initializerbeforereadstorageobjects(
+int initializerregisterbeforereadstorageobjects(
 	const void *ptr,
 	const NkBeforeReadStorageObjectsCallbackFn cb,
 	NkString **outerror)
@@ -4156,7 +4550,7 @@ int initializerbeforereadstorageobjects(
 		outerror);
 }
 
-int initializerafterreadstorageobjects(
+int initializerregisterafterreadstorageobjects(
 	const void *ptr,
 	const NkAfterReadStorageObjectsCallbackFn cb,
 	NkString **outerror)
@@ -4167,7 +4561,7 @@ int initializerafterreadstorageobjects(
 		outerror);
 }
 
-int initializerbeforewritestorageobjects(
+int initializerregisterbeforewritestorageobjects(
 	const void *ptr,
 	const NkBeforeWriteStorageObjectsCallbackFn cb,
 	NkString **outerror)
@@ -4178,7 +4572,7 @@ int initializerbeforewritestorageobjects(
 		outerror);
 }
 
-int initializerafterwritestorageobjects(
+int initializerregisterafterwritestorageobjects(
 	const void *ptr,
 	const NkAfterWriteStorageObjectsCallbackFn cb,
 	NkString **outerror)
@@ -4189,7 +4583,7 @@ int initializerafterwritestorageobjects(
 		outerror);
 }
 
-int initializerbeforedeletestorageobjects(
+int initializerregisterbeforedeletestorageobjects(
 	const void *ptr,
 	const NkBeforeDeleteStorageObjectsCallbackFn cb,
 	NkString **outerror)
@@ -4200,7 +4594,7 @@ int initializerbeforedeletestorageobjects(
 		outerror);
 }
 
-int initializerafterdeletestorageobjects(
+int initializerregisterafterdeletestorageobjects(
 	const void *ptr,
 	const NkAfterDeleteStorageObjectsCallbackFn cb,
 	NkString **outerror)
@@ -4211,7 +4605,7 @@ int initializerafterdeletestorageobjects(
 		outerror);
 }
 
-int initializerbeforejointournament(
+int initializerregisterbeforejointournament(
 	const void *ptr,
 	const NkBeforeJoinTournamentCallbackFn cb,
 	NkString **outerror)
@@ -4222,7 +4616,7 @@ int initializerbeforejointournament(
 		outerror);
 }
 
-int initializerafterjointournament(
+int initializerregisterafterjointournament(
 	const void *ptr,
 	const NkAfterJoinTournamentCallbackFn cb,
 	NkString **outerror)
@@ -4233,7 +4627,7 @@ int initializerafterjointournament(
 		outerror);
 }
 
-int initializerbeforelisttournamentrecords(
+int initializerregisterbeforelisttournamentrecords(
 	const void *ptr,
 	const NkBeforeListTournamentRecordsCallbackFn cb,
 	NkString **outerror)
@@ -4244,7 +4638,7 @@ int initializerbeforelisttournamentrecords(
 		outerror);
 }
 
-int initializerafterlisttournamentrecords(
+int initializerregisterafterlisttournamentrecords(
 	const void *ptr,
 	const NkAfterListTournamentRecordsCallbackFn cb,
 	NkString **outerror)
@@ -4255,7 +4649,7 @@ int initializerafterlisttournamentrecords(
 		outerror);
 }
 
-int initializerbeforelisttournaments(
+int initializerregisterbeforelisttournaments(
 	const void *ptr,
 	const NkBeforeListTournamentsCallbackFn cb,
 	NkString **outerror)
@@ -4266,7 +4660,7 @@ int initializerbeforelisttournaments(
 		outerror);
 }
 
-int initializerafterlisttournaments(
+int initializerregisterafterlisttournaments(
 	const void *ptr,
 	const NkAfterListTournamentsCallbackFn cb,
 	NkString **outerror)
@@ -4277,7 +4671,7 @@ int initializerafterlisttournaments(
 		outerror);
 }
 
-int initializerbeforewritetournamentrecord(
+int initializerregisterbeforewritetournamentrecord(
 	const void *ptr,
 	const NkBeforeWriteTournamentRecordCallbackFn cb,
 	NkString **outerror)
@@ -4288,7 +4682,7 @@ int initializerbeforewritetournamentrecord(
 		outerror);
 }
 
-int initializerafterwritetournamentrecord(
+int initializerregisterafterwritetournamentrecord(
 	const void *ptr,
 	const NkAfterWriteTournamentRecordCallbackFn cb,
 	NkString **outerror)
@@ -4299,7 +4693,7 @@ int initializerafterwritetournamentrecord(
 		outerror);
 }
 
-int initializerbeforelisttournamentrecordsaroundowner(
+int initializerregisterbeforelisttournamentrecordsaroundowner(
 	const void *ptr,
 	const NkBeforeListTournamentRecordsAroundOwnerCallbackFn cb,
 	NkString **outerror)
@@ -4310,7 +4704,7 @@ int initializerbeforelisttournamentrecordsaroundowner(
 		outerror);
 }
 
-int initializerafterlisttournamentrecordsaroundowner(
+int initializerregisterafterlisttournamentrecordsaroundowner(
 	const void *ptr,
 	const NkAfterListTournamentRecordsAroundOwnerCallbackFn cb,
 	NkString **outerror)
@@ -4321,7 +4715,7 @@ int initializerafterlisttournamentrecordsaroundowner(
 		outerror);
 }
 
-int initializerbeforeunlinkapple(
+int initializerregisterbeforeunlinkapple(
 	const void *ptr,
 	const NkBeforeUnlinkAppleCallbackFn cb,
 	NkString **outerror)
@@ -4332,7 +4726,7 @@ int initializerbeforeunlinkapple(
 		outerror);
 }
 
-int initializerafterunlinkapple(
+int initializerregisterafterunlinkapple(
 	const void *ptr,
 	const NkAfterUnlinkAppleCallbackFn cb,
 	NkString **outerror)
@@ -4343,7 +4737,7 @@ int initializerafterunlinkapple(
 		outerror);
 }
 
-int initializerbeforeunlinkcustom(
+int initializerregisterbeforeunlinkcustom(
 	const void *ptr,
 	const NkBeforeUnlinkCustomCallbackFn cb,
 	NkString **outerror)
@@ -4354,7 +4748,7 @@ int initializerbeforeunlinkcustom(
 		outerror);
 }
 
-int initializerafterunlinkcustom(
+int initializerregisterafterunlinkcustom(
 	const void *ptr,
 	const NkAfterUnlinkCustomCallbackFn cb,
 	NkString **outerror)
@@ -4365,7 +4759,7 @@ int initializerafterunlinkcustom(
 		outerror);
 }
 
-int initializerbeforeunlinkdevice(
+int initializerregisterbeforeunlinkdevice(
 	const void *ptr,
 	const NkBeforeUnlinkDeviceCallbackFn cb,
 	NkString **outerror)
@@ -4376,7 +4770,7 @@ int initializerbeforeunlinkdevice(
 		outerror);
 }
 
-int initializerafterunlinkdevice(
+int initializerregisterafterunlinkdevice(
 	const void *ptr,
 	const NkAfterUnlinkDeviceCallbackFn cb,
 	NkString **outerror)
@@ -4387,7 +4781,7 @@ int initializerafterunlinkdevice(
 		outerror);
 }
 
-int initializerbeforeunlinkemail(
+int initializerregisterbeforeunlinkemail(
 	const void *ptr,
 	const NkBeforeUnlinkEmailCallbackFn cb,
 	NkString **outerror)
@@ -4398,7 +4792,7 @@ int initializerbeforeunlinkemail(
 		outerror);
 }
 
-int initializerafterunlinkemail(
+int initializerregisterafterunlinkemail(
 	const void *ptr,
 	const NkAfterUnlinkEmailCallbackFn cb,
 	NkString **outerror)
@@ -4409,7 +4803,7 @@ int initializerafterunlinkemail(
 		outerror);
 }
 
-int initializerbeforeunlinkfacebook(
+int initializerregisterbeforeunlinkfacebook(
 	const void *ptr,
 	const NkBeforeUnlinkFacebookCallbackFn cb,
 	NkString **outerror)
@@ -4420,7 +4814,7 @@ int initializerbeforeunlinkfacebook(
 		outerror);
 }
 
-int initializerafterunlinkfacebook(
+int initializerregisterafterunlinkfacebook(
 	const void *ptr,
 	const NkAfterUnlinkFacebookCallbackFn cb,
 	NkString **outerror)
@@ -4431,7 +4825,7 @@ int initializerafterunlinkfacebook(
 		outerror);
 }
 
-int initializerbeforeunlinkfacebookinstantgame(
+int initializerregisterbeforeunlinkfacebookinstantgame(
 	const void *ptr,
 	const NkBeforeUnlinkFacebookInstantGameCallbackFn cb,
 	NkString **outerror)
@@ -4442,7 +4836,7 @@ int initializerbeforeunlinkfacebookinstantgame(
 		outerror);
 }
 
-int initializerafterunlinkfacebookinstantgame(
+int initializerregisterafterunlinkfacebookinstantgame(
 	const void *ptr,
 	const NkAfterUnlinkFacebookInstantGameCallbackFn cb,
 	NkString **outerror)
@@ -4453,7 +4847,7 @@ int initializerafterunlinkfacebookinstantgame(
 		outerror);
 }
 
-int initializerbeforeunlinkgamecenter(
+int initializerregisterbeforeunlinkgamecenter(
 	const void *ptr,
 	const NkBeforeUnlinkGameCenterCallbackFn cb,
 	NkString **outerror)
@@ -4464,7 +4858,7 @@ int initializerbeforeunlinkgamecenter(
 		outerror);
 }
 
-int initializerafterunlinkgamecenter(
+int initializerregisterafterunlinkgamecenter(
 	const void *ptr,
 	const NkAfterUnlinkGameCenterCallbackFn cb,
 	NkString **outerror)
@@ -4475,7 +4869,7 @@ int initializerafterunlinkgamecenter(
 		outerror);
 }
 
-int initializerbeforeunlinkgoogle(
+int initializerregisterbeforeunlinkgoogle(
 	const void *ptr,
 	const NkBeforeUnlinkGoogleCallbackFn cb,
 	NkString **outerror)
@@ -4486,7 +4880,7 @@ int initializerbeforeunlinkgoogle(
 		outerror);
 }
 
-int initializerafterunlinkgoogle(
+int initializerregisterafterunlinkgoogle(
 	const void *ptr,
 	const NkAfterUnlinkGoogleCallbackFn cb,
 	NkString **outerror)
@@ -4497,7 +4891,7 @@ int initializerafterunlinkgoogle(
 		outerror);
 }
 
-int initializerbeforeunlinksteam(
+int initializerregisterbeforeunlinksteam(
 	const void *ptr,
 	const NkBeforeUnlinkSteamCallbackFn cb,
 	NkString **outerror)
@@ -4508,7 +4902,7 @@ int initializerbeforeunlinksteam(
 		outerror);
 }
 
-int initializerafterunlinksteam(
+int initializerregisterafterunlinksteam(
 	const void *ptr,
 	const NkAfterUnlinkSteamCallbackFn cb,
 	NkString **outerror)
@@ -4519,7 +4913,7 @@ int initializerafterunlinksteam(
 		outerror);
 }
 
-int initializerbeforegetusers(
+int initializerregisterbeforegetusers(
 	const void *ptr,
 	const NkBeforeGetUsersCallbackFn cb,
 	NkString **outerror)
@@ -4530,7 +4924,7 @@ int initializerbeforegetusers(
 		outerror);
 }
 
-int initializeraftergetusers(
+int initializerregisteraftergetusers(
 	const void *ptr,
 	const NkAfterGetUsersCallbackFn cb,
 	NkString **outerror)
@@ -4541,7 +4935,7 @@ int initializeraftergetusers(
 		outerror);
 }
 
-int initializerevent(
+int initializerregisterevent(
 	const void *ptr,
 	const NkEventCallbackFn cb,
 	NkString **outerror)
@@ -4552,7 +4946,7 @@ int initializerevent(
 		outerror);
 }
 
-int initializereventsessionstart(
+int initializerregistereventsessionstart(
 	const void *ptr,
 	const NkEventCallbackFn cb,
 	NkString **outerror)
@@ -4563,7 +4957,7 @@ int initializereventsessionstart(
 		outerror);
 }
 
-int initializereventsessionend(
+int initializerregistereventsessionend(
 	const void *ptr,
 	const NkEventCallbackFn cb,
 	NkString **outerror)

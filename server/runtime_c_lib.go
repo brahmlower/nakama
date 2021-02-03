@@ -152,7 +152,7 @@ extern int moduleauthenticatesteam(
 	NkString **outerror,
 	bool **outcreated);
 
-extern int moduleauthenticategeneratetoken(
+extern int moduleauthenticatetokengenerate(
 	const void *ptr,
 	NkString userid,
 	NkString username,
@@ -191,7 +191,7 @@ extern int moduleaccountupdateid(
 	NkString avatarurl,
 	NkString **outerror);
 
-extern int ModuleAccountDeleteId(
+extern int moduleaccountdeleteid(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString userid,
@@ -205,7 +205,7 @@ extern int moduleaccountexportid(
 	NkString **outaccount,
 	NkString **outerror);
 
-extern int moduleusersget(
+extern int moduleusersgetid(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString *keys,
@@ -214,14 +214,160 @@ extern int moduleusersget(
 	NkU32 **outnumusers,
 	NkString **outerror);
 
-extern int moduleusersban(
+extern int moduleusersgetusername(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString *keys,
+	NkU32 numkeys,
+	NkUser **outusers,
+	NkU32 **outnumusers,
+	NkString **outerror);
+
+extern int moduleusersbanid(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString *userids,
 	NkU32 numids,
 	NkString **outerror);
 
-extern int modulelink(
+extern int moduleusersunbanid(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString *userids,
+	NkU32 numids,
+	NkString **outerror);
+
+extern int modulelinkapple(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int modulelinkcustom(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int modulelinkdevice(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int modulelinkfacebookinstantgame(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int modulelinkgoogle(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int modulelinksteam(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int moduleunlinkapple(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int moduleunlinkcustom(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int moduleunlinkdevice(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int moduleunlinkemail(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int moduleunlinkfacebook(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int moduleunlinkfacebookinstantgame(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int moduleunlinkgoogle(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int moduleunlinksteam(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+
+extern int modulelinkgamecenter(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString playerid,
+	NkString bundleid,
+	NkI64 timestamp,
+	NkString salt,
+	NkString signature,
+	NkString publickeyurl,
+	NkString **outerror);
+
+extern int moduleunlinkgamecenter(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString playerid,
+	NkString bundleid,
+	NkI64 timestamp,
+	NkString salt,
+	NkString signature,
+	NkString publickeyurl,
+	NkString **outerror);
+
+extern int modulelinkgoogle(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	NkString **outerror);
+
+extern int modulelinksteam(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString userid,
@@ -551,7 +697,28 @@ extern int moduleleaderboardrecordwrite(
 	NkLeaderboardRecord **outrecord,
 	NkString **outerror);
 
-extern int moduledelete(
+extern int moduleleaderboarddelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkString **outerror);
+
+extern int moduleleaderboardrecorddelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkString **outerror);
+
+extern int moduletournamentdelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	NkString **outerror);
+
+extern int modulegroupdelete(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
@@ -693,7 +860,7 @@ extern int modulegroupupdate(
 	NkU32 maxcount,
 	NkString **outerror);
 
-extern int modulegroupuser(
+extern int modulegroupuserjoin(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString groupid,
@@ -701,7 +868,39 @@ extern int modulegroupuser(
 	NkString username,
 	NkString **outerror);
 
-extern int modulegroupusers(
+extern int modulegroupuserleave(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	NkString userid,
+	NkString username,
+	NkString **outerror);
+
+extern int modulegroupusersadd(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	NkString **outerror);
+
+extern int modulegroupusersdemote(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	NkString **outerror);
+
+extern int modulegroupuserskick(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	NkString **outerror);
+
+extern int modulegroupuserspromote(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString groupid,
@@ -751,716 +950,721 @@ extern int moduleevent(
 	NkEvent evt,
 	NkString **outerror);
 
-extern int initializerrpc(
+extern int initializerregisterrpc(
 	const void *ptr,
 	NkString id,
 	const NkRpcFn fn,
 	NkString **outerror);
 
-extern int initializerbeforert(
+extern int initializerregisterbeforert(
 	const void *ptr,
 	NkString id,
 	const NkBeforeRtCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterrt(
+extern int initializerregisterafterrt(
 	const void *ptr,
 	NkString id,
 	const NkAfterRtCallbackFn cb,
 	NkString **outerror);
 
-extern int initializermatchmakermatched(
+extern int initializerregistermatchmakermatched(
 	const void *ptr,
 	const NkMatchmakerMatchedCallbackFn cb,
 	NkString **outerror);
 
-extern int initializermatch(
+extern int initializerregistermatch(
 	const void *ptr,
 	NkString name,
 	const NkMatchCallbackFn cb,
 	NkString **outerror);
 
-extern int initializertournament(
+extern int initializerregistertournamentend (
 	const void *ptr,
 	const NkTournamentCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerleaderboard(
+extern int initializerregistertournamentreset(
+	const void *ptr,
+	const NkTournamentCallbackFn cb,
+	NkString **outerror);
+
+extern int initializerregisterleaderboardreset(
 	const void *ptr,
 	const NkLeaderBoardCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforegetaccount(
+extern int initializerregisterbeforegetaccount(
 	const void *ptr,
 	const NkCallbackFn cb,
 	NkString **outerror);
 
-extern int initializeraftergetaccount(
+extern int initializerregisteraftergetaccount(
 	const void *ptr,
 	const NkAfterGetAccountCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeupdateaccount(
+extern int initializerregisterbeforeupdateaccount(
 	const void *ptr,
 	const NkBeforeUpdateAccountCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterupdateaccount(
+extern int initializerregisterafterupdateaccount(
 	const void *ptr,
 	const NkAfterUpdateAccountCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforesessionrefresh(
+extern int initializerregisterbeforesessionrefresh(
 	const void *ptr,
 	const NkBeforeSessionRefreshCallbackFn cb,
 	NkString **outerror);
 
-extern int initializeraftersessionrefresh(
+extern int initializerregisteraftersessionrefresh(
 	const void *ptr,
 	const NkAfterSessionRefreshCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeauthenticateapple(
+extern int initializerregisterbeforeauthenticateapple(
 	const void *ptr,
 	const NkBeforeAuthenticateAppleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterauthenticateapple(
+extern int initializerregisterafterauthenticateapple(
 	const void *ptr,
 	const NkAfterAuthenticateAppleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeauthenticatecustom(
+extern int initializerregisterbeforeauthenticatecustom(
 	const void *ptr,
 	const NkBeforeAuthenticateCustomCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterauthenticatecustom(
+extern int initializerregisterafterauthenticatecustom(
 	const void *ptr,
 	const NkAfterAuthenticateCustomCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeauthenticatedevice(
+extern int initializerregisterbeforeauthenticatedevice(
 	const void *ptr,
 	const NkBeforeAuthenticateDeviceCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterauthenticatedevice(
+extern int initializerregisterafterauthenticatedevice(
 	const void *ptr,
 	const NkAfterAuthenticateDeviceCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeauthenticateemail(
+extern int initializerregisterbeforeauthenticateemail(
 	const void *ptr,
 	const NkBeforeAuthenticateEmailCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterauthenticateemail(
+extern int initializerregisterafterauthenticateemail(
 	const void *ptr,
 	const NkAfterAuthenticateEmailCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeauthenticatefacebook(
+extern int initializerregisterbeforeauthenticatefacebook(
 	const void *ptr,
 	const NkBeforeAuthenticateFacebookCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterauthenticatefacebook(
+extern int initializerregisterafterauthenticatefacebook(
 	const void *ptr,
 	const NkAfterAuthenticateFacebookCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeauthenticatefacebookinstantgame(
+extern int initializerregisterbeforeauthenticatefacebookinstantgame(
 	const void *ptr,
 	const NkBeforeAuthenticateFacebookInstantGameCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterauthenticatefacebookinstantgame(
+extern int initializerregisterafterauthenticatefacebookinstantgame(
 	const void *ptr,
 	const NkAfterAuthenticateFacebookInstantGameCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeauthenticategamecenter(
+extern int initializerregisterbeforeauthenticategamecenter(
 	const void *ptr,
 	const NkBeforeAuthenticateGameCenterCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterauthenticategamecenter(
+extern int initializerregisterafterauthenticategamecenter(
 	const void *ptr,
 	const NkAfterAuthenticateGameCenterCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeauthenticategoogle(
+extern int initializerregisterbeforeauthenticategoogle(
 	const void *ptr,
 	const NkBeforeAuthenticateGoogleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterauthenticategoogle(
+extern int initializerregisterafterauthenticategoogle(
 	const void *ptr,
 	const NkAfterAuthenticateGoogleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeauthenticatesteam(
+extern int initializerregisterbeforeauthenticatesteam(
 	const void *ptr,
 	const NkBeforeAuthenticateSteamCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterauthenticatesteam(
+extern int initializerregisterafterauthenticatesteam(
 	const void *ptr,
 	const NkAfterAuthenticateSteamCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelistchannelmessages(
+extern int initializerregisterbeforelistchannelmessages(
 	const void *ptr,
 	const NkBeforeListChannelMessagesCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlistchannelmessages(
+extern int initializerregisterafterlistchannelmessages(
 	const void *ptr,
 	const NkAfterListChannelMessagesCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelistfriends(
+extern int initializerregisterbeforelistfriends(
 	const void *ptr,
 	const NkBeforeListFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlistfriends(
+extern int initializerregisterafterlistfriends(
 	const void *ptr,
 	const NkAfterListFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeaddfriends(
+extern int initializerregisterbeforeaddfriends(
 	const void *ptr,
 	const NkBeforeAddFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafteraddfriends(
+extern int initializerregisterafteraddfriends(
 	const void *ptr,
 	const NkAfterAddFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforedeletefriends(
+extern int initializerregisterbeforedeletefriends(
 	const void *ptr,
 	const NkBeforeDeleteFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterdeletefriends(
+extern int initializerregisterafterdeletefriends(
 	const void *ptr,
 	const NkAfterDeleteFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeblockfriends(
+extern int initializerregisterbeforeblockfriends(
 	const void *ptr,
 	const NkBeforeBlockFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterblockfriends(
+extern int initializerregisterafterblockfriends(
 	const void *ptr,
 	const NkAfterBlockFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeimportfacebookfriends(
+extern int initializerregisterbeforeimportfacebookfriends(
 	const void *ptr,
 	const NkBeforeImportFacebookFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterimportfacebookfriends(
+extern int initializerregisterafterimportfacebookfriends(
 	const void *ptr,
 	const NkAfterImportFacebookFriendsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforecreategroup(
+extern int initializerregisterbeforecreategroup(
 	const void *ptr,
 	const NkBeforeCreateGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializeraftercreategroup(
+extern int initializerregisteraftercreategroup(
 	const void *ptr,
 	const NkAfterCreateGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeupdategroup(
+extern int initializerregisterbeforeupdategroup(
 	const void *ptr,
 	const NkBeforeUpdateGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterupdategroup(
+extern int initializerregisterafterupdategroup(
 	const void *ptr,
 	const NkAfterUpdateGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforedeletegroup(
+extern int initializerregisterbeforedeletegroup(
 	const void *ptr,
 	const NkBeforeDeleteGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterdeletegroup(
+extern int initializerregisterafterdeletegroup(
 	const void *ptr,
 	const NkAfterDeleteGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforejoingroup(
+extern int initializerregisterbeforejoingroup(
 	const void *ptr,
 	const NkBeforeJoinGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterjoingroup(
+extern int initializerregisterafterjoingroup(
 	const void *ptr,
 	const NkAfterJoinGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeleavegroup(
+extern int initializerregisterbeforeleavegroup(
 	const void *ptr,
 	const NkBeforeLeaveGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterleavegroup(
+extern int initializerregisterafterleavegroup(
 	const void *ptr,
 	const NkAfterLeaveGroupCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeaddgroupusers(
+extern int initializerregisterbeforeaddgroupusers(
 	const void *ptr,
 	const NkBeforeAddGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafteraddgroupusers(
+extern int initializerregisterafteraddgroupusers(
 	const void *ptr,
 	const NkAfterAddGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforebangroupusers(
+extern int initializerregisterbeforebangroupusers(
 	const void *ptr,
 	const NkBeforeBanGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterbangroupusers(
+extern int initializerregisterafterbangroupusers(
 	const void *ptr,
 	const NkAfterBanGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforekickgroupusers(
+extern int initializerregisterbeforekickgroupusers(
 	const void *ptr,
 	const NkBeforeKickGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterkickgroupusers(
+extern int initializerregisterafterkickgroupusers(
 	const void *ptr,
 	const NkAfterKickGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforepromotegroupusers(
+extern int initializerregisterbeforepromotegroupusers(
 	const void *ptr,
 	const NkBeforePromoteGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterpromotegroupusers(
+extern int initializerregisterafterpromotegroupusers(
 	const void *ptr,
 	const NkAfterPromoteGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforedemotegroupusers(
+extern int initializerregisterbeforedemotegroupusers(
 	const void *ptr,
 	const NkBeforeDemoteGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterdemotegroupusers(
+extern int initializerregisterafterdemotegroupusers(
 	const void *ptr,
 	const NkAfterDemoteGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelistgroupusers(
+extern int initializerregisterbeforelistgroupusers(
 	const void *ptr,
 	const NkBeforeListGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlistgroupusers(
+extern int initializerregisterafterlistgroupusers(
 	const void *ptr,
 	const NkAfterListGroupUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelistusergroups(
+extern int initializerregisterbeforelistusergroups(
 	const void *ptr,
 	const NkBeforeListUserGroupsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlistusergroups(
+extern int initializerregisterafterlistusergroups(
 	const void *ptr,
 	const NkAfterListUserGroupsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelistgroups(
+extern int initializerregisterbeforelistgroups(
 	const void *ptr,
 	const NkBeforeListGroupsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlistgroups(
+extern int initializerregisterafterlistgroups(
 	const void *ptr,
 	const NkAfterListGroupsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforedeleteleaderboardrecord(
+extern int initializerregisterbeforedeleteleaderboardrecord(
 	const void *ptr,
 	const NkBeforeDeleteLeaderboardRecordCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterdeleteleaderboardrecord(
+extern int initializerregisterafterdeleteleaderboardrecord(
 	const void *ptr,
 	const NkAfterDeleteLeaderboardRecordCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelistleaderboardrecords(
+extern int initializerregisterbeforelistleaderboardrecords(
 	const void *ptr,
 	const NkBeforeListLeaderboardRecordsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlistleaderboardrecords(
+extern int initializerregisterafterlistleaderboardrecords(
 	const void *ptr,
 	const NkAfterListLeaderboardRecordsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforewriteleaderboardrecord(
+extern int initializerregisterbeforewriteleaderboardrecord(
 	const void *ptr,
 	const NkBeforeWriteLeaderboardRecordCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterwriteleaderboardrecord(
+extern int initializerregisterafterwriteleaderboardrecord(
 	const void *ptr,
 	const NkAfterWriteLeaderboardRecordCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelistleaderboardrecordsaroundowner(
+extern int initializerregisterbeforelistleaderboardrecordsaroundowner(
 	const void *ptr,
 	const NkBeforeListLeaderboardRecordsAroundOwnerCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlistleaderboardrecordsaroundowner(
+extern int initializerregisterafterlistleaderboardrecordsaroundowner(
 	const void *ptr,
 	const NkAfterListLeaderboardRecordsAroundOwnerCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelinkapple(
+extern int initializerregisterbeforelinkapple(
 	const void *ptr,
 	const NkBeforeLinkAppleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlinkapple(
+extern int initializerregisterafterlinkapple(
 	const void *ptr,
 	const NkAfterLinkAppleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelinkcustom(
+extern int initializerregisterbeforelinkcustom(
 	const void *ptr,
 	const NkBeforeLinkCustomCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlinkcustom(
+extern int initializerregisterafterlinkcustom(
 	const void *ptr,
 	const NkAfterLinkCustomCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelinkdevice(
+extern int initializerregisterbeforelinkdevice(
 	const void *ptr,
 	const NkBeforeLinkDeviceCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlinkdevice(
+extern int initializerregisterafterlinkdevice(
 	const void *ptr,
 	const NkAfterLinkDeviceCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelinkemail(
+extern int initializerregisterbeforelinkemail(
 	const void *ptr,
 	const NkBeforeLinkEmailCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlinkemail(
+extern int initializerregisterafterlinkemail(
 	const void *ptr,
 	const NkAfterLinkEmailCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelinkfacebook(
+extern int initializerregisterbeforelinkfacebook(
 	const void *ptr,
 	const NkBeforeLinkFacebookCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlinkfacebook(
+extern int initializerregisterafterlinkfacebook(
 	const void *ptr,
 	const NkAfterLinkFacebookCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelinkfacebookinstantgame(
+extern int initializerregisterbeforelinkfacebookinstantgame(
 	const void *ptr,
 	const NkBeforeLinkFacebookInstantGameCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlinkfacebookinstantgame(
+extern int initializerregisterafterlinkfacebookinstantgame(
 	const void *ptr,
 	const NkAfterLinkFacebookInstantGameCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelinkgamecenter(
+extern int initializerregisterbeforelinkgamecenter(
 	const void *ptr,
 	const NkBeforeLinkGameCenterCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlinkgamecenter(
+extern int initializerregisterafterlinkgamecenter(
 	const void *ptr,
 	const NkAfterLinkGameCenterCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelinkgoogle(
+extern int initializerregisterbeforelinkgoogle(
 	const void *ptr,
 	const NkBeforeLinkGoogleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlinkgoogle(
+extern int initializerregisterafterlinkgoogle(
 	const void *ptr,
 	const NkAfterLinkGoogleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelinksteam(
+extern int initializerregisterbeforelinksteam(
 	const void *ptr,
 	const NkBeforeLinkSteamCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlinksteam(
+extern int initializerregisterafterlinksteam(
 	const void *ptr,
 	const NkAfterLinkSteamCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelistmatches(
+extern int initializerregisterbeforelistmatches(
 	const void *ptr,
 	const NkBeforeListMatchesCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlistmatches(
+extern int initializerregisterafterlistmatches(
 	const void *ptr,
 	const NkAfterListMatchesCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelistnotifications(
+extern int initializerregisterbeforelistnotifications(
 	const void *ptr,
 	const NkBeforeListNotificationsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlistnotifications(
+extern int initializerregisterafterlistnotifications(
 	const void *ptr,
 	const NkAfterListNotificationsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforedeletenotifications(
+extern int initializerregisterbeforedeletenotifications(
 	const void *ptr,
 	const NkBeforeDeleteNotificationsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterdeletenotifications(
+extern int initializerregisterafterdeletenotifications(
 	const void *ptr,
 	const NkAfterDeleteNotificationsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeliststorageobjects(
+extern int initializerregisterbeforeliststorageobjects(
 	const void *ptr,
 	const NkBeforeListStorageObjectsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterliststorageobjects(
+extern int initializerregisterafterliststorageobjects(
 	const void *ptr,
 	const NkAfterListStorageObjectsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforereadstorageobjects(
+extern int initializerregisterbeforereadstorageobjects(
 	const void *ptr,
 	const NkBeforeReadStorageObjectsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterreadstorageobjects(
+extern int initializerregisterafterreadstorageobjects(
 	const void *ptr,
 	const NkAfterReadStorageObjectsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforewritestorageobjects(
+extern int initializerregisterbeforewritestorageobjects(
 	const void *ptr,
 	const NkBeforeWriteStorageObjectsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterwritestorageobjects(
+extern int initializerregisterafterwritestorageobjects(
 	const void *ptr,
 	const NkAfterWriteStorageObjectsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforedeletestorageobjects(
+extern int initializerregisterbeforedeletestorageobjects(
 	const void *ptr,
 	const NkBeforeDeleteStorageObjectsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterdeletestorageobjects(
+extern int initializerregisterafterdeletestorageobjects(
 	const void *ptr,
 	const NkAfterDeleteStorageObjectsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforejointournament(
+extern int initializerregisterbeforejointournament(
 	const void *ptr,
 	const NkBeforeJoinTournamentCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterjointournament(
+extern int initializerregisterafterjointournament(
 	const void *ptr,
 	const NkAfterJoinTournamentCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelisttournamentrecords(
+extern int initializerregisterbeforelisttournamentrecords(
 	const void *ptr,
 	const NkBeforeListTournamentRecordsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlisttournamentrecords(
+extern int initializerregisterafterlisttournamentrecords(
 	const void *ptr,
 	const NkAfterListTournamentRecordsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelisttournaments(
+extern int initializerregisterbeforelisttournaments(
 	const void *ptr,
 	const NkBeforeListTournamentsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlisttournaments(
+extern int initializerregisterafterlisttournaments(
 	const void *ptr,
 	const NkAfterListTournamentsCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforewritetournamentrecord(
+extern int initializerregisterbeforewritetournamentrecord(
 	const void *ptr,
 	const NkBeforeWriteTournamentRecordCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterwritetournamentrecord(
+extern int initializerregisterafterwritetournamentrecord(
 	const void *ptr,
 	const NkAfterWriteTournamentRecordCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforelisttournamentrecordsaroundowner(
+extern int initializerregisterbeforelisttournamentrecordsaroundowner(
 	const void *ptr,
 	const NkBeforeListTournamentRecordsAroundOwnerCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterlisttournamentrecordsaroundowner(
+extern int initializerregisterafterlisttournamentrecordsaroundowner(
 	const void *ptr,
 	const NkAfterListTournamentRecordsAroundOwnerCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeunlinkapple(
+extern int initializerregisterbeforeunlinkapple(
 	const void *ptr,
 	const NkBeforeUnlinkAppleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterunlinkapple(
+extern int initializerregisterafterunlinkapple(
 	const void *ptr,
 	const NkAfterUnlinkAppleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeunlinkcustom(
+extern int initializerregisterbeforeunlinkcustom(
 	const void *ptr,
 	const NkBeforeUnlinkCustomCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterunlinkcustom(
+extern int initializerregisterafterunlinkcustom(
 	const void *ptr,
 	const NkAfterUnlinkCustomCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeunlinkdevice(
+extern int initializerregisterbeforeunlinkdevice(
 	const void *ptr,
 	const NkBeforeUnlinkDeviceCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterunlinkdevice(
+extern int initializerregisterafterunlinkdevice(
 	const void *ptr,
 	const NkAfterUnlinkDeviceCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeunlinkemail(
+extern int initializerregisterbeforeunlinkemail(
 	const void *ptr,
 	const NkBeforeUnlinkEmailCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterunlinkemail(
+extern int initializerregisterafterunlinkemail(
 	const void *ptr,
 	const NkAfterUnlinkEmailCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeunlinkfacebook(
+extern int initializerregisterbeforeunlinkfacebook(
 	const void *ptr,
 	const NkBeforeUnlinkFacebookCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterunlinkfacebook(
+extern int initializerregisterafterunlinkfacebook(
 	const void *ptr,
 	const NkAfterUnlinkFacebookCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeunlinkfacebookinstantgame(
+extern int initializerregisterbeforeunlinkfacebookinstantgame(
 	const void *ptr,
 	const NkBeforeUnlinkFacebookInstantGameCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterunlinkfacebookinstantgame(
+extern int initializerregisterafterunlinkfacebookinstantgame(
 	const void *ptr,
 	const NkAfterUnlinkFacebookInstantGameCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeunlinkgamecenter(
+extern int initializerregisterbeforeunlinkgamecenter(
 	const void *ptr,
 	const NkBeforeUnlinkGameCenterCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterunlinkgamecenter(
+extern int initializerregisterafterunlinkgamecenter(
 	const void *ptr,
 	const NkAfterUnlinkGameCenterCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeunlinkgoogle(
+extern int initializerregisterbeforeunlinkgoogle(
 	const void *ptr,
 	const NkBeforeUnlinkGoogleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterunlinkgoogle(
+extern int initializerregisterafterunlinkgoogle(
 	const void *ptr,
 	const NkAfterUnlinkGoogleCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforeunlinksteam(
+extern int initializerregisterbeforeunlinksteam(
 	const void *ptr,
 	const NkBeforeUnlinkSteamCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerafterunlinksteam(
+extern int initializerregisterafterunlinksteam(
 	const void *ptr,
 	const NkAfterUnlinkSteamCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerbeforegetusers(
+extern int initializerregisterbeforegetusers(
 	const void *ptr,
 	const NkBeforeGetUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializeraftergetusers(
+extern int initializerregisteraftergetusers(
 	const void *ptr,
 	const NkAfterGetUsersCallbackFn cb,
 	NkString **outerror);
 
-extern int initializerevent(
+extern int initializerregisterevent(
 	const void *ptr,
 	const NkEventCallbackFn cb,
 	NkString **outerror);
 
-extern int initializereventsessionstart(
+extern int initializerregistereventsessionstart(
 	const void *ptr,
 	const NkEventCallbackFn cb,
 	NkString **outerror);
 
-extern int initializereventsessionend(
+extern int initializerregistereventsessionend(
 	const void *ptr,
 	const NkEventCallbackFn cb,
 	NkString **outerror);
@@ -1495,149 +1699,149 @@ func cDb(db *sql.DB) C.NkDb {
 func cInitializer(initializer runtime.Initializer) C.NkInitializer {
 	ret := C.NkInitializer{}
 	ret.ptr = pointer.Save(initializer)
-	ret.registerrpc = C.NkInitializerRpcFn(C.initializerregisterrpc);
-	ret.registerbeforert = C.NkInitializerBeforeRtFn(C.initializerregisterbeforert);
-	ret.registerafterrt = C.NkInitializerAfterRtFn(C.initializerregisterafterrt);
-	ret.registermatchmakermatched = C.NkInitializerMatchmakerMatchedFn(C.initializerregistermatchmakermatched);
-	ret.registermatch = C.NkInitializerMatchFn(C.initializerregistermatch);
-	ret.registertournamentend = C.NkInitializerTournamentFn(C.initializerregistertournamentend);
-	ret.registertournamentreset = C.NkInitializerTournamentFn(C.initializerregistertournamentreset);
-	ret.registerleaderboardreset = C.NkInitializerLeaderBoardFn(C.initializerregisterleaderboardreset);
-	ret.registerbeforegetaccount = C.NkInitializerBeforeGetAccountFn(C.initializerregisterbeforegetaccount);
-	ret.registeraftergetaccount = C.NkInitializerAfterGetAccountFn(C.initializerregisteraftergetaccount);
-	ret.registerbeforeupdateaccount = C.NkInitializerBeforeUpdateAccountFn(C.initializerregisterbeforeupdateaccount);
-	ret.registerafterupdateaccount = C.NkInitializerAfterUpdateAccountFn(C.initializerregisterafterupdateaccount);
-	ret.registerbeforesessionrefresh = C.NkInitializerBeforeSessionRefreshFn(C.initializerregisterbeforesessionrefresh);
-	ret.registeraftersessionrefresh = C.NkInitializerAfterSessionRefreshFn(C.initializerregisteraftersessionrefresh);
-	ret.registerbeforeauthenticateapple = C.NkInitializerBeforeAuthenticateAppleFn(C.initializerregisterbeforeauthenticateapple);
-	ret.registerafterauthenticateapple = C.NkInitializerAfterAuthenticateAppleFn(C.initializerregisterafterauthenticateapple);
-	ret.registerbeforeauthenticatecustom = C.NkInitializerBeforeAuthenticateCustomFn(C.initializerregisterbeforeauthenticatecustom);
-	ret.registerafterauthenticatecustom = C.NkInitializerAfterAuthenticateCustomFn(C.initializerregisterafterauthenticatecustom);
-	ret.registerbeforeauthenticatedevice = C.NkInitializerBeforeAuthenticateDeviceFn(C.initializerregisterbeforeauthenticatedevice);
-	ret.registerafterauthenticatedevice = C.NkInitializerAfterAuthenticateDeviceFn(C.initializerregisterafterauthenticatedevice);
-	ret.registerbeforeauthenticateemail = C.NkInitializerBeforeAuthenticateEmailFn(C.initializerregisterbeforeauthenticateemail);
-	ret.registerafterauthenticateemail = C.NkInitializerAfterAuthenticateEmailFn(C.initializerregisterafterauthenticateemail);
-	ret.registerbeforeauthenticatefacebook = C.NkInitializerBeforeAuthenticateFacebookFn(C.initializerregisterbeforeauthenticatefacebook);
-	ret.registerafterauthenticatefacebook = C.NkInitializerAfterAuthenticateFacebookFn(C.initializerregisterafterauthenticatefacebook);
-	ret.registerbeforeauthenticatefacebookinstantgame = C.NkInitializerBeforeAuthenticateFacebookInstantGameFn(C.initializerregisterbeforeauthenticatefacebookinstantgame);
-	ret.registerafterauthenticatefacebookinstantgame = C.NkInitializerAfterAuthenticateFacebookInstantGameFn(C.initializerregisterafterauthenticatefacebookinstantgame);
-	ret.registerbeforeauthenticategamecenter = C.NkInitializerBeforeAuthenticateGameCenterFn(C.initializerregisterbeforeauthenticategamecenter);
-	ret.registerafterauthenticategamecenter = C.NkInitializerAfterAuthenticateGameCenterFn(C.initializerregisterafterauthenticategamecenter);
-	ret.registerbeforeauthenticategoogle = C.NkInitializerBeforeAuthenticateGoogleFn(C.initializerregisterbeforeauthenticategoogle);
-	ret.registerafterauthenticategoogle = C.NkInitializerAfterAuthenticateGoogleFn(C.initializerregisterafterauthenticategoogle);
-	ret.registerbeforeauthenticatesteam = C.NkInitializerBeforeAuthenticateSteamFn(C.initializerregisterbeforeauthenticatesteam);
-	ret.registerafterauthenticatesteam = C.NkInitializerAfterAuthenticateSteamFn(C.initializerregisterafterauthenticatesteam);
-	ret.registerbeforelistchannelmessages = C.NkInitializerBeforeListChannelMessagesFn(C.initializerregisterbeforelistchannelmessages);
-	ret.registerafterlistchannelmessages = C.NkInitializerAfterListChannelMessagesFn(C.initializerregisterafterlistchannelmessages);
-	ret.registerbeforelistfriends = C.NkInitializerBeforeListFriendsFn(C.initializerregisterbeforelistfriends);
-	ret.registerafterlistfriends = C.NkInitializerAfterListFriendsFn(C.initializerregisterafterlistfriends);
-	ret.registerbeforeaddfriends = C.NkInitializerBeforeAddFriendsFn(C.initializerregisterbeforeaddfriends);
-	ret.registerafteraddfriends = C.NkInitializerAfterAddFriendsFn(C.initializerregisterafteraddfriends);
-	ret.registerbeforedeletefriends = C.NkInitializerBeforeDeleteFriendsFn(C.initializerregisterbeforedeletefriends);
-	ret.registerafterdeletefriends = C.NkInitializerAfterDeleteFriendsFn(C.initializerregisterafterdeletefriends);
-	ret.registerbeforeblockfriends = C.NkInitializerBeforeBlockFriendsFn(C.initializerregisterbeforeblockfriends);
-	ret.registerafterblockfriends = C.NkInitializerAfterBlockFriendsFn(C.initializerregisterafterblockfriends);
-	ret.registerbeforeimportfacebookfriends = C.NkInitializerBeforeImportFacebookFriendsFn(C.initializerregisterbeforeimportfacebookfriends);
-	ret.registerafterimportfacebookfriends = C.NkInitializerAfterImportFacebookFriendsFn(C.initializerregisterafterimportfacebookfriends);
-	ret.registerbeforecreategroup = C.NkInitializerBeforeCreateGroupFn(C.initializerregisterbeforecreategroup);
-	ret.registeraftercreategroup = C.NkInitializerAfterCreateGroupFn(C.initializerregisteraftercreategroup);
-	ret.registerbeforeupdategroup = C.NkInitializerBeforeUpdateGroupFn(C.initializerregisterbeforeupdategroup);
-	ret.registerafterupdategroup = C.NkInitializerAfterUpdateGroupFn(C.initializerregisterafterupdategroup);
-	ret.registerbeforedeletegroup = C.NkInitializerBeforeDeleteGroupFn(C.initializerregisterbeforedeletegroup);
-	ret.registerafterdeletegroup = C.NkInitializerAfterDeleteGroupFn(C.initializerregisterafterdeletegroup);
-	ret.registerbeforejoingroup = C.NkInitializerBeforeJoinGroupFn(C.initializerregisterbeforejoingroup);
-	ret.registerafterjoingroup = C.NkInitializerAfterJoinGroupFn(C.initializerregisterafterjoingroup);
-	ret.registerbeforeleavegroup = C.NkInitializerBeforeLeaveGroupFn(C.initializerregisterbeforeleavegroup);
-	ret.registerafterleavegroup = C.NkInitializerAfterLeaveGroupFn(C.initializerregisterafterleavegroup);
-	ret.registerbeforeaddgroupusers = C.NkInitializerBeforeAddGroupUsersFn(C.initializerregisterbeforeaddgroupusers);
-	ret.registerafteraddgroupusers = C.NkInitializerAfterAddGroupUsersFn(C.initializerregisterafteraddgroupusers);
-	ret.registerbeforebangroupusers = C.NkInitializerBeforeBanGroupUsersFn(C.initializerregisterbeforebangroupusers);
-	ret.registerafterbangroupusers = C.NkInitializerAfterBanGroupUsersFn(C.initializerregisterafterbangroupusers);
-	ret.registerbeforekickgroupusers = C.NkInitializerBeforeKickGroupUsersFn(C.initializerregisterbeforekickgroupusers);
-	ret.registerafterkickgroupusers = C.NkInitializerAfterKickGroupUsersFn(C.initializerregisterafterkickgroupusers);
-	ret.registerbeforepromotegroupusers = C.NkInitializerBeforePromoteGroupUsersFn(C.initializerregisterbeforepromotegroupusers);
-	ret.registerafterpromotegroupusers = C.NkInitializerAfterPromoteGroupUsersFn(C.initializerregisterafterpromotegroupusers);
-	ret.registerbeforedemotegroupusers = C.NkInitializerBeforeDemoteGroupUsersFn(C.initializerregisterbeforedemotegroupusers);
-	ret.registerafterdemotegroupusers = C.NkInitializerAfterDemoteGroupUsersFn(C.initializerregisterafterdemotegroupusers);
-	ret.registerbeforelistgroupusers = C.NkInitializerBeforeListGroupUsersFn(C.initializerregisterbeforelistgroupusers);
-	ret.registerafterlistgroupusers = C.NkInitializerAfterListGroupUsersFn(C.initializerregisterafterlistgroupusers);
-	ret.registerbeforelistusergroups = C.NkInitializerBeforeListUserGroupsFn(C.initializerregisterbeforelistusergroups);
-	ret.registerafterlistusergroups = C.NkInitializerAfterListUserGroupsFn(C.initializerregisterafterlistusergroups);
-	ret.registerbeforelistgroups = C.NkInitializerBeforeListGroupsFn(C.initializerregisterbeforelistgroups);
-	ret.registerafterlistgroups = C.NkInitializerAfterListGroupsFn(C.initializerregisterafterlistgroups);
-	ret.registerbeforedeleteleaderboardrecord = C.NkInitializerBeforeDeleteLeaderboardRecordFn(C.initializerregisterbeforedeleteleaderboardrecord);
-	ret.registerafterdeleteleaderboardrecord = C.NkInitializerAfterDeleteLeaderboardRecordFn(C.initializerregisterafterdeleteleaderboardrecord);
-	ret.registerbeforelistleaderboardrecords = C.NkInitializerBeforeListLeaderboardRecordsFn(C.initializerregisterbeforelistleaderboardrecords);
-	ret.registerafterlistleaderboardrecords = C.NkInitializerAfterListLeaderboardRecordsFn(C.initializerregisterafterlistleaderboardrecords);
-	ret.registerbeforewriteleaderboardrecord = C.NkInitializerBeforeWriteLeaderboardRecordFn(C.initializerregisterbeforewriteleaderboardrecord);
-	ret.registerafterwriteleaderboardrecord = C.NkInitializerAfterWriteLeaderboardRecordFn(C.initializerregisterafterwriteleaderboardrecord);
-	ret.registerbeforelistleaderboardrecordsaroundowner = C.NkInitializerBeforeListLeaderboardRecordsAroundOwnerFn(C.initializerregisterbeforelistleaderboardrecordsaroundowner);
-	ret.registerafterlistleaderboardrecordsaroundowner = C.NkInitializerAfterListLeaderboardRecordsAroundOwnerFn(C.initializerregisterafterlistleaderboardrecordsaroundowner);
-	ret.registerbeforelinkapple = C.NkInitializerBeforeLinkAppleFn(C.initializerregisterbeforelinkapple);
-	ret.registerafterlinkapple = C.NkInitializerAfterLinkAppleFn(C.initializerregisterafterlinkapple);
-	ret.registerbeforelinkcustom = C.NkInitializerBeforeLinkCustomFn(C.initializerregisterbeforelinkcustom);
-	ret.registerafterlinkcustom = C.NkInitializerAfterLinkCustomFn(C.initializerregisterafterlinkcustom);
-	ret.registerbeforelinkdevice = C.NkInitializerBeforeLinkDeviceFn(C.initializerregisterbeforelinkdevice);
-	ret.registerafterlinkdevice = C.NkInitializerAfterLinkDeviceFn(C.initializerregisterafterlinkdevice);
-	ret.registerbeforelinkemail = C.NkInitializerBeforeLinkEmailFn(C.initializerregisterbeforelinkemail);
-	ret.registerafterlinkemail = C.NkInitializerAfterLinkEmailFn(C.initializerregisterafterlinkemail);
-	ret.registerbeforelinkfacebook = C.NkInitializerBeforeLinkFacebookFn(C.initializerregisterbeforelinkfacebook);
-	ret.registerafterlinkfacebook = C.NkInitializerAfterLinkFacebookFn(C.initializerregisterafterlinkfacebook);
-	ret.registerbeforelinkfacebookinstantgame = C.NkInitializerBeforeLinkFacebookInstantGameFn(C.initializerregisterbeforelinkfacebookinstantgame);
-	ret.registerafterlinkfacebookinstantgame = C.NkInitializerAfterLinkFacebookInstantGameFn(C.initializerregisterafterlinkfacebookinstantgame);
-	ret.registerbeforelinkgamecenter = C.NkInitializerBeforeLinkGameCenterFn(C.initializerregisterbeforelinkgamecenter);
-	ret.registerafterlinkgamecenter = C.NkInitializerAfterLinkGameCenterFn(C.initializerregisterafterlinkgamecenter);
-	ret.registerbeforelinkgoogle = C.NkInitializerBeforeLinkGoogleFn(C.initializerregisterbeforelinkgoogle);
-	ret.registerafterlinkgoogle = C.NkInitializerAfterLinkGoogleFn(C.initializerregisterafterlinkgoogle);
-	ret.registerbeforelinksteam = C.NkInitializerBeforeLinkSteamFn(C.initializerregisterbeforelinksteam);
-	ret.registerafterlinksteam = C.NkInitializerAfterLinkSteamFn(C.initializerregisterafterlinksteam);
-	ret.registerbeforelistmatches = C.NkInitializerBeforeListMatchesFn(C.initializerregisterbeforelistmatches);
-	ret.registerafterlistmatches = C.NkInitializerAfterListMatchesFn(C.initializerregisterafterlistmatches);
-	ret.registerbeforelistnotifications = C.NkInitializerBeforeListNotificationsFn(C.initializerregisterbeforelistnotifications);
-	ret.registerafterlistnotifications = C.NkInitializerAfterListNotificationsFn(C.initializerregisterafterlistnotifications);
-	ret.registerbeforedeletenotifications = C.NkInitializerBeforeDeleteNotificationsFn(C.initializerregisterbeforedeletenotifications);
-	ret.registerafterdeletenotifications = C.NkInitializerAfterDeleteNotificationsFn(C.initializerregisterafterdeletenotifications);
-	ret.registerbeforeliststorageobjects = C.NkInitializerBeforeListStorageObjectsFn(C.initializerregisterbeforeliststorageobjects);
-	ret.registerafterliststorageobjects = C.NkInitializerAfterListStorageObjectsFn(C.initializerregisterafterliststorageobjects);
-	ret.registerbeforereadstorageobjects = C.NkInitializerBeforeReadStorageObjectsFn(C.initializerregisterbeforereadstorageobjects);
-	ret.registerafterreadstorageobjects = C.NkInitializerAfterReadStorageObjectsFn(C.initializerregisterafterreadstorageobjects);
-	ret.registerbeforewritestorageobjects = C.NkInitializerBeforeWriteStorageObjectsFn(C.initializerregisterbeforewritestorageobjects);
-	ret.registerafterwritestorageobjects = C.NkInitializerAfterWriteStorageObjectsFn(C.initializerregisterafterwritestorageobjects);
-	ret.registerbeforedeletestorageobjects = C.NkInitializerBeforeDeleteStorageObjectsFn(C.initializerregisterbeforedeletestorageobjects);
-	ret.registerafterdeletestorageobjects = C.NkInitializerAfterDeleteStorageObjectsFn(C.initializerregisterafterdeletestorageobjects);
-	ret.registerbeforejointournament = C.NkInitializerBeforeJoinTournamentFn(C.initializerregisterbeforejointournament);
-	ret.registerafterjointournament = C.NkInitializerAfterJoinTournamentFn(C.initializerregisterafterjointournament);
-	ret.registerbeforelisttournamentrecords = C.NkInitializerBeforeListTournamentRecordsFn(C.initializerregisterbeforelisttournamentrecords);
-	ret.registerafterlisttournamentrecords = C.NkInitializerAfterListTournamentRecordsFn(C.initializerregisterafterlisttournamentrecords);
-	ret.registerbeforelisttournaments = C.NkInitializerBeforeListTournamentsFn(C.initializerregisterbeforelisttournaments);
-	ret.registerafterlisttournaments = C.NkInitializerAfterListTournamentsFn(C.initializerregisterafterlisttournaments);
-	ret.registerbeforewritetournamentrecord = C.NkInitializerBeforeWriteTournamentRecordFn(C.initializerregisterbeforewritetournamentrecord);
-	ret.registerafterwritetournamentrecord = C.NkInitializerAfterWriteTournamentRecordFn(C.initializerregisterafterwritetournamentrecord);
-	ret.registerbeforelisttournamentrecordsaroundowner = C.NkInitializerBeforeListTournamentRecordsAroundOwnerFn(C.initializerregisterbeforelisttournamentrecordsaroundowner);
-	ret.registerafterlisttournamentrecordsaroundowner = C.NkInitializerAfterListTournamentRecordsAroundOwnerFn(C.initializerregisterafterlisttournamentrecordsaroundowner);
-	ret.registerbeforeunlinkapple = C.NkInitializerBeforeUnlinkAppleFn(C.initializerregisterbeforeunlinkapple);
-	ret.registerafterunlinkapple = C.NkInitializerAfterUnlinkAppleFn(C.initializerregisterafterunlinkapple);
-	ret.registerbeforeunlinkcustom = C.NkInitializerBeforeUnlinkCustomFn(C.initializerregisterbeforeunlinkcustom);
-	ret.registerafterunlinkcustom = C.NkInitializerAfterUnlinkCustomFn(C.initializerregisterafterunlinkcustom);
-	ret.registerbeforeunlinkdevice = C.NkInitializerBeforeUnlinkDeviceFn(C.initializerregisterbeforeunlinkdevice);
-	ret.registerafterunlinkdevice = C.NkInitializerAfterUnlinkDeviceFn(C.initializerregisterafterunlinkdevice);
-	ret.registerbeforeunlinkemail = C.NkInitializerBeforeUnlinkEmailFn(C.initializerregisterbeforeunlinkemail);
-	ret.registerafterunlinkemail = C.NkInitializerAfterUnlinkEmailFn(C.initializerregisterafterunlinkemail);
-	ret.registerbeforeunlinkfacebook = C.NkInitializerBeforeUnlinkFacebookFn(C.initializerregisterbeforeunlinkfacebook);
-	ret.registerafterunlinkfacebook = C.NkInitializerAfterUnlinkFacebookFn(C.initializerregisterafterunlinkfacebook);
-	ret.registerbeforeunlinkfacebookinstantgame = C.NkInitializerBeforeUnlinkFacebookInstantGameFn(C.initializerregisterbeforeunlinkfacebookinstantgame);
-	ret.registerafterunlinkfacebookinstantgame = C.NkInitializerAfterUnlinkFacebookInstantGameFn(C.initializerregisterafterunlinkfacebookinstantgame);
-	ret.registerbeforeunlinkgamecenter = C.NkInitializerBeforeUnlinkGameCenterFn(C.initializerregisterbeforeunlinkgamecenter);
-	ret.registerafterunlinkgamecenter = C.NkInitializerAfterUnlinkGameCenterFn(C.initializerregisterafterunlinkgamecenter);
-	ret.registerbeforeunlinkgoogle = C.NkInitializerBeforeUnlinkGoogleFn(C.initializerregisterbeforeunlinkgoogle);
-	ret.registerafterunlinkgoogle = C.NkInitializerAfterUnlinkGoogleFn(C.initializerregisterafterunlinkgoogle);
-	ret.registerbeforeunlinksteam = C.NkInitializerBeforeUnlinkSteamFn(C.initializerregisterbeforeunlinksteam);
-	ret.registerafterunlinksteam = C.NkInitializerAfterUnlinkSteamFn(C.initializerregisterafterunlinksteam);
-	ret.registerbeforegetusers = C.NkInitializerBeforeGetUsersFn(C.initializerregisterbeforegetusers);
-	ret.registeraftergetusers = C.NkInitializerAfterGetUsersFn(C.initializerregisteraftergetusers);
-	ret.registerevent = C.NkInitializerEventFn(C.initializerregisterevent);
-	ret.registereventsessionstart = C.NkInitializerEventSessionStartFn(C.initializerregistereventsessionstart);
-	ret.registereventsessionend = C.NkInitializerEventSessionEndFn(C.initializerregistereventsessionend);
+	ret.registerrpc = C.NkInitializerRpcFn(C.initializerregisterrpc)
+	ret.registerbeforert = C.NkInitializerBeforeRtFn(C.initializerregisterbeforert)
+	ret.registerafterrt = C.NkInitializerAfterRtFn(C.initializerregisterafterrt)
+	ret.registermatchmakermatched = C.NkInitializerMatchmakerMatchedFn(C.initializerregistermatchmakermatched)
+	ret.registermatch = C.NkInitializerMatchFn(C.initializerregistermatch)
+	ret.registertournamentend = C.NkInitializerTournamentFn(C.initializerregistertournamentend)
+	ret.registertournamentreset = C.NkInitializerTournamentFn(C.initializerregistertournamentreset)
+	ret.registerleaderboardreset = C.NkInitializerLeaderBoardFn(C.initializerregisterleaderboardreset)
+	ret.registerbeforegetaccount = C.NkInitializerBeforeGetAccountFn(C.initializerregisterbeforegetaccount)
+	ret.registeraftergetaccount = C.NkInitializerAfterGetAccountFn(C.initializerregisteraftergetaccount)
+	ret.registerbeforeupdateaccount = C.NkInitializerBeforeUpdateAccountFn(C.initializerregisterbeforeupdateaccount)
+	ret.registerafterupdateaccount = C.NkInitializerAfterUpdateAccountFn(C.initializerregisterafterupdateaccount)
+	ret.registerbeforesessionrefresh = C.NkInitializerBeforeSessionRefreshFn(C.initializerregisterbeforesessionrefresh)
+	ret.registeraftersessionrefresh = C.NkInitializerAfterSessionRefreshFn(C.initializerregisteraftersessionrefresh)
+	ret.registerbeforeauthenticateapple = C.NkInitializerBeforeAuthenticateAppleFn(C.initializerregisterbeforeauthenticateapple)
+	ret.registerafterauthenticateapple = C.NkInitializerAfterAuthenticateAppleFn(C.initializerregisterafterauthenticateapple)
+	ret.registerbeforeauthenticatecustom = C.NkInitializerBeforeAuthenticateCustomFn(C.initializerregisterbeforeauthenticatecustom)
+	ret.registerafterauthenticatecustom = C.NkInitializerAfterAuthenticateCustomFn(C.initializerregisterafterauthenticatecustom)
+	ret.registerbeforeauthenticatedevice = C.NkInitializerBeforeAuthenticateDeviceFn(C.initializerregisterbeforeauthenticatedevice)
+	ret.registerafterauthenticatedevice = C.NkInitializerAfterAuthenticateDeviceFn(C.initializerregisterafterauthenticatedevice)
+	ret.registerbeforeauthenticateemail = C.NkInitializerBeforeAuthenticateEmailFn(C.initializerregisterbeforeauthenticateemail)
+	ret.registerafterauthenticateemail = C.NkInitializerAfterAuthenticateEmailFn(C.initializerregisterafterauthenticateemail)
+	ret.registerbeforeauthenticatefacebook = C.NkInitializerBeforeAuthenticateFacebookFn(C.initializerregisterbeforeauthenticatefacebook)
+	ret.registerafterauthenticatefacebook = C.NkInitializerAfterAuthenticateFacebookFn(C.initializerregisterafterauthenticatefacebook)
+	ret.registerbeforeauthenticatefacebookinstantgame = C.NkInitializerBeforeAuthenticateFacebookInstantGameFn(C.initializerregisterbeforeauthenticatefacebookinstantgame)
+	ret.registerafterauthenticatefacebookinstantgame = C.NkInitializerAfterAuthenticateFacebookInstantGameFn(C.initializerregisterafterauthenticatefacebookinstantgame)
+	ret.registerbeforeauthenticategamecenter = C.NkInitializerBeforeAuthenticateGameCenterFn(C.initializerregisterbeforeauthenticategamecenter)
+	ret.registerafterauthenticategamecenter = C.NkInitializerAfterAuthenticateGameCenterFn(C.initializerregisterafterauthenticategamecenter)
+	ret.registerbeforeauthenticategoogle = C.NkInitializerBeforeAuthenticateGoogleFn(C.initializerregisterbeforeauthenticategoogle)
+	ret.registerafterauthenticategoogle = C.NkInitializerAfterAuthenticateGoogleFn(C.initializerregisterafterauthenticategoogle)
+	ret.registerbeforeauthenticatesteam = C.NkInitializerBeforeAuthenticateSteamFn(C.initializerregisterbeforeauthenticatesteam)
+	ret.registerafterauthenticatesteam = C.NkInitializerAfterAuthenticateSteamFn(C.initializerregisterafterauthenticatesteam)
+	ret.registerbeforelistchannelmessages = C.NkInitializerBeforeListChannelMessagesFn(C.initializerregisterbeforelistchannelmessages)
+	ret.registerafterlistchannelmessages = C.NkInitializerAfterListChannelMessagesFn(C.initializerregisterafterlistchannelmessages)
+	ret.registerbeforelistfriends = C.NkInitializerBeforeListFriendsFn(C.initializerregisterbeforelistfriends)
+	ret.registerafterlistfriends = C.NkInitializerAfterListFriendsFn(C.initializerregisterafterlistfriends)
+	ret.registerbeforeaddfriends = C.NkInitializerBeforeAddFriendsFn(C.initializerregisterbeforeaddfriends)
+	ret.registerafteraddfriends = C.NkInitializerAfterAddFriendsFn(C.initializerregisterafteraddfriends)
+	ret.registerbeforedeletefriends = C.NkInitializerBeforeDeleteFriendsFn(C.initializerregisterbeforedeletefriends)
+	ret.registerafterdeletefriends = C.NkInitializerAfterDeleteFriendsFn(C.initializerregisterafterdeletefriends)
+	ret.registerbeforeblockfriends = C.NkInitializerBeforeBlockFriendsFn(C.initializerregisterbeforeblockfriends)
+	ret.registerafterblockfriends = C.NkInitializerAfterBlockFriendsFn(C.initializerregisterafterblockfriends)
+	ret.registerbeforeimportfacebookfriends = C.NkInitializerBeforeImportFacebookFriendsFn(C.initializerregisterbeforeimportfacebookfriends)
+	ret.registerafterimportfacebookfriends = C.NkInitializerAfterImportFacebookFriendsFn(C.initializerregisterafterimportfacebookfriends)
+	ret.registerbeforecreategroup = C.NkInitializerBeforeCreateGroupFn(C.initializerregisterbeforecreategroup)
+	ret.registeraftercreategroup = C.NkInitializerAfterCreateGroupFn(C.initializerregisteraftercreategroup)
+	ret.registerbeforeupdategroup = C.NkInitializerBeforeUpdateGroupFn(C.initializerregisterbeforeupdategroup)
+	ret.registerafterupdategroup = C.NkInitializerAfterUpdateGroupFn(C.initializerregisterafterupdategroup)
+	ret.registerbeforedeletegroup = C.NkInitializerBeforeDeleteGroupFn(C.initializerregisterbeforedeletegroup)
+	ret.registerafterdeletegroup = C.NkInitializerAfterDeleteGroupFn(C.initializerregisterafterdeletegroup)
+	ret.registerbeforejoingroup = C.NkInitializerBeforeJoinGroupFn(C.initializerregisterbeforejoingroup)
+	ret.registerafterjoingroup = C.NkInitializerAfterJoinGroupFn(C.initializerregisterafterjoingroup)
+	ret.registerbeforeleavegroup = C.NkInitializerBeforeLeaveGroupFn(C.initializerregisterbeforeleavegroup)
+	ret.registerafterleavegroup = C.NkInitializerAfterLeaveGroupFn(C.initializerregisterafterleavegroup)
+	ret.registerbeforeaddgroupusers = C.NkInitializerBeforeAddGroupUsersFn(C.initializerregisterbeforeaddgroupusers)
+	ret.registerafteraddgroupusers = C.NkInitializerAfterAddGroupUsersFn(C.initializerregisterafteraddgroupusers)
+	ret.registerbeforebangroupusers = C.NkInitializerBeforeBanGroupUsersFn(C.initializerregisterbeforebangroupusers)
+	ret.registerafterbangroupusers = C.NkInitializerAfterBanGroupUsersFn(C.initializerregisterafterbangroupusers)
+	ret.registerbeforekickgroupusers = C.NkInitializerBeforeKickGroupUsersFn(C.initializerregisterbeforekickgroupusers)
+	ret.registerafterkickgroupusers = C.NkInitializerAfterKickGroupUsersFn(C.initializerregisterafterkickgroupusers)
+	ret.registerbeforepromotegroupusers = C.NkInitializerBeforePromoteGroupUsersFn(C.initializerregisterbeforepromotegroupusers)
+	ret.registerafterpromotegroupusers = C.NkInitializerAfterPromoteGroupUsersFn(C.initializerregisterafterpromotegroupusers)
+	ret.registerbeforedemotegroupusers = C.NkInitializerBeforeDemoteGroupUsersFn(C.initializerregisterbeforedemotegroupusers)
+	ret.registerafterdemotegroupusers = C.NkInitializerAfterDemoteGroupUsersFn(C.initializerregisterafterdemotegroupusers)
+	ret.registerbeforelistgroupusers = C.NkInitializerBeforeListGroupUsersFn(C.initializerregisterbeforelistgroupusers)
+	ret.registerafterlistgroupusers = C.NkInitializerAfterListGroupUsersFn(C.initializerregisterafterlistgroupusers)
+	ret.registerbeforelistusergroups = C.NkInitializerBeforeListUserGroupsFn(C.initializerregisterbeforelistusergroups)
+	ret.registerafterlistusergroups = C.NkInitializerAfterListUserGroupsFn(C.initializerregisterafterlistusergroups)
+	ret.registerbeforelistgroups = C.NkInitializerBeforeListGroupsFn(C.initializerregisterbeforelistgroups)
+	ret.registerafterlistgroups = C.NkInitializerAfterListGroupsFn(C.initializerregisterafterlistgroups)
+	ret.registerbeforedeleteleaderboardrecord = C.NkInitializerBeforeDeleteLeaderboardRecordFn(C.initializerregisterbeforedeleteleaderboardrecord)
+	ret.registerafterdeleteleaderboardrecord = C.NkInitializerAfterDeleteLeaderboardRecordFn(C.initializerregisterafterdeleteleaderboardrecord)
+	ret.registerbeforelistleaderboardrecords = C.NkInitializerBeforeListLeaderboardRecordsFn(C.initializerregisterbeforelistleaderboardrecords)
+	ret.registerafterlistleaderboardrecords = C.NkInitializerAfterListLeaderboardRecordsFn(C.initializerregisterafterlistleaderboardrecords)
+	ret.registerbeforewriteleaderboardrecord = C.NkInitializerBeforeWriteLeaderboardRecordFn(C.initializerregisterbeforewriteleaderboardrecord)
+	ret.registerafterwriteleaderboardrecord = C.NkInitializerAfterWriteLeaderboardRecordFn(C.initializerregisterafterwriteleaderboardrecord)
+	ret.registerbeforelistleaderboardrecordsaroundowner = C.NkInitializerBeforeListLeaderboardRecordsAroundOwnerFn(C.initializerregisterbeforelistleaderboardrecordsaroundowner)
+	ret.registerafterlistleaderboardrecordsaroundowner = C.NkInitializerAfterListLeaderboardRecordsAroundOwnerFn(C.initializerregisterafterlistleaderboardrecordsaroundowner)
+	ret.registerbeforelinkapple = C.NkInitializerBeforeLinkAppleFn(C.initializerregisterbeforelinkapple)
+	ret.registerafterlinkapple = C.NkInitializerAfterLinkAppleFn(C.initializerregisterafterlinkapple)
+	ret.registerbeforelinkcustom = C.NkInitializerBeforeLinkCustomFn(C.initializerregisterbeforelinkcustom)
+	ret.registerafterlinkcustom = C.NkInitializerAfterLinkCustomFn(C.initializerregisterafterlinkcustom)
+	ret.registerbeforelinkdevice = C.NkInitializerBeforeLinkDeviceFn(C.initializerregisterbeforelinkdevice)
+	ret.registerafterlinkdevice = C.NkInitializerAfterLinkDeviceFn(C.initializerregisterafterlinkdevice)
+	ret.registerbeforelinkemail = C.NkInitializerBeforeLinkEmailFn(C.initializerregisterbeforelinkemail)
+	ret.registerafterlinkemail = C.NkInitializerAfterLinkEmailFn(C.initializerregisterafterlinkemail)
+	ret.registerbeforelinkfacebook = C.NkInitializerBeforeLinkFacebookFn(C.initializerregisterbeforelinkfacebook)
+	ret.registerafterlinkfacebook = C.NkInitializerAfterLinkFacebookFn(C.initializerregisterafterlinkfacebook)
+	ret.registerbeforelinkfacebookinstantgame = C.NkInitializerBeforeLinkFacebookInstantGameFn(C.initializerregisterbeforelinkfacebookinstantgame)
+	ret.registerafterlinkfacebookinstantgame = C.NkInitializerAfterLinkFacebookInstantGameFn(C.initializerregisterafterlinkfacebookinstantgame)
+	ret.registerbeforelinkgamecenter = C.NkInitializerBeforeLinkGameCenterFn(C.initializerregisterbeforelinkgamecenter)
+	ret.registerafterlinkgamecenter = C.NkInitializerAfterLinkGameCenterFn(C.initializerregisterafterlinkgamecenter)
+	ret.registerbeforelinkgoogle = C.NkInitializerBeforeLinkGoogleFn(C.initializerregisterbeforelinkgoogle)
+	ret.registerafterlinkgoogle = C.NkInitializerAfterLinkGoogleFn(C.initializerregisterafterlinkgoogle)
+	ret.registerbeforelinksteam = C.NkInitializerBeforeLinkSteamFn(C.initializerregisterbeforelinksteam)
+	ret.registerafterlinksteam = C.NkInitializerAfterLinkSteamFn(C.initializerregisterafterlinksteam)
+	ret.registerbeforelistmatches = C.NkInitializerBeforeListMatchesFn(C.initializerregisterbeforelistmatches)
+	ret.registerafterlistmatches = C.NkInitializerAfterListMatchesFn(C.initializerregisterafterlistmatches)
+	ret.registerbeforelistnotifications = C.NkInitializerBeforeListNotificationsFn(C.initializerregisterbeforelistnotifications)
+	ret.registerafterlistnotifications = C.NkInitializerAfterListNotificationsFn(C.initializerregisterafterlistnotifications)
+	ret.registerbeforedeletenotifications = C.NkInitializerBeforeDeleteNotificationsFn(C.initializerregisterbeforedeletenotifications)
+	ret.registerafterdeletenotifications = C.NkInitializerAfterDeleteNotificationsFn(C.initializerregisterafterdeletenotifications)
+	ret.registerbeforeliststorageobjects = C.NkInitializerBeforeListStorageObjectsFn(C.initializerregisterbeforeliststorageobjects)
+	ret.registerafterliststorageobjects = C.NkInitializerAfterListStorageObjectsFn(C.initializerregisterafterliststorageobjects)
+	ret.registerbeforereadstorageobjects = C.NkInitializerBeforeReadStorageObjectsFn(C.initializerregisterbeforereadstorageobjects)
+	ret.registerafterreadstorageobjects = C.NkInitializerAfterReadStorageObjectsFn(C.initializerregisterafterreadstorageobjects)
+	ret.registerbeforewritestorageobjects = C.NkInitializerBeforeWriteStorageObjectsFn(C.initializerregisterbeforewritestorageobjects)
+	ret.registerafterwritestorageobjects = C.NkInitializerAfterWriteStorageObjectsFn(C.initializerregisterafterwritestorageobjects)
+	ret.registerbeforedeletestorageobjects = C.NkInitializerBeforeDeleteStorageObjectsFn(C.initializerregisterbeforedeletestorageobjects)
+	ret.registerafterdeletestorageobjects = C.NkInitializerAfterDeleteStorageObjectsFn(C.initializerregisterafterdeletestorageobjects)
+	ret.registerbeforejointournament = C.NkInitializerBeforeJoinTournamentFn(C.initializerregisterbeforejointournament)
+	ret.registerafterjointournament = C.NkInitializerAfterJoinTournamentFn(C.initializerregisterafterjointournament)
+	ret.registerbeforelisttournamentrecords = C.NkInitializerBeforeListTournamentRecordsFn(C.initializerregisterbeforelisttournamentrecords)
+	ret.registerafterlisttournamentrecords = C.NkInitializerAfterListTournamentRecordsFn(C.initializerregisterafterlisttournamentrecords)
+	ret.registerbeforelisttournaments = C.NkInitializerBeforeListTournamentsFn(C.initializerregisterbeforelisttournaments)
+	ret.registerafterlisttournaments = C.NkInitializerAfterListTournamentsFn(C.initializerregisterafterlisttournaments)
+	ret.registerbeforewritetournamentrecord = C.NkInitializerBeforeWriteTournamentRecordFn(C.initializerregisterbeforewritetournamentrecord)
+	ret.registerafterwritetournamentrecord = C.NkInitializerAfterWriteTournamentRecordFn(C.initializerregisterafterwritetournamentrecord)
+	ret.registerbeforelisttournamentrecordsaroundowner = C.NkInitializerBeforeListTournamentRecordsAroundOwnerFn(C.initializerregisterbeforelisttournamentrecordsaroundowner)
+	ret.registerafterlisttournamentrecordsaroundowner = C.NkInitializerAfterListTournamentRecordsAroundOwnerFn(C.initializerregisterafterlisttournamentrecordsaroundowner)
+	ret.registerbeforeunlinkapple = C.NkInitializerBeforeUnlinkAppleFn(C.initializerregisterbeforeunlinkapple)
+	ret.registerafterunlinkapple = C.NkInitializerAfterUnlinkAppleFn(C.initializerregisterafterunlinkapple)
+	ret.registerbeforeunlinkcustom = C.NkInitializerBeforeUnlinkCustomFn(C.initializerregisterbeforeunlinkcustom)
+	ret.registerafterunlinkcustom = C.NkInitializerAfterUnlinkCustomFn(C.initializerregisterafterunlinkcustom)
+	ret.registerbeforeunlinkdevice = C.NkInitializerBeforeUnlinkDeviceFn(C.initializerregisterbeforeunlinkdevice)
+	ret.registerafterunlinkdevice = C.NkInitializerAfterUnlinkDeviceFn(C.initializerregisterafterunlinkdevice)
+	ret.registerbeforeunlinkemail = C.NkInitializerBeforeUnlinkEmailFn(C.initializerregisterbeforeunlinkemail)
+	ret.registerafterunlinkemail = C.NkInitializerAfterUnlinkEmailFn(C.initializerregisterafterunlinkemail)
+	ret.registerbeforeunlinkfacebook = C.NkInitializerBeforeUnlinkFacebookFn(C.initializerregisterbeforeunlinkfacebook)
+	ret.registerafterunlinkfacebook = C.NkInitializerAfterUnlinkFacebookFn(C.initializerregisterafterunlinkfacebook)
+	ret.registerbeforeunlinkfacebookinstantgame = C.NkInitializerBeforeUnlinkFacebookInstantGameFn(C.initializerregisterbeforeunlinkfacebookinstantgame)
+	ret.registerafterunlinkfacebookinstantgame = C.NkInitializerAfterUnlinkFacebookInstantGameFn(C.initializerregisterafterunlinkfacebookinstantgame)
+	ret.registerbeforeunlinkgamecenter = C.NkInitializerBeforeUnlinkGameCenterFn(C.initializerregisterbeforeunlinkgamecenter)
+	ret.registerafterunlinkgamecenter = C.NkInitializerAfterUnlinkGameCenterFn(C.initializerregisterafterunlinkgamecenter)
+	ret.registerbeforeunlinkgoogle = C.NkInitializerBeforeUnlinkGoogleFn(C.initializerregisterbeforeunlinkgoogle)
+	ret.registerafterunlinkgoogle = C.NkInitializerAfterUnlinkGoogleFn(C.initializerregisterafterunlinkgoogle)
+	ret.registerbeforeunlinksteam = C.NkInitializerBeforeUnlinkSteamFn(C.initializerregisterbeforeunlinksteam)
+	ret.registerafterunlinksteam = C.NkInitializerAfterUnlinkSteamFn(C.initializerregisterafterunlinksteam)
+	ret.registerbeforegetusers = C.NkInitializerBeforeGetUsersFn(C.initializerregisterbeforegetusers)
+	ret.registeraftergetusers = C.NkInitializerAfterGetUsersFn(C.initializerregisteraftergetusers)
+	ret.registerevent = C.NkInitializerEventFn(C.initializerregisterevent)
+	ret.registereventsessionstart = C.NkInitializerEventSessionStartFn(C.initializerregistereventsessionstart)
+	ret.registereventsessionend = C.NkInitializerEventSessionEndFn(C.initializerregistereventsessionend)
 
 	return ret
 }
@@ -1668,87 +1872,87 @@ func cNakamaModule(nk runtime.NakamaModule) C.NkModule {
 	ret.authenticategamecenter = C.NkModuleAuthenticateGameCenterFn(C.moduleauthenticategamecenter)
 	ret.authenticategoogle = C.NkModuleAuthenticateFn(C.moduleauthenticategoogle)
 	ret.authenticatesteam = C.NkModuleAuthenticateFn(C.moduleauthenticatesteam)
-	res.authenticatetokengenerate = C.NkModuleAuthenticateTokenGenerateFn(C.moduleauthenticatetokengenerate);
-	res.accountgetid = C.NkModuleAccountGetIdFn(C.moduleaccountgetid);
-	res.accountsgetid = C.NkModuleAccountsGetIdFn(C.moduleaccountsgetid);
-	res.accountupdateid = C.NkModuleAccountUpdateIdFn(C.moduleaccountupdateid);
-	res.accountdeleteid = C.NkModuleAccountDeleteIdFn(C.moduleaccountdeleteid);
-	res.accountexportid = C.NkModuleAccountExportIdFn(C.moduleaccountexportid);
-	res.usersgetid = C.NkModuleUsersGetIdFn(C.moduleusersgetid);
-	res.usersgetusername = C.NkModuleUsersGetUsernameFn(C.moduleusersgetusername);
-	res.usersbanid = C.NkModuleUsersBanIdFn(C.moduleusersbanid);
-	res.usersunbanid = C.NkModuleUsersUnbanIdFn(C.moduleusersunbanid);
-	res.linkapple = C.NkModuleLinkAppleFn(C.modulelinkapple);
-	res.linkcustom = C.NkModuleLinkCustomFn(C.modulelinkcustom);
-	res.linkdevice = C.NkModuleLinkDeviceFn(C.modulelinkdevice);
-	res.linkemail = C.NkModuleLinkEmailFn(C.modulelinkemail);
-	res.linkfacebook = C.NkModuleLinkFacebookFn(C.modulelinkfacebook);
-	res.linkfacebookinstantgame = C.NkModuleLinkFacebookInstantGameFn(C.modulelinkfacebookinstantgame);
-	res.linkgamecenter = C.NkModuleLinkGameCenterFn(C.modulelinkgamecenter);
-	res.linkgoogle = C.NkModuleLinkGoogleFn(C.modulelinkgoogle);
-	res.linksteam = C.NkModuleLinkSteamFn(C.modulelinksteam);
-	res.unlinkapple = C.NkModuleUnlinkAppleFn(C.moduleunlinkapple);
-	res.unlinkcustom = C.NkModuleUnlinkCustomFn(C.moduleunlinkcustom);
-	res.unlinkdevice = C.NkModuleUnlinkDeviceFn(C.moduleunlinkdevice);
-	res.unlinkemail = C.NkModuleUnlinkEmailFn(C.moduleunlinkemail);
-	res.unlinkfacebook = C.NkModuleUnlinkFacebookFn(C.moduleunlinkfacebook);
-	res.unlinkfacebookinstantgame = C.NkModuleUnlinkFacebookInstantGameFn(C.moduleunlinkfacebookinstantgame);
-	res.unlinkgamecenter = C.NkModuleUnlinkGameCenterFn(C.moduleunlinkgamecenter);
-	res.unlinkgoogle = C.NkModuleUnlinkGoogleFn(C.moduleunlinkgoogle);
-	res.unlinksteam = C.NkModuleunlinkSteamFn(C.moduleunlinksteam);
-	res.streamuserlist = C.NkModuleStreamUserListFn(C.modulestreamuserlist);
-	res.streamuserget = C.NkModuleStreamUserGetFn(C.modulestreamuserget);
-	res.streamuserjoin = C.NkModuleStreamUserJoinFn(C.modulestreamuserjoin);
-	res.streamuserupdate = C.NkModuleStreamuserUpdateFn(C.modulestreamuserupdate);
-	res.streamuserleave = C.NkModuleStreamUserLeaveFn(C.modulestreamuserleave);
-	res.streamuserkick = C.NkModuleStreamUserKickFn(C.modulestreamuserkick);
-	res.streamcount = C.NkModuleStreamCountFn(C.modulestreamcount);
-	res.streamclose = C.NkModuleStreamCloseFn(C.modulestreamclose);
-	res.streamsend = C.NkModuleStreamSendFn(C.modulestreamsend);
-	res.streamsendraw = C.NkModuleStreamSendRawFn(C.modulestreamsendraw);
-	res.sessiondisconnect = C.NkModuleSessionDisconnectFn(C.modulesessiondisconnect);
-	res.matchcreate = C.NkModuleMatchCreateFn(C.modulematchcreate);
-	res.matchget = C.NkModuleMatchGetFn(C.modulematchget);
-	res.matchlist = C.NkModuleMatchListFn(C.modulematchlist);
-	res.notificationsend = C.NkModuleNotificationSendFn(C.modulenotificationsend);
-	res.notificationssend = C.NkModuleNotificationsSendFn(C.modulenotificationssend);
-	res.walletupdate = C.NkModuleWalletUpdateFn(C.modulewalletupdate);
-	res.walletsupdate = C.NkModuleWalletsUpdateFn(C.modulewalletsupdate);
-	res.walletledgerupdate = C.NkModuleWalletLedgerUpdateFn(C.modulewalletledgerupdate);
-	res.walletledgerlist = C.NkModuleWalletLedgerListFn(C.modulewalletledgerlist);
-	res.storagelist = C.NkModuleStorageListFn(C.modulestoragelist);
-	res.storageread = C.NkModuleStorageReadFn(C.modulestorageread);
-	res.storagewrite = C.NkModuleStorageWriteFn(C.modulestoragewrite);
-	res.storagedelete = C.NkModuleStorageDeleteFn(C.modulestoragedelete);
-	res.multiupdate = C.NkModuleMultiUpdateFn(C.modulemultiupdate);
-	res.leaderboardcreate = C.NkModuleLeaderboardCreateFn(C.moduleleaderboardcreate);
-	res.leaderboarddelete = C.NkModuleLeaderboardDeleteFn(C.moduleleaderboarddelete);
-	res.leaderboardrecordslist = C.NkModuleLeaderboardRecordsListFn(C.moduleleaderboardrecordslist);
-	res.leaderboardrecordwrite = C.NkModuleLeaderboardRecordWriteFn(C.moduleleaderboardrecordwrite);
-	res.leaderboardrecorddelete = C.NkModuleLeaderboardRecordDeleteFn(C.moduleleaderboardrecorddelete);
-	res.tournamentcreate = C.NkModuleTournamentCreateFn(C.moduletournamentcreate);
-	res.tournamentdelete = C.NkModuleTournamentDeleteFn(C.moduletournamentdelete);
-	res.tournamentaddattempt = C.NkModuleTournamentAddAttemptFn(C.moduletournamentaddattempt);
-	res.tournamentjoin = C.NkModuleTournamentJoinFn(C.moduletournamentjoin);
-	res.tournamentsgetid = C.NkModuleTournamentsGetIdFn(C.moduletournamentsgetid);
-	res.tournamentlist = C.NkModuleTournamentListFn(C.moduletournamentlist);
-	res.tournamentrecordslist = C.NkModuleTournamentRecordsListFn(C.moduletournamentrecordslist);
-	res.tournamentrecordwrite = C.NkModuleTournamentRecordWriteFn(C.moduletournamentrecordwrite);
-	res.tournamentrecordshaystack = C.NkModuleTournamentRecordsHaystackFn(C.moduletournamentrecordshaystack);
-	res.groupgetid = C.NkModuleGroupGetIdFn(C.modulegroupgetid);
-	res.groupcreate = C.NkModuleGroupCreateFn(C.modulegroupcreate);
-	res.groupupdate = C.NkModuleGroupUpdateFn(C.modulegroupupdate);
-	res.groupdelete = C.NkModuleGroupDeleteFn(C.modulegroupdelete);
-	res.groupuserjoin = C.NkModuleGroupUserJoinFn(C.modulegroupuserjoin);
-	res.groupuserleave = C.NkModuleGroupUserLeaveFn(C.modulegroupuserleave);
-	res.groupusersadd = C.NkModuleGroupUsersAddFn(C.modulegroupusersadd);
-	res.groupuserskick = C.NkModuleGroupUsersKickFn(C.modulegroupuserskick);
-	res.groupuserspromote = C.NkModuleGroupUsersPromoteFn(C.modulegroupuserspromote);
-	res.groupusersdemote = C.NkModuleGroupUsersDemoteFn(C.modulegroupusersdemote);
-	res.groupuserslist = C.NkModuleGroupUsersListFn(C.modulegroupuserslist);
-	res.usergroupslist = C.NkModuleUserGroupsListFn(C.moduleusergroupslist);
-	res.friendslist = C.NkModuleFriendsListFn(C.modulefriendslist);
-	res.event = C.NkModuleEventFn(C.moduleevent);
+	res.authenticatetokengenerate = C.NkModuleAuthenticateTokenGenerateFn(C.moduleauthenticatetokengenerate)
+	res.accountgetid = C.NkModuleAccountGetIdFn(C.moduleaccountgetid)
+	res.accountsgetid = C.NkModuleAccountsGetIdFn(C.moduleaccountsgetid)
+	res.accountupdateid = C.NkModuleAccountUpdateIdFn(C.moduleaccountupdateid)
+	res.accountdeleteid = C.NkModuleAccountDeleteIdFn(C.moduleaccountdeleteid)
+	res.accountexportid = C.NkModuleAccountExportIdFn(C.moduleaccountexportid)
+	res.usersgetid = C.NkModuleUsersGetFn(C.moduleusersgetid)
+	res.usersgetusername = C.NkModuleUsersGetFn(C.moduleusersgetusername)
+	res.usersbanid = C.NkModuleUsersBanFn(C.moduleusersbanid)
+	res.usersunbanid = C.NkModuleUsersBanFn(C.moduleusersunbanid)
+	res.linkapple = C.NkModuleLinkFn(C.modulelinkapple)
+	res.linkcustom = C.NkModuleLinkFn(C.modulelinkcustom)
+	res.linkdevice = C.NkModuleLinkFn(C.modulelinkdevice)
+	res.linkemail = C.NkModuleLinkEmailFn(C.modulelinkemail)
+	res.linkfacebook = C.NkModuleLinkFacebookFn(C.modulelinkfacebook)
+	res.linkfacebookinstantgame = C.NkModuleLinkFn(C.modulelinkfacebookinstantgame)
+	res.linkgamecenter = C.NkModuleLinkGameCenterFn(C.modulelinkgamecenter)
+	res.linkgoogle = C.NkModuleLinkFn(C.modulelinkgoogle)
+	res.linksteam = C.NkModuleLinkFn(C.modulelinksteam)
+	res.unlinkapple = C.NkModuleLinkFn(C.moduleunlinkapple)
+	res.unlinkcustom = C.NkModuleLinkFn(C.moduleunlinkcustom)
+	res.unlinkdevice = C.NkModuleLinkFn(C.moduleunlinkdevice)
+	res.unlinkemail = C.NkModuleLinkFn(C.moduleunlinkemail)
+	res.unlinkfacebook = C.NkModuleLinkFn(C.moduleunlinkfacebook)
+	res.unlinkfacebookinstantgame = C.NkModuleLinkFn(C.moduleunlinkfacebookinstantgame)
+	res.unlinkgamecenter = C.NkModuleLinkGameCenterFn(C.moduleunlinkgamecenter)
+	res.unlinkgoogle = C.NkModuleLinkFn(C.moduleunlinkgoogle)
+	res.unlinksteam = C.NkModuleLinkFn(C.moduleunlinksteam)
+	res.streamuserlist = C.NkModuleStreamUserListFn(C.modulestreamuserlist)
+	res.streamuserget = C.NkModuleStreamUserGetFn(C.modulestreamuserget)
+	res.streamuserjoin = C.NkModuleStreamUserJoinFn(C.modulestreamuserjoin)
+	res.streamuserupdate = C.NkModuleStreamUserUpdateFn(C.modulestreamuserupdate)
+	res.streamuserleave = C.NkModuleStreamUserLeaveFn(C.modulestreamuserleave)
+	res.streamuserkick = C.NkModuleStreamUserKickFn(C.modulestreamuserkick)
+	res.streamcount = C.NkModuleStreamCountFn(C.modulestreamcount)
+	res.streamclose = C.NkModuleStreamCloseFn(C.modulestreamclose)
+	res.streamsend = C.NkModuleStreamSendFn(C.modulestreamsend)
+	res.streamsendraw = C.NkModuleStreamSendRawFn(C.modulestreamsendraw)
+	res.sessiondisconnect = C.NkModuleSessionDisconnectFn(C.modulesessiondisconnect)
+	res.matchcreate = C.NkModuleMatchCreateFn(C.modulematchcreate)
+	res.matchget = C.NkModuleMatchGetFn(C.modulematchget)
+	res.matchlist = C.NkModuleMatchListFn(C.modulematchlist)
+	res.notificationsend = C.NkModuleNotificationSendFn(C.modulenotificationsend)
+	res.notificationssend = C.NkModuleNotificationsSendFn(C.modulenotificationssend)
+	res.walletupdate = C.NkModuleWalletUpdateFn(C.modulewalletupdate)
+	res.walletsupdate = C.NkModuleWalletsUpdateFn(C.modulewalletsupdate)
+	res.walletledgerupdate = C.NkModuleWalletLedgerUpdateFn(C.modulewalletledgerupdate)
+	res.walletledgerlist = C.NkModuleWalletLedgerListFn(C.modulewalletledgerlist)
+	res.storagelist = C.NkModuleStorageListFn(C.modulestoragelist)
+	res.storageread = C.NkModuleStorageReadFn(C.modulestorageread)
+	res.storagewrite = C.NkModuleStorageWriteFn(C.modulestoragewrite)
+	res.storagedelete = C.NkModuleStorageDeleteFn(C.modulestoragedelete)
+	res.multiupdate = C.NkModuleMultiUpdateFn(C.modulemultiupdate)
+	res.leaderboardcreate = C.NkModuleLeaderboardCreateFn(C.moduleleaderboardcreate)
+	res.leaderboarddelete = C.NkModuleDeleteFn(C.moduleleaderboarddelete)
+	res.leaderboardrecordslist = C.NkModuleLeaderboardRecordsListFn(C.moduleleaderboardrecordslist)
+	res.leaderboardrecordwrite = C.NkModuleLeaderboardRecordWriteFn(C.moduleleaderboardrecordwrite)
+	res.leaderboardrecorddelete = C.NkModuleDeleteFn(C.moduleleaderboardrecorddelete)
+	res.tournamentcreate = C.NkModuleTournamentCreateFn(C.moduletournamentcreate)
+	res.tournamentdelete = C.NkModuleDeleteFn(C.moduletournamentdelete)
+	res.tournamentaddattempt = C.NkModuleTournamentAddAttemptFn(C.moduletournamentaddattempt)
+	res.tournamentjoin = C.NkModuleTournamentJoinFn(C.moduletournamentjoin)
+	res.tournamentsgetid = C.NkModuleTournamentsGetIdFn(C.moduletournamentsgetid)
+	res.tournamentlist = C.NkModuleTournamentListFn(C.moduletournamentlist)
+	res.tournamentrecordslist = C.NkModuleTournamentRecordsListFn(C.moduletournamentrecordslist)
+	res.tournamentrecordwrite = C.NkModuleTournamentRecordWriteFn(C.moduletournamentrecordwrite)
+	res.tournamentrecordshaystack = C.NkModuleTournamentRecordsHaystackFn(C.moduletournamentrecordshaystack)
+	res.groupsgetid = C.NkModuleGroupsGetIdFn(C.modulegroupsgetid)
+	res.groupcreate = C.NkModuleGroupCreateFn(C.modulegroupcreate)
+	res.groupupdate = C.NkModuleGroupUpdateFn(C.modulegroupupdate)
+	res.groupdelete = C.NkModuleDeleteFn(C.modulegroupdelete)
+	res.groupuserjoin = C.NkModuleGroupUserFn(C.modulegroupuserjoin)
+	res.groupuserleave = C.NkModuleGroupUserFn(C.modulegroupuserleave)
+	res.groupusersadd = C.NkModuleGroupUsersFn(C.modulegroupusersadd)
+	res.groupuserskick = C.NkModuleGroupUsersFn(C.modulegroupuserskick)
+	res.groupuserspromote = C.NkModuleGroupUsersFn(C.modulegroupuserspromote)
+	res.groupusersdemote = C.NkModuleGroupUsersFn(C.modulegroupusersdemote)
+	res.groupuserslist = C.NkModuleGroupUsersListFn(C.modulegroupuserslist)
+	res.usergroupslist = C.NkModuleUserGroupsListFn(C.moduleusergroupslist)
+	res.friendslist = C.NkModuleFriendsListFn(C.modulefriendslist)
+	res.event = C.NkModuleEventFn(C.moduleevent)
 
 	return ret
 }

@@ -194,7 +194,7 @@ extern "C"
 		NkString **outerror,
 		bool **outcreated);
 
-	typedef int (*NkModuleAuthenticateGenerateTokenFn)(
+	typedef int (*NkModuleAuthenticateTokenGenerateFn)(
 		NkString userid,
 		NkString username,
 		NkI64 expiry,
@@ -924,7 +924,7 @@ extern "C"
 		NkModuleAuthenticateGameCenterFn authenticategamecenter;
 		NkModuleAuthenticateFn authenticategoogle;
 		NkModuleAuthenticateFn authenticatesteam;
-		NkModuleAuthenticateGenerateTokenFn authenticatetokengenerate;
+		NkModuleAuthenticateTokenGenerateFn authenticatetokengenerate;
 		NkModuleAccountGetIdFn accountgetid;
 		NkModuleAccountsGetIdFn accountsgetid;
 		NkModuleAccountUpdateIdFn accountupdateid;
