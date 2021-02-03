@@ -17,99 +17,412 @@ package server
 /*
 #include "../include/nakama.h"
 
-typedef int (*InitModuleFn)(NkContext, NkLogger, NkDb, NkModule, NkInitializer);
+typedef int (*InitModuleFn)(
+	NkContext,
+	NkLogger,
+	NkDb,
+	NkModule,
+	NkInitializer);
 
-extern void cLoggerDebug(const void *, NkString);
-extern void cLoggerError(const void *, NkString);
-extern void cLoggerInfo(const void *, NkString);
-extern void cLoggerWarn(const void *, NkString);
+extern void cLoggerDebug(
+	const void *,
+	NkString);
+extern void cLoggerError(
+	const void *,
+	NkString);
+extern void cLoggerInfo(
+	const void *,
+	NkString);
+extern void cLoggerWarn(
+	const void *,
+	NkString);
 
-extern void cContextValue(const void *, NkString, NkString *);
+extern void cContextValue(
+	const void *,
+	NkString,
+	NkString *);
 
-extern int cModuleAuthenticateApple(const void *, const void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int cModuleAuthenticateCustom(const void *, const void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int cModuleAuthenticateDevice(const void *, const void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int cModuleAuthenticateEmail(const void *, const void *, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int cModuleAuthenticateFacebook(const void *, const void *, NkString, bool, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int cModuleAuthenticateFacebookInstantGame(const void *, const void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int cModuleAuthenticateGameCenter(const void *, const void *, NkString, NkString, NkI64, NkString, NkString, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int cModuleAuthenticateGoogle(const void *, const void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
-extern int cModuleAuthenticateSteam(const void *, const void *, NkString, NkString, bool, NkString *, NkString *, NkString *, bool *);
+extern int cModuleAuthenticateApple(
+	const void *,
+	const void *,
+	NkString,
+	NkString,
+	bool,
+	NkString *,
+	NkString *,
+	NkString *,
+	bool *);
+extern int cModuleAuthenticateCustom(
+	const void *,
+	const void *,
+	NkString,
+	NkString,
+	bool,
+	NkString *,
+	NkString *,
+	NkString *,
+	bool *);
+extern int cModuleAuthenticateDevice(
+	const void *,
+	const void *,
+	NkString,
+	NkString,
+	bool,
+	NkString *,
+	NkString *,
+	NkString *,
+	bool *);
+extern int cModuleAuthenticateEmail(
+	const void *,
+	const void *,
+	NkString,
+	NkString,
+	NkString,
+	bool,
+	NkString *,
+	NkString *,
+	NkString *,
+	bool *);
+extern int cModuleAuthenticateFacebook(
+	const void *,
+	const void *,
+	NkString,
+	bool,
+	NkString,
+	bool,
+	NkString *,
+	NkString *,
+	NkString *,
+	bool *);
+extern int cModuleAuthenticateFacebookInstantGame(
+	const void *,
+	const void *,
+	NkString,
+	NkString,
+	bool,
+	NkString *,
+	NkString *,
+	NkString *,
+	bool *);
+extern int cModuleAuthenticateGameCenter(
+	const void *,
+	const void *,
+	NkString,
+	NkString,
+	NkI64,
+	NkString,
+	NkString,
+	NkString,
+	NkString,
+	bool,
+	NkString *,
+	NkString *,
+	NkString *,
+	bool *);
+extern int cModuleAuthenticateGoogle(
+	const void *,
+	const void *,
+	NkString,
+	NkString,
+	bool,
+	NkString *,
+	NkString *,
+	NkString *,
+	bool *);
+extern int cModuleAuthenticateSteam(
+	const void *,
+	const void *,
+	NkString,
+	NkString,
+	bool,
+	NkString *,
+	NkString *,
+	NkString *,
+	bool *);
 
-int initmodule(const void *ptr, NkContext ctx, NkLogger logger, NkDb db, NkModule nk, NkInitializer initializer)
+int initmodule(
+	const void *ptr,
+	NkContext ctx,
+	NkLogger logger,
+	NkDb db,
+	NkModule nk,
+	NkInitializer initializer)
 {
 	InitModuleFn fn = (InitModuleFn)ptr;
-	return fn(ctx, logger, db, nk, initializer);
+	return fn(
+		ctx,
+		logger,
+		db,
+		nk,
+		initializer);
 }
 
-void contextvalue(const void *ptr, NkString key, NkString *outvalue)
+void contextvalue(
+	const void *ptr,
+	NkString key,
+	NkString *outvalue)
 {
-	return cContextValue(ptr, key, outvalue);
+	return cContextValue(
+		ptr,
+		key,
+		outvalue);
 }
 
-void loggerdebug(const void *ptr, NkString s)
+void loggerdebug(
+	const void *ptr,
+	NkString s)
 {
-	cLoggerDebug(ptr, s);
+	cLoggerDebug(
+		ptr,
+		s);
 }
 
-void loggererror(const void *ptr, NkString s)
+void loggererror(
+	const void *ptr,
+	NkString s)
 {
-	cLoggerError(ptr, s);
+	cLoggerError(
+		ptr,
+		s);
 }
 
-void loggerinfo(const void *ptr, NkString s)
+void loggerinfo(
+	const void *ptr,
+	NkString s)
 {
-	cLoggerInfo(ptr, s);
+	cLoggerInfo(
+		ptr,
+		s);
 }
 
-void loggerwarn(const void *ptr, NkString s)
+void loggerwarn(
+	const void *ptr,
+	NkString s)
 {
-	cLoggerWarn(ptr, s);
+	cLoggerWarn(
+		ptr,
+		s);
 }
 
-int moduleauthenticateapple(const void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
+int moduleauthenticateapple(
+	const void *ptr,
+	NkContext ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString *outuserid,
+	NkString *outusername,
+	NkString *outerr,
+	bool *outcreated)
 {
-	return cModuleAuthenticateApple(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
+	return cModuleAuthenticateApple(
+		ptr,
+		ctx.ptr,
+		userid,
+		username,
+		create,
+		outuserid,
+		outusername,
+		outerr,
+		outcreated);
 }
 
-int moduleauthenticatecustom(const void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
+int moduleauthenticatecustom(
+	const void *ptr,
+	NkContext ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString *outuserid,
+	NkString *outusername,
+	NkString *outerr,
+	bool *outcreated)
 {
-	return cModuleAuthenticateCustom(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
+	return cModuleAuthenticateCustom(
+		ptr,
+		ctx.ptr,
+		userid,
+		username,
+		create,
+		outuserid,
+		outusername,
+		outerr,
+		outcreated);
 }
 
-int moduleauthenticatedevice(const void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
+int moduleauthenticatedevice(
+	const void *ptr,
+	NkContext ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString *outuserid,
+	NkString *outusername,
+	NkString *outerr,
+	bool *outcreated)
 {
-	return cModuleAuthenticateDevice(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
+	return cModuleAuthenticateDevice(
+		ptr,
+		ctx.ptr,
+		userid,
+		username,
+		create,
+		outuserid,
+		outusername,
+		outerr,
+		outcreated);
 }
 
-int moduleauthenticateemail(const void *ptr, NkContext ctx, NkString email, NkString password, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
+int moduleauthenticateemail(
+	const void *ptr,
+	NkContext ctx,
+	NkString email,
+	NkString password,
+	NkString username,
+	bool create,
+	NkString *outuserid,
+	NkString *outusername,
+	NkString *outerr,
+	bool *outcreated)
 {
-	return cModuleAuthenticateEmail(ptr, ctx.ptr, email, password, username, create, outuserid, outusername, outerr, outcreated);
+	return cModuleAuthenticateEmail(
+		ptr,
+		ctx.ptr,
+		email,
+		password,
+		username,
+		create,
+		outuserid,
+		outusername,
+		outerr,
+		outcreated);
 }
 
-int moduleauthenticatefacebook(const void *ptr, NkContext ctx, NkString token, bool importfriends, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
+int moduleauthenticatefacebook(
+	const void *ptr,
+	NkContext ctx,
+	NkString token,
+	bool importfriends,
+	NkString username,
+	bool create,
+	NkString *outuserid,
+	NkString *outusername,
+	NkString *outerr,
+	bool *outcreated)
 {
-	return cModuleAuthenticateFacebook(ptr, ctx.ptr, token, importfriends, username, create, outuserid, outusername, outerr, outcreated);
+	return cModuleAuthenticateFacebook(
+		ptr,
+		ctx.ptr,
+		token,
+		importfriends,
+		username,
+		create,
+		outuserid,
+		outusername,
+		outerr,
+		outcreated);
 }
 
-int moduleauthenticatefacebookinstantgame(const void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
+int moduleauthenticatefacebookinstantgame(
+	const void *ptr,
+	NkContext ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString *outuserid,
+	NkString *outusername,
+	NkString *outerr,
+	bool *outcreated)
 {
-	return cModuleAuthenticateFacebookInstantGame(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
+	return cModuleAuthenticateFacebookInstantGame(
+		ptr,
+		ctx.ptr,
+		userid,
+		username,
+		create,
+		outuserid,
+		outusername,
+		outerr,
+		outcreated);
 }
 
-int moduleauthenticategamecenter(const void *ptr, NkContext ctx, NkString playerid, NkString bundleid, NkI64 timestamp, NkString salt, NkString signature, NkString publickeyurl, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
+int moduleauthenticategamecenter(
+	const void *ptr,
+	NkContext ctx,
+	NkString playerid,
+	NkString bundleid,
+	NkI64 timestamp,
+	NkString salt,
+	NkString signature,
+	NkString publickeyurl,
+	NkString username,
+	bool create,
+	NkString *outuserid,
+	NkString *outusername,
+	NkString *outerr,
+	bool *outcreated)
 {
-	return cModuleAuthenticateGameCenter(ptr, ctx.ptr, playerid, bundleid, timestamp, salt, signature, publickeyurl, username, create, outuserid, outusername, outerr, outcreated);
+	return cModuleAuthenticateGameCenter(
+		ptr,
+		ctx.ptr,
+		playerid,
+		bundleid,
+		timestamp,
+		salt,
+		signature,
+		publickeyurl,
+		username,
+		create,
+		outuserid,
+		outusername,
+		outerr,
+		outcreated);
 }
 
-int moduleauthenticategoogle(const void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
+int moduleauthenticategoogle(
+	const void *ptr,
+	NkContext ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString *outuserid,
+	NkString *outusername,
+	NkString *outerr,
+	bool *outcreated)
 {
-	return cModuleAuthenticateGoogle(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
+	return cModuleAuthenticateGoogle(
+		ptr,
+		ctx.ptr,
+		userid,
+		username,
+		create,
+		outuserid,
+		outusername,
+		outerr,
+		outcreated);
 }
 
-int moduleauthenticatesteam(const void *ptr, NkContext ctx, NkString userid, NkString username, bool create, NkString *outuserid, NkString *outusername, NkString *outerr, bool *outcreated)
+int moduleauthenticatesteam(
+	const void *ptr,
+	NkContext ctx,
+	NkString userid,
+	NkString username,
+	bool create,
+	NkString *outuserid,
+	NkString *outusername,
+	NkString *outerr,
+	bool *outcreated)
 {
-	return cModuleAuthenticateSteam(ptr, ctx.ptr, userid, username, create, outuserid, outusername, outerr, outcreated);
+	return cModuleAuthenticateSteam(
+		ptr,
+		ctx.ptr,
+		userid,
+		username,
+		create,
+		outuserid,
+		outusername,
+		outerr,
+		outcreated);
 }
 
 */

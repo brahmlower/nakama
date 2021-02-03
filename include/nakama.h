@@ -3312,7 +3312,6 @@ extern "C"
 	typedef struct
 	{
 		const void *ptr;
-
 		NkInitializerRpcFn registerrpc;
 		NkInitializerBeforeRtFn registerbeforert;
 		NkInitializerAfterRtFn registerafterrt;
