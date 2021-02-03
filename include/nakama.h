@@ -12,13 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// NOTE: In order to implement a c-module, you must provide the following functions:
+// NOTE: In order to implement a c-module, you must provide the following function:
 //
-// Module entrypoint:
 // int nk_init_module(NkContext, NkLogger, NkDb, NkModule, NkInitializer);
-//
-// Match initializer:
-// int nk_init_match(NkContext, NkLogger, NkDb, NkModule);
 
 #ifndef NAKAMA_H
 #define NAKAMA_H
@@ -3317,35 +3313,8 @@ extern "C"
 	{
 		const void *ptr;
 
-		// registerrpc registers a function with the given ID. This ID can be used within client
-		// code to send an RPC message to execute the function and return the result. Results are
-		// always returned as a JSON string (or optionally empty string).
-		//
-		// If there is an issue with the RPC call, return an empty string and the associated error
-		// which will be returned to the client.
 		NkInitializerRpcFn registerrpc;
-
-		// registerbeforert registers a function for a message. The registered function will be
-		// called after the message has been processed in the pipeline.
-		//
-		// The custom code will be executed asynchronously after the response message has been sent
-		// to a client
-		//
-		// Message names can be found here:
-		// https://heroiclabs.com/docs/runtime-code-basics/#message-names
 		NkInitializerBeforeRtFn registerbeforert;
-
-		// registerafterrt registers a function for a message. Any function may be registered to
-		// intercept a message received from a client and operate on it (or reject it) based on
-		// custom logic.
-		//
-		// This is useful to enforce specific rules on top of the standard features in the server.
-		//
-		// You can return `NULL` instead of the `rtapi.Envelope` and this will disable disable that
-		// particular server functionality.
-		//
-		// Message names can be found here:
-		// https://heroiclabs.com/docs/runtime-code-basics/#message-names
 		NkInitializerAfterRtFn registerafterrt;
 		NkInitializerMatchmakerMatchedFn registermatchmakermatched;
 		NkInitializerMatchFn registermatch;
@@ -3360,18 +3329,7 @@ extern "C"
 		NkInitializerAfterSessionRefreshFn registeraftersessionrefresh;
 		NkInitializerBeforeAuthenticateAppleFn registerbeforeauthenticateapple;
 		NkInitializerAfterAuthenticateAppleFn registerafterauthenticateapple;
-
-		// RegisterBeforeAuthenticateCustom can be used to perform pre-authentication checks.
-		//
-		// You can use this to process the input (such as decoding custom tokens) and ensure
-		// inter-compatibility between Nakama and your own custom system.
 		NkInitializerBeforeAuthenticateCustomFn registerbeforeauthenticatecustom;
-
-		// RegisterAfterAuthenticateCustom can be used to perform after successful authentication
-		// checks.
-		//
-		// For instance, you can run special logic if the account was just created like adding them
-		// to newcomers leaderboard.
 		NkInitializerAfterAuthenticateCustomFn registerafterauthenticatecustom;
 		NkInitializerBeforeAuthenticateDeviceFn registerbeforeauthenticatedevice;
 		NkInitializerAfterAuthenticateDeviceFn registerafterauthenticatedevice;
@@ -3379,8 +3337,10 @@ extern "C"
 		NkInitializerAfterAuthenticateEmailFn registerafterauthenticateemail;
 		NkInitializerBeforeAuthenticateFacebookFn registerbeforeauthenticatefacebook;
 		NkInitializerAfterAuthenticateFacebookFn registerafterauthenticatefacebook;
-		NkInitializerBeforeAuthenticateFacebookInstantGameFn registerbeforeauthenticatefacebookinstantgame;
-		NkInitializerAfterAuthenticateFacebookInstantGameFn registerafterauthenticatefacebookinstantgame;
+		NkInitializerBeforeAuthenticateFacebookInstantGameFn
+			registerbeforeauthenticatefacebookinstantgame;
+		NkInitializerAfterAuthenticateFacebookInstantGameFn
+			registerafterauthenticatefacebookinstantgame;
 		NkInitializerBeforeAuthenticateGameCenterFn registerbeforeauthenticategamecenter;
 		NkInitializerAfterAuthenticateGameCenterFn registerafterauthenticategamecenter;
 		NkInitializerBeforeAuthenticateGoogleFn registerbeforeauthenticategoogle;
@@ -3431,8 +3391,10 @@ extern "C"
 		NkInitializerAfterListLeaderboardRecordsFn registerafterlistleaderboardrecords;
 		NkInitializerBeforeWriteLeaderboardRecordFn registerbeforewriteleaderboardrecord;
 		NkInitializerAfterWriteLeaderboardRecordFn registerafterwriteleaderboardrecord;
-		NkInitializerBeforeListLeaderboardRecordsAroundOwnerFn registerbeforelistleaderboardrecordsaroundowner;
-		NkInitializerAfterListLeaderboardRecordsAroundOwnerFn registerafterlistleaderboardrecordsaroundowner;
+		NkInitializerBeforeListLeaderboardRecordsAroundOwnerFn
+			registerbeforelistleaderboardrecordsaroundowner;
+		NkInitializerAfterListLeaderboardRecordsAroundOwnerFn
+			registerafterlistleaderboardrecordsaroundowner;
 		NkInitializerBeforeLinkAppleFn registerbeforelinkapple;
 		NkInitializerAfterLinkAppleFn registerafterlinkapple;
 		NkInitializerBeforeLinkCustomFn registerbeforelinkcustom;
@@ -3473,8 +3435,10 @@ extern "C"
 		NkInitializerAfterListTournamentsFn registerafterlisttournaments;
 		NkInitializerBeforeWriteTournamentRecordFn registerbeforewritetournamentrecord;
 		NkInitializerAfterWriteTournamentRecordFn registerafterwritetournamentrecord;
-		NkInitializerBeforeListTournamentRecordsAroundOwnerFn registerbeforelisttournamentrecordsaroundowner;
-		NkInitializerAfterListTournamentRecordsAroundOwnerFn registerafterlisttournamentrecordsaroundowner;
+		NkInitializerBeforeListTournamentRecordsAroundOwnerFn
+			registerbeforelisttournamentrecordsaroundowner;
+		NkInitializerAfterListTournamentRecordsAroundOwnerFn
+			registerafterlisttournamentrecordsaroundowner;
 		NkInitializerBeforeUnlinkAppleFn registerbeforeunlinkapple;
 		NkInitializerAfterUnlinkAppleFn registerafterunlinkapple;
 		NkInitializerBeforeUnlinkCustomFn registerbeforeunlinkcustom;
