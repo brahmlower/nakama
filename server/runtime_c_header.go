@@ -51,9 +51,9 @@ extern int cModuleAuthenticateApple(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated);
 
 extern int cModuleAuthenticateCustom(
@@ -62,9 +62,9 @@ extern int cModuleAuthenticateCustom(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated);
 
 extern int cModuleAuthenticateDevice(
@@ -73,9 +73,9 @@ extern int cModuleAuthenticateDevice(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated);
 
 extern int cModuleAuthenticateEmail(
@@ -85,9 +85,9 @@ extern int cModuleAuthenticateEmail(
 	NkString password,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated);
 
 extern int cModuleAuthenticateFacebook(
@@ -97,9 +97,9 @@ extern int cModuleAuthenticateFacebook(
 	bool importfriends,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated);
 
 extern int cModuleAuthenticateFacebookInstantGame(
@@ -108,9 +108,9 @@ extern int cModuleAuthenticateFacebookInstantGame(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated);
 
 extern int cModuleAuthenticateGameCenter(
@@ -124,9 +124,9 @@ extern int cModuleAuthenticateGameCenter(
 	NkString publickeyurl,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated);
 
 extern int cModuleAuthenticateGoogle(
@@ -135,9 +135,9 @@ extern int cModuleAuthenticateGoogle(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated);
 
 extern int cModuleAuthenticateSteam(
@@ -146,12 +146,12 @@ extern int cModuleAuthenticateSteam(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated);
 
-extern int cModuleAuthenticateGenerateToken(
+extern int cModuleAuthenticateTokenGenerate(
 	const void *ptr,
 	NkString userid,
 	NkString username,
@@ -159,14 +159,14 @@ extern int cModuleAuthenticateGenerateToken(
 	NkMapString vars,
 	NkString **outtoken,
 	NkI64 **outexpiry,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleAccountGetId(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString userid,
 	NkAccount **outaccount,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleAccountsGetId(
 	const void *ptr,
@@ -175,7 +175,7 @@ extern int cModuleAccountsGetId(
 	NkU32 numuserids,
 	NkAccount **outaccounts,
 	NkU32 **outnumaccounts,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleAccountUpdateId(
 	const void *ptr,
@@ -188,44 +188,74 @@ extern int cModuleAccountUpdateId(
 	NkString location,
 	NkString langtag,
 	NkString avatarurl,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleAccountDeleteId(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString userid,
 	bool recorded,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleAccountExportId(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString userid,
 	NkString **outaccount,
-	NkString **outerror);
+	char **outerror);
 
-extern int cModuleUsersGet(
+extern int cModuleUsersGetId(
 	const void *ptr,
 	const NkContext *ctx,
-	NkString *keys,
+	const NkString *keys,
 	NkU32 numkeys,
 	NkUser **outusers,
 	NkU32 **outnumusers,
-	NkString **outerror);
+	char **outerror);
 
-extern int cModuleUsersBan(
+extern int cModuleUsersGetUsername(
 	const void *ptr,
 	const NkContext *ctx,
-	NkString *userids,
-	NkU32 numids,
-	NkString **outerror);
+	const NkString *keys,
+	NkU32 numkeys,
+	NkUser **outusers,
+	NkU32 **outnumusers,
+	char **outerror);
 
-extern int cModuleLink(
+extern int cModuleUsersBanId(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkString *userids,
+	NkU32 numids,
+	char **outerror);
+
+extern int cModuleUsersUnbanId(
+	const void *ptr,
+	const NkContext *ctx,
+	const NkString *userids,
+	NkU32 numids,
+	char **outerror);
+
+extern int cModuleLinkApple(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror);
+	char **outerror);
+
+extern int cModuleLinkCustom(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleLinkDevice(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
 
 extern int cModuleLinkEmail(
 	const void *ptr,
@@ -233,7 +263,7 @@ extern int cModuleLinkEmail(
 	NkString userid,
 	NkString email,
 	NkString password,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleLinkFacebook(
 	const void *ptr,
@@ -242,7 +272,14 @@ extern int cModuleLinkFacebook(
 	NkString username,
 	NkString token,
 	bool importfriends,
-	NkString **outerror);
+	char **outerror);
+
+extern int cModuleLinkFacebookInstantGame(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
 
 extern int cModuleLinkGameCenter(
 	const void *ptr,
@@ -254,7 +291,89 @@ extern int cModuleLinkGameCenter(
 	NkString salt,
 	NkString signature,
 	NkString publickeyurl,
-	NkString **outerror);
+	char **outerror);
+
+extern int cModuleLinkGoogle(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleLinkSteam(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleUnlinkApple(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleUnlinkCustom(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleUnlinkDevice(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleUnlinkEmail(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleUnlinkFacebook(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleUnlinkFacebookInstantGame(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleUnlinkGameCenter(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString playerid,
+	NkString bundleid,
+	NkI64 timestamp,
+	NkString salt,
+	NkString signature,
+	NkString publickeyurl,
+	char **outerror);
+
+extern int cModuleUnlinkGoogle(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
+
+extern int cModuleUnlinkSteam(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString userid,
+	NkString linkid,
+	char **outerror);
 
 extern int cModuleStreamUserList(
 	const void *ptr,
@@ -266,7 +385,7 @@ extern int cModuleStreamUserList(
 	bool includenothidden,
 	NkPresence **outpresences,
 	NkU32 **outnumpresences,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStreamUserGet(
 	const void *ptr,
@@ -277,7 +396,7 @@ extern int cModuleStreamUserGet(
 	NkString userid,
 	NkString sessionid,
 	NkPresenceMeta **outmeta,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStreamUserJoin(
 	const void *ptr,
@@ -291,7 +410,7 @@ extern int cModuleStreamUserJoin(
 	bool persistence,
 	NkString status,
 	bool **outjoined,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStreamUserUpdate(
 	const void *ptr,
@@ -304,7 +423,7 @@ extern int cModuleStreamUserUpdate(
 	bool hidden,
 	bool persistence,
 	NkString status,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStreamUserLeave(
 	const void *ptr,
@@ -314,7 +433,7 @@ extern int cModuleStreamUserLeave(
 	NkString label,
 	NkString userid,
 	NkString sessionid,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStreamUserKick(
 	const void *ptr,
@@ -323,7 +442,7 @@ extern int cModuleStreamUserKick(
 	NkString subcontext,
 	NkString label,
 	NkPresence presence,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStreamCount(
 	const void *ptr,
@@ -332,7 +451,7 @@ extern int cModuleStreamCount(
 	NkString subcontext,
 	NkString label,
 	NkU64 **outcount,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStreamClose(
 	const void *ptr,
@@ -340,7 +459,7 @@ extern int cModuleStreamClose(
 	NkString subject,
 	NkString subcontext,
 	NkString label,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStreamSend(
 	const void *ptr,
@@ -352,7 +471,7 @@ extern int cModuleStreamSend(
 	NkPresence *presences,
 	NkU32 numpresences,
 	bool reliable,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStreamSendRaw(
 	const void *ptr,
@@ -361,16 +480,16 @@ extern int cModuleStreamSendRaw(
 	NkString subcontext,
 	NkString label,
 	NkEnvelope msg,
-	NkPresence *presences,
+	const NkPresence *presences,
 	NkU32 numpresences,
 	bool reliable,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleSessionDisconnect(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString sessionid,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleMatchCreate(
 	const void *ptr,
@@ -378,14 +497,14 @@ extern int cModuleMatchCreate(
 	NkString module,
 	NkMapAny params,
 	NkString **outmatchid,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleMatchGet(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
 	NkMatch **outmatch,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleMatchList(
 	const void *ptr,
@@ -398,7 +517,7 @@ extern int cModuleMatchList(
 	NkString query,
 	NkMatch **outmatches,
 	NkU32 **outnummatches,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleNotificationSend(
 	const void *ptr,
@@ -409,14 +528,14 @@ extern int cModuleNotificationSend(
 	NkU64 code,
 	NkString sender,
 	bool persistent,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleNotificationsSend(
 	const void *ptr,
 	const NkContext *ctx,
 	const NkNotificationSend *notifications,
 	NkU32 numnotifications,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleWalletUpdate(
 	const void *ptr,
@@ -427,7 +546,7 @@ extern int cModuleWalletUpdate(
 	bool updateledger,
 	NkMapI64 **outupdated,
 	NkMapI64 **outprevious,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleWalletsUpdate(
 	const void *ptr,
@@ -437,7 +556,7 @@ extern int cModuleWalletsUpdate(
 	bool updateledger,
 	NkWalletUpdateResult **outresults,
 	NkU32 **outnumresults,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleWalletLedgerUpdate(
 	const void *ptr,
@@ -445,7 +564,7 @@ extern int cModuleWalletLedgerUpdate(
 	NkString itemid,
 	NkMapAny metadata,
 	NkWalletLedgerItem **outitem,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleWalletLedgerList(
 	const void *ptr,
@@ -456,7 +575,7 @@ extern int cModuleWalletLedgerList(
 	NkWalletLedgerItem **outitems,
 	NkU32 **outnumitems,
 	NkString **outcursor,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStorageList(
 	const void *ptr,
@@ -468,7 +587,7 @@ extern int cModuleStorageList(
 	NkStorageObject **outobjs,
 	NkU32 **outnumobjs,
 	NkString **outcursor,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStorageRead(
 	const void *ptr,
@@ -477,7 +596,7 @@ extern int cModuleStorageRead(
 	NkU32 numreads,
 	NkStorageObject **outobjs,
 	NkU32 **outnumobjs,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStorageWrite(
 	const void *ptr,
@@ -486,14 +605,14 @@ extern int cModuleStorageWrite(
 	NkU32 numwrites,
 	NkStorageObjectAck **outacks,
 	NkU32 **outnumacks,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleStorageDelete(
 	const void *ptr,
 	const NkContext *ctx,
 	const NkStorageDelete *deletes,
 	NkU32 numdeletes,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleMultiUpdate(
 	const void *ptr,
@@ -509,7 +628,7 @@ extern int cModuleMultiUpdate(
 	NkU32 **outnumacks,
 	NkWalletUpdateResult **outresults,
 	NkU32 **outnumresults,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleLeaderboardCreate(
 	const void *ptr,
@@ -520,7 +639,7 @@ extern int cModuleLeaderboardCreate(
 	NkString op,
 	NkString resetschedule,
 	NkMapAny metadata,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleLeaderboardRecordsList(
 	const void *ptr,
@@ -537,7 +656,7 @@ extern int cModuleLeaderboardRecordsList(
 	NkU32 **outnumownerrecords,
 	NkString **outnextcursor,
 	NkString **outprevcursor,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleLeaderboardRecordWrite(
 	const void *ptr,
@@ -548,14 +667,35 @@ extern int cModuleLeaderboardRecordWrite(
 	NkI64 subscore,
 	NkMapAny metadata,
 	NkLeaderboardRecord **outrecord,
-	NkString **outerror);
+	char **outerror);
 
-extern int cModuleDelete(
+extern int cModuleLeaderboardDelete(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
 	NkString ownerid,
-	NkString **outerror);
+	char **outerror);
+
+extern int cModuleLeaderboardRecordDelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	char **outerror);
+
+extern int cModuleTournamentDelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	char **outerror);
+
+extern int cModuleGroupDelete(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString id,
+	NkString ownerid,
+	char **outerror);
 
 extern int cModuleTournamentCreate(
 	const void *ptr,
@@ -573,7 +713,7 @@ extern int cModuleTournamentCreate(
 	NkU32 maxsize,
 	NkU32 maxnumscore,
 	bool joinrequired,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleTournamentAddAttempt(
 	const void *ptr,
@@ -581,7 +721,7 @@ extern int cModuleTournamentAddAttempt(
 	NkString id,
 	NkString ownerid,
 	NkU64 count,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleTournamentJoin(
 	const void *ptr,
@@ -589,7 +729,7 @@ extern int cModuleTournamentJoin(
 	NkString id,
 	NkString ownerid,
 	NkString username,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleTournamentsGetId(
 	const void *ptr,
@@ -598,7 +738,7 @@ extern int cModuleTournamentsGetId(
 	NkU32 numtournamentids,
 	NkTournament **outtournaments,
 	NkU32 **outnumtournaments,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleTournamentList(
 	const void *ptr,
@@ -612,7 +752,7 @@ extern int cModuleTournamentList(
 	NkString id,
 	NkTournamentList **outtournaments,
 	NkU32 **outnumtournaments,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleTournamentRecordsList(
 	const void *ptr,
@@ -629,7 +769,7 @@ extern int cModuleTournamentRecordsList(
 	NkU32 **outnumownerrecords,
 	NkString **outnextcursor,
 	NkString **outprevcursor,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleTournamentRecordWrite(
 	const void *ptr,
@@ -641,7 +781,7 @@ extern int cModuleTournamentRecordWrite(
 	NkI64 subscore,
 	NkMapAny metadata,
 	NkLeaderboardRecord **outrecord,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleTournamentRecordsHaystack(
 	const void *ptr,
@@ -652,7 +792,7 @@ extern int cModuleTournamentRecordsHaystack(
 	NkI64 expiry,
 	NkLeaderboardRecord **outrecords,
 	NkU32 **outnumrecords,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleGroupsGetId(
 	const void *ptr,
@@ -661,7 +801,7 @@ extern int cModuleGroupsGetId(
 	NkU32 numgroupids,
 	NkGroup **outgroups,
 	NkU32 **outnumgroups,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleGroupCreate(
 	const void *ptr,
@@ -676,7 +816,7 @@ extern int cModuleGroupCreate(
 	NkMapAny metadata,
 	NkU32 maxcount,
 	NkGroup **outgroup,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleGroupUpdate(
 	const void *ptr,
@@ -690,23 +830,55 @@ extern int cModuleGroupUpdate(
 	bool open,
 	NkMapAny metadata,
 	NkU32 maxcount,
-	NkString **outerror);
+	char **outerror);
 
-extern int cModuleGroupuUser(
+extern int cModuleGroupUserJoin(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString groupid,
 	NkString userid,
 	NkString username,
-	NkString **outerror);
+	char **outerror);
 
-extern int cModuleGroupUsers(
+extern int cModuleGroupUserLeave(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	NkString userid,
+	NkString username,
+	char **outerror);
+
+extern int cModuleGroupUsersAdd(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString groupid,
 	const NkString *userids,
 	NkU32 numuserids,
-	NkString **outerror);
+	char **outerror);
+
+extern int cModuleGroupUsersDemote(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	char **outerror);
+
+extern int cModuleGroupUsersKick(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	char **outerror);
+
+extern int cModuleGroupUsersPromote(
+	const void *ptr,
+	const NkContext *ctx,
+	NkString groupid,
+	const NkString *userids,
+	NkU32 numuserids,
+	char **outerror);
 
 extern int cModuleGroupUsersList(
 	const void *ptr,
@@ -718,7 +890,7 @@ extern int cModuleGroupUsersList(
 	NkGroupUserListGroupUser **outusers,
 	NkU32 **outnumusers,
 	NkString **outcursor,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleUserGroupsList(
 	const void *ptr,
@@ -730,7 +902,7 @@ extern int cModuleUserGroupsList(
 	NkUserGroupListUserGroup **outusers,
 	NkU32 **outnumusers,
 	NkString **outcursor,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleFriendsList(
 	const void *ptr,
@@ -742,732 +914,737 @@ extern int cModuleFriendsList(
 	NkFriend **outfriends,
 	NkU32 **outnumfriends,
 	NkString **outcursor,
-	NkString **outerror);
+	char **outerror);
 
 extern int cModuleEvent(
 	const void *ptr,
 	const NkContext *ctx,
 	NkEvent evt,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerRpc(
+extern int cInitializerRegisterRpc(
 	const void *ptr,
 	NkString id,
 	const NkRpcFn fn,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeRt(
+extern int cInitializerRegisterBeforeRt(
 	const void *ptr,
 	NkString id,
 	const NkBeforeRtCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterRt(
+extern int cInitializerRegisterAfterRt(
 	const void *ptr,
 	NkString id,
 	const NkAfterRtCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerMatchmakerMatched(
+extern int cInitializerRegisterMatchmakerMatched(
 	const void *ptr,
 	const NkMatchmakerMatchedCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerMatch(
+extern int cInitializerRegisterMatch(
 	const void *ptr,
 	NkString name,
 	const NkMatchCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerTournament(
+extern int cInitializerRegisterTournamentEnd(
 	const void *ptr,
 	const NkTournamentCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerLeaderBoardEnd(
+extern int cInitializerRegisterTournamentReset(
+	const void *ptr,
+	const NkTournamentCallbackFn cb,
+	char **outerror);
+
+extern int cInitializerRegisterLeaderBoardEnd(
 	const void *ptr,
 	const NkLeaderBoardCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerLeaderBoardReset(
+extern int cInitializerRegisterLeaderBoardReset(
 	const void *ptr,
 	const NkLeaderBoardCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeGetAccount(
+extern int cInitializerRegisterBeforeGetAccount(
 	const void *ptr,
 	const NkCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterGetAccount(
+extern int cInitializerRegisterAfterGetAccount(
 	const void *ptr,
 	const NkAfterGetAccountCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUpdateAccount(
+extern int cInitializerRegisterBeforeUpdateAccount(
 	const void *ptr,
 	const NkBeforeUpdateAccountCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUpdateAccount(
+extern int cInitializerRegisterAfterUpdateAccount(
 	const void *ptr,
 	const NkAfterUpdateAccountCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeSessionRefresh(
+extern int cInitializerRegisterBeforeSessionRefresh(
 	const void *ptr,
 	const NkBeforeSessionRefreshCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterSessionRefresh(
+extern int cInitializerRegisterAfterSessionRefresh(
 	const void *ptr,
 	const NkAfterSessionRefreshCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAuthenticateApple(
+extern int cInitializerRegisterBeforeAuthenticateApple(
 	const void *ptr,
 	const NkBeforeAuthenticateAppleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAuthenticateApple(
+extern int cInitializerRegisterAfterAuthenticateApple(
 	const void *ptr,
 	const NkAfterAuthenticateAppleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAuthenticateCustom(
+extern int cInitializerRegisterBeforeAuthenticateCustom(
 	const void *ptr,
 	const NkBeforeAuthenticateCustomCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAuthenticateCustom(
+extern int cInitializerRegisterAfterAuthenticateCustom(
 	const void *ptr,
 	const NkAfterAuthenticateCustomCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAuthenticateDevice(
+extern int cInitializerRegisterBeforeAuthenticateDevice(
 	const void *ptr,
 	const NkBeforeAuthenticateDeviceCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAuthenticateDevice(
+extern int cInitializerRegisterAfterAuthenticateDevice(
 	const void *ptr,
 	const NkAfterAuthenticateDeviceCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAuthenticateEmail(
+extern int cInitializerRegisterBeforeAuthenticateEmail(
 	const void *ptr,
 	const NkBeforeAuthenticateEmailCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAuthenticateEmail(
+extern int cInitializerRegisterAfterAuthenticateEmail(
 	const void *ptr,
 	const NkAfterAuthenticateEmailCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAuthenticateFacebook(
+extern int cInitializerRegisterBeforeAuthenticateFacebook(
 	const void *ptr,
 	const NkBeforeAuthenticateFacebookCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAuthenticateFacebook(
+extern int cInitializerRegisterAfterAuthenticateFacebook(
 	const void *ptr,
 	const NkAfterAuthenticateFacebookCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAuthenticateFacebookInstantGame(
+extern int cInitializerRegisterBeforeAuthenticateFacebookInstantGame(
 	const void *ptr,
 	const NkBeforeAuthenticateFacebookInstantGameCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAuthenticateFacebookInstantGame(
+extern int cInitializerRegisterAfterAuthenticateFacebookInstantGame(
 	const void *ptr,
 	const NkAfterAuthenticateFacebookInstantGameCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAuthenticateGameCenter(
+extern int cInitializerRegisterBeforeAuthenticateGameCenter(
 	const void *ptr,
 	const NkBeforeAuthenticateGameCenterCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAuthenticateGameCenter(
+extern int cInitializerRegisterAfterAuthenticateGameCenter(
 	const void *ptr,
 	const NkAfterAuthenticateGameCenterCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAuthenticateGoogle(
+extern int cInitializerRegisterBeforeAuthenticateGoogle(
 	const void *ptr,
 	const NkBeforeAuthenticateGoogleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAuthenticateGoogle(
+extern int cInitializerRegisterAfterAuthenticateGoogle(
 	const void *ptr,
 	const NkAfterAuthenticateGoogleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAuthenticateSteam(
+extern int cInitializerRegisterBeforeAuthenticateSteam(
 	const void *ptr,
 	const NkBeforeAuthenticateSteamCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAuthenticateSteam(
+extern int cInitializerRegisterAfterAuthenticateSteam(
 	const void *ptr,
 	const NkAfterAuthenticateSteamCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListChannelMessages(
+extern int cInitializerRegisterBeforeListChannelMessages(
 	const void *ptr,
 	const NkBeforeListChannelMessagesCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListChannelMessages(
+extern int cInitializerRegisterAfterListChannelMessages(
 	const void *ptr,
 	const NkAfterListChannelMessagesCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListFriends(
+extern int cInitializerRegisterBeforeListFriends(
 	const void *ptr,
 	const NkBeforeListFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListFriends(
+extern int cInitializerRegisterAfterListFriends(
 	const void *ptr,
 	const NkAfterListFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAddFriends(
+extern int cInitializerRegisterBeforeAddFriends(
 	const void *ptr,
 	const NkBeforeAddFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAddFriends(
+extern int cInitializerRegisterAfterAddFriends(
 	const void *ptr,
 	const NkAfterAddFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeDeleteFriends(
+extern int cInitializerRegisterBeforeDeleteFriends(
 	const void *ptr,
 	const NkBeforeDeleteFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterDeleteFriends(
+extern int cInitializerRegisterAfterDeleteFriends(
 	const void *ptr,
 	const NkAfterDeleteFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeBlockFriends(
+extern int cInitializerRegisterBeforeBlockFriends(
 	const void *ptr,
 	const NkBeforeBlockFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterBlockFriends(
+extern int cInitializerRegisterAfterBlockFriends(
 	const void *ptr,
 	const NkAfterBlockFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeImportFacebookFriends(
+extern int cInitializerRegisterBeforeImportFacebookFriends(
 	const void *ptr,
 	const NkBeforeImportFacebookFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterImportFacebookFriends(
+extern int cInitializerRegisterAfterImportFacebookFriends(
 	const void *ptr,
 	const NkAfterImportFacebookFriendsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeCreateGroup(
+extern int cInitializerRegisterBeforeCreateGroup(
 	const void *ptr,
 	const NkBeforeCreateGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterCreateGroup(
+extern int cInitializerRegisterAfterCreateGroup(
 	const void *ptr,
 	const NkAfterCreateGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUpdateGroup(
+extern int cInitializerRegisterBeforeUpdateGroup(
 	const void *ptr,
 	const NkBeforeUpdateGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUpdateGroup(
+extern int cInitializerRegisterAfterUpdateGroup(
 	const void *ptr,
 	const NkAfterUpdateGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeDeleteGroup(
+extern int cInitializerRegisterBeforeDeleteGroup(
 	const void *ptr,
 	const NkBeforeDeleteGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterDeleteGroup(
+extern int cInitializerRegisterAfterDeleteGroup(
 	const void *ptr,
 	const NkAfterDeleteGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeJoinGroup(
+extern int cInitializerRegisterBeforeJoinGroup(
 	const void *ptr,
 	const NkBeforeJoinGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterJoinGroup(
+extern int cInitializerRegisterAfterJoinGroup(
 	const void *ptr,
 	const NkAfterJoinGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLeaveGroup(
+extern int cInitializerRegisterBeforeLeaveGroup(
 	const void *ptr,
 	const NkBeforeLeaveGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLeaveGroup(
+extern int cInitializerRegisterAfterLeaveGroup(
 	const void *ptr,
 	const NkAfterLeaveGroupCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeAddGroupUsers(
+extern int cInitializerRegisterBeforeAddGroupUsers(
 	const void *ptr,
 	const NkBeforeAddGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterAddGroupUsers(
+extern int cInitializerRegisterAfterAddGroupUsers(
 	const void *ptr,
 	const NkAfterAddGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeBanGroupUsers(
+extern int cInitializerRegisterBeforeBanGroupUsers(
 	const void *ptr,
 	const NkBeforeBanGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterBanGroupUsers(
+extern int cInitializerRegisterAfterBanGroupUsers(
 	const void *ptr,
 	const NkAfterBanGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeKickGroupUsers(
+extern int cInitializerRegisterBeforeKickGroupUsers(
 	const void *ptr,
 	const NkBeforeKickGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterKickGroupUsers(
+extern int cInitializerRegisterAfterKickGroupUsers(
 	const void *ptr,
 	const NkAfterKickGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforePromoteGroupUsers(
+extern int cInitializerRegisterBeforePromoteGroupUsers(
 	const void *ptr,
 	const NkBeforePromoteGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterPromoteGroupUsers(
+extern int cInitializerRegisterAfterPromoteGroupUsers(
 	const void *ptr,
 	const NkAfterPromoteGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeDemoteGroupUsers(
+extern int cInitializerRegisterBeforeDemoteGroupUsers(
 	const void *ptr,
 	const NkBeforeDemoteGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterDemoteGroupUsers(
+extern int cInitializerRegisterAfterDemoteGroupUsers(
 	const void *ptr,
 	const NkAfterDemoteGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListGroupUsers(
+extern int cInitializerRegisterBeforeListGroupUsers(
 	const void *ptr,
 	const NkBeforeListGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListGroupUsers(
+extern int cInitializerRegisterAfterListGroupUsers(
 	const void *ptr,
 	const NkAfterListGroupUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListUserGroups(
+extern int cInitializerRegisterBeforeListUserGroups(
 	const void *ptr,
 	const NkBeforeListUserGroupsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListUserGroups(
+extern int cInitializerRegisterAfterListUserGroups(
 	const void *ptr,
 	const NkAfterListUserGroupsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListGroups(
+extern int cInitializerRegisterBeforeListGroups(
 	const void *ptr,
 	const NkBeforeListGroupsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListGroups(
+extern int cInitializerRegisterAfterListGroups(
 	const void *ptr,
 	const NkAfterListGroupsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeDeleteLeaderboardRecord(
+extern int cInitializerRegisterBeforeDeleteLeaderboardRecord(
 	const void *ptr,
 	const NkBeforeDeleteLeaderboardRecordCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterDeleteLeaderboardRecord(
+extern int cInitializerRegisterAfterDeleteLeaderboardRecord(
 	const void *ptr,
 	const NkAfterDeleteLeaderboardRecordCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListLeaderboardRecords(
+extern int cInitializerRegisterBeforeListLeaderboardRecords(
 	const void *ptr,
 	const NkBeforeListLeaderboardRecordsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListLeaderboardRecords(
+extern int cInitializerRegisterAfterListLeaderboardRecords(
 	const void *ptr,
 	const NkAfterListLeaderboardRecordsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeWriteLeaderboardRecord(
+extern int cInitializerRegisterBeforeWriteLeaderboardRecord(
 	const void *ptr,
 	const NkBeforeWriteLeaderboardRecordCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterWriteLeaderboardRecord(
+extern int cInitializerRegisterAfterWriteLeaderboardRecord(
 	const void *ptr,
 	const NkAfterWriteLeaderboardRecordCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListLeaderboardRecordsAroundOwner(
+extern int cInitializerRegisterBeforeListLeaderboardRecordsAroundOwner(
 	const void *ptr,
 	const NkBeforeListLeaderboardRecordsAroundOwnerCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListLeaderboardRecordsAroundOwner(
+extern int cInitializerRegisterAfterListLeaderboardRecordsAroundOwner(
 	const void *ptr,
 	const NkAfterListLeaderboardRecordsAroundOwnerCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLinkApple(
+extern int cInitializerRegisterBeforeLinkApple(
 	const void *ptr,
 	const NkBeforeLinkAppleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLinkApple(
+extern int cInitializerRegisterAfterLinkApple(
 	const void *ptr,
 	const NkAfterLinkAppleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLinkCustom(
+extern int cInitializerRegisterBeforeLinkCustom(
 	const void *ptr,
 	const NkBeforeLinkCustomCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLinkCustom(
+extern int cInitializerRegisterAfterLinkCustom(
 	const void *ptr,
 	const NkAfterLinkCustomCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLinkDevice(
+extern int cInitializerRegisterBeforeLinkDevice(
 	const void *ptr,
 	const NkBeforeLinkDeviceCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLinkDevice(
+extern int cInitializerRegisterAfterLinkDevice(
 	const void *ptr,
 	const NkAfterLinkDeviceCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLinkEmail(
+extern int cInitializerRegisterBeforeLinkEmail(
 	const void *ptr,
 	const NkBeforeLinkEmailCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLinkEmail(
+extern int cInitializerRegisterAfterLinkEmail(
 	const void *ptr,
 	const NkAfterLinkEmailCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLinkFacebook(
+extern int cInitializerRegisterBeforeLinkFacebook(
 	const void *ptr,
 	const NkBeforeLinkFacebookCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLinkFacebook(
+extern int cInitializerRegisterAfterLinkFacebook(
 	const void *ptr,
 	const NkAfterLinkFacebookCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLinkFacebookInstantGame(
+extern int cInitializerRegisterBeforeLinkFacebookInstantGame(
 	const void *ptr,
 	const NkBeforeLinkFacebookInstantGameCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLinkFacebookInstantGame(
+extern int cInitializerRegisterAfterLinkFacebookInstantGame(
 	const void *ptr,
 	const NkAfterLinkFacebookInstantGameCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLinkGameCenter(
+extern int cInitializerRegisterBeforeLinkGameCenter(
 	const void *ptr,
 	const NkBeforeLinkGameCenterCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLinkGameCenter(
+extern int cInitializerRegisterAfterLinkGameCenter(
 	const void *ptr,
 	const NkAfterLinkGameCenterCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLinkGoogle(
+extern int cInitializerRegisterBeforeLinkGoogle(
 	const void *ptr,
 	const NkBeforeLinkGoogleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLinkGoogle(
+extern int cInitializerRegisterAfterLinkGoogle(
 	const void *ptr,
 	const NkAfterLinkGoogleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeLinkSteam(
+extern int cInitializerRegisterBeforeLinkSteam(
 	const void *ptr,
 	const NkBeforeLinkSteamCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterLinkSteam(
+extern int cInitializerRegisterAfterLinkSteam(
 	const void *ptr,
 	const NkAfterLinkSteamCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListMatches(
+extern int cInitializerRegisterBeforeListMatches(
 	const void *ptr,
 	const NkBeforeListMatchesCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListMatches(
+extern int cInitializerRegisterAfterListMatches(
 	const void *ptr,
 	const NkAfterListMatchesCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListNotifications(
+extern int cInitializerRegisterBeforeListNotifications(
 	const void *ptr,
 	const NkBeforeListNotificationsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListNotifications(
+extern int cInitializerRegisterAfterListNotifications(
 	const void *ptr,
 	const NkAfterListNotificationsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeDeleteNotifications(
+extern int cInitializerRegisterBeforeDeleteNotifications(
 	const void *ptr,
 	const NkBeforeDeleteNotificationsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterDeleteNotifications(
+extern int cInitializerRegisterAfterDeleteNotifications(
 	const void *ptr,
 	const NkAfterDeleteNotificationsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListStorageObjects(
+extern int cInitializerRegisterBeforeListStorageObjects(
 	const void *ptr,
 	const NkBeforeListStorageObjectsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListStorageObjects(
+extern int cInitializerRegisterAfterListStorageObjects(
 	const void *ptr,
 	const NkAfterListStorageObjectsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeReadStorageObjects(
+extern int cInitializerRegisterBeforeReadStorageObjects(
 	const void *ptr,
 	const NkBeforeReadStorageObjectsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterReadStorageObjects(
+extern int cInitializerRegisterAfterReadStorageObjects(
 	const void *ptr,
 	const NkAfterReadStorageObjectsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeWriteStorageObjects(
+extern int cInitializerRegisterBeforeWriteStorageObjects(
 	const void *ptr,
 	const NkBeforeWriteStorageObjectsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterWriteStorageObjects(
+extern int cInitializerRegisterAfterWriteStorageObjects(
 	const void *ptr,
 	const NkAfterWriteStorageObjectsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeDeleteStorageObjects(
+extern int cInitializerRegisterBeforeDeleteStorageObjects(
 	const void *ptr,
 	const NkBeforeDeleteStorageObjectsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterDeleteStorageObjects(
+extern int cInitializerRegisterAfterDeleteStorageObjects(
 	const void *ptr,
 	const NkAfterDeleteStorageObjectsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeJoinTournament(
+extern int cInitializerRegisterBeforeJoinTournament(
 	const void *ptr,
 	const NkBeforeJoinTournamentCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterJoinTournament(
+extern int cInitializerRegisterAfterJoinTournament(
 	const void *ptr,
 	const NkAfterJoinTournamentCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListTournamentRecords(
+extern int cInitializerRegisterBeforeListTournamentRecords(
 	const void *ptr,
 	const NkBeforeListTournamentRecordsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListTournamentRecords(
+extern int cInitializerRegisterAfterListTournamentRecords(
 	const void *ptr,
 	const NkAfterListTournamentRecordsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListTournaments(
+extern int cInitializerRegisterBeforeListTournaments(
 	const void *ptr,
 	const NkBeforeListTournamentsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListTournaments(
+extern int cInitializerRegisterAfterListTournaments(
 	const void *ptr,
 	const NkAfterListTournamentsCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeWriteTournamentRecord(
+extern int cInitializerRegisterBeforeWriteTournamentRecord(
 	const void *ptr,
 	const NkBeforeWriteTournamentRecordCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterWriteTournamentRecord(
+extern int cInitializerRegisterAfterWriteTournamentRecord(
 	const void *ptr,
 	const NkAfterWriteTournamentRecordCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeListTournamentRecordsAroundOwner(
+extern int cInitializerRegisterBeforeListTournamentRecordsAroundOwner(
 	const void *ptr,
 	const NkBeforeListTournamentRecordsAroundOwnerCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterListTournamentRecordsAroundOwner(
+extern int cInitializerRegisterAfterListTournamentRecordsAroundOwner(
 	const void *ptr,
 	const NkAfterListTournamentRecordsAroundOwnerCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUnlinkApple(
+extern int cInitializerRegisterBeforeUnlinkApple(
 	const void *ptr,
 	const NkBeforeUnlinkAppleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUnlinkApple(
+extern int cInitializerRegisterAfterUnlinkApple(
 	const void *ptr,
 	const NkAfterUnlinkAppleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUnlinkCustom(
+extern int cInitializerRegisterBeforeUnlinkCustom(
 	const void *ptr,
 	const NkBeforeUnlinkCustomCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUnlinkCustom(
+extern int cInitializerRegisterAfterUnlinkCustom(
 	const void *ptr,
 	const NkAfterUnlinkCustomCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUnlinkDevice(
+extern int cInitializerRegisterBeforeUnlinkDevice(
 	const void *ptr,
 	const NkBeforeUnlinkDeviceCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUnlinkDevice(
+extern int cInitializerRegisterAfterUnlinkDevice(
 	const void *ptr,
 	const NkAfterUnlinkDeviceCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUnlinkEmail(
+extern int cInitializerRegisterBeforeUnlinkEmail(
 	const void *ptr,
 	const NkBeforeUnlinkEmailCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUnlinkEmail(
+extern int cInitializerRegisterAfterUnlinkEmail(
 	const void *ptr,
 	const NkAfterUnlinkEmailCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUnlinkFacebook(
+extern int cInitializerRegisterBeforeUnlinkFacebook(
 	const void *ptr,
 	const NkBeforeUnlinkFacebookCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUnlinkFacebook(
+extern int cInitializerRegisterAfterUnlinkFacebook(
 	const void *ptr,
 	const NkAfterUnlinkFacebookCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUnlinkFacebookInstantGame(
+extern int cInitializerRegisterBeforeUnlinkFacebookInstantGame(
 	const void *ptr,
 	const NkBeforeUnlinkFacebookInstantGameCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUnlinkFacebookInstantGame(
+extern int cInitializerRegisterAfterUnlinkFacebookInstantGame(
 	const void *ptr,
 	const NkAfterUnlinkFacebookInstantGameCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUnlinkGameCenter(
+extern int cInitializerRegisterBeforeUnlinkGameCenter(
 	const void *ptr,
 	const NkBeforeUnlinkGameCenterCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUnlinkGameCenter(
+extern int cInitializerRegisterAfterUnlinkGameCenter(
 	const void *ptr,
 	const NkAfterUnlinkGameCenterCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUnlinkGoogle(
+extern int cInitializerRegisterBeforeUnlinkGoogle(
 	const void *ptr,
 	const NkBeforeUnlinkGoogleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUnlinkGoogle(
+extern int cInitializerRegisterAfterUnlinkGoogle(
 	const void *ptr,
 	const NkAfterUnlinkGoogleCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeUnlinkSteam(
+extern int cInitializerRegisterBeforeUnlinkSteam(
 	const void *ptr,
 	const NkBeforeUnlinkSteamCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterUnlinkSteam(
+extern int cInitializerRegisterAfterUnlinkSteam(
 	const void *ptr,
 	const NkAfterUnlinkSteamCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerBeforeGetUsers(
+extern int cInitializerRegisterBeforeGetUsers(
 	const void *ptr,
 	const NkBeforeGetUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerAfterGetUsers(
+extern int cInitializerRegisterAfterGetUsers(
 	const void *ptr,
 	const NkAfterGetUsersCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerEvent(
+extern int cInitializerRegisterEvent(
 	const void *ptr,
 	const NkEventCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerEventSessionStart(
+extern int cInitializerRegisterEventSessionStart(
 	const void *ptr,
 	const NkEventCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
-extern int cInitializerEventSessionEnd(
+extern int cInitializerRegisterEventSessionEnd(
 	const void *ptr,
 	const NkEventCallbackFn cb,
-	NkString **outerror);
+	char **outerror);
 
 int initmodule(
 	const void *ptr,
@@ -1539,9 +1716,9 @@ int moduleauthenticateapple(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated)
 {
 	return cModuleAuthenticateApple(
@@ -1562,9 +1739,9 @@ int moduleauthenticatecustom(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated)
 {
 	return cModuleAuthenticateCustom(
@@ -1585,9 +1762,9 @@ int moduleauthenticatedevice(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated)
 {
 	return cModuleAuthenticateDevice(
@@ -1609,9 +1786,9 @@ int moduleauthenticateemail(
 	NkString password,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated)
 {
 	return cModuleAuthenticateEmail(
@@ -1634,9 +1811,9 @@ int moduleauthenticatefacebook(
 	bool importfriends,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated)
 {
 	return cModuleAuthenticateFacebook(
@@ -1658,9 +1835,9 @@ int moduleauthenticatefacebookinstantgame(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated)
 {
 	return cModuleAuthenticateFacebookInstantGame(
@@ -1686,9 +1863,9 @@ int moduleauthenticategamecenter(
 	NkString publickeyurl,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated)
 {
 	return cModuleAuthenticateGameCenter(
@@ -1714,9 +1891,9 @@ int moduleauthenticategoogle(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated)
 {
 	return cModuleAuthenticateGoogle(
@@ -1737,9 +1914,9 @@ int moduleauthenticatesteam(
 	NkString userid,
 	NkString username,
 	bool create,
-	NkString **outuserid,
-	NkString **outusername,
-	NkString **outerror,
+	char **outuserid,
+	char **outusername,
+	char **outerror,
 	bool **outcreated)
 {
 	return cModuleAuthenticateSteam(
@@ -1762,7 +1939,7 @@ int moduleauthenticatetokengenerate(
 	NkMapString vars,
 	NkString **outtoken,
 	NkI64 **outexpiry,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleAuthenticateTokenGenerate(
 		ptr,
@@ -1780,7 +1957,7 @@ int moduleaccountgetid(
 	const NkContext *ctx,
 	NkString userid,
 	NkAccount **outaccount,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleAccountGetId(
 		ptr,
@@ -1797,7 +1974,7 @@ int moduleaccountsgetid(
 	NkU32 numuserids,
 	NkAccount **outaccounts,
 	NkU32 **outnumaccounts,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleAccountsGetId(
 		ptr,
@@ -1820,7 +1997,7 @@ int moduleaccountupdateid(
 	NkString location,
 	NkString langtag,
 	NkString avatarurl,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleAccountUpdateId(
 		ptr,
@@ -1841,7 +2018,7 @@ int ModuleAccountDeleteId(
 		const NkContext *ctx,
 		NkString userid,
 		bool recorded,
-		NkString **outerror)
+		char **outerror)
 {
 	return cModuleAccountDeleteId(
 		ptr,
@@ -1856,7 +2033,7 @@ int moduleaccountexportid(
 	const NkContext *ctx,
 	NkString userid,
 	NkString **outaccount,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleAccountExportId(
 		ptr,
@@ -1869,11 +2046,11 @@ int moduleaccountexportid(
 int moduleusersgetid(
 	const void *ptr,
 	const NkContext *ctx,
-	NkString *keys,
+	const NkString *keys,
 	NkU32 numkeys,
 	NkUser **outusers,
 	NkU32 **outnumusers,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUsersGetId(
 		ptr,
@@ -1888,11 +2065,11 @@ int moduleusersgetid(
 int moduleusersgetusername(
 	const void *ptr,
 	const NkContext *ctx,
-	NkString *keys,
+	const NkString *keys,
 	NkU32 numkeys,
 	NkUser **outusers,
 	NkU32 **outnumusers,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUsersGetUsername(
 		ptr,
@@ -1907,9 +2084,9 @@ int moduleusersgetusername(
 int moduleusersbanid(
 	const void *ptr,
 	const NkContext *ctx,
-	NkString *userids,
+	const NkString *userids,
 	NkU32 numids,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUsersBanId(
 		ptr,
@@ -1922,9 +2099,9 @@ int moduleusersbanid(
 int moduleusersunbanid(
 	const void *ptr,
 	const NkContext *ctx,
-	NkString *userids,
+	const NkString *userids,
 	NkU32 numids,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUsersUnbanId(
 		ptr,
@@ -1939,7 +2116,7 @@ int modulelinkapple(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLinkApple(
 		ptr,
@@ -1954,7 +2131,7 @@ int modulelinkcustom(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLinkCustom(
 		ptr,
@@ -1969,7 +2146,7 @@ int modulelinkdevice(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLinkDevice(
 		ptr,
@@ -1984,7 +2161,7 @@ int modulelinkfacebookinstantgame(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLinkFacebookInstantGame(
 		ptr,
@@ -1999,7 +2176,7 @@ int modulelinkgoogle(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLinkGoogle(
 		ptr,
@@ -2014,7 +2191,7 @@ int modulelinksteam(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLinkSteam(
 		ptr,
@@ -2029,7 +2206,7 @@ int moduleunlinkapple(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUnlinkApple(
 		ptr,
@@ -2044,7 +2221,7 @@ int moduleunlinkcustom(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUnlinkCustom(
 		ptr,
@@ -2059,7 +2236,7 @@ int moduleunlinkdevice(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUnlinkDevice(
 		ptr,
@@ -2074,7 +2251,7 @@ int moduleunlinkemail(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUnlinkEmail(
 		ptr,
@@ -2089,7 +2266,7 @@ int moduleunlinkfacebook(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUnlinkFacebook(
 		ptr,
@@ -2104,7 +2281,7 @@ int moduleunlinkfacebookinstantgame(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUnlinkFacebookInstantGame(
 		ptr,
@@ -2124,7 +2301,7 @@ int moduleunlinkgamecenter(
 	NkString salt,
 	NkString signature,
 	NkString publickeyurl,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUnlinkGameCenter(
 		ptr,
@@ -2144,7 +2321,7 @@ int moduleunlinkgoogle(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUnlinkGoogle(
 		ptr,
@@ -2159,7 +2336,7 @@ int moduleunlinksteam(
 	const NkContext *ctx,
 	NkString userid,
 	NkString linkid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUnlinkSteam(
 		ptr,
@@ -2175,7 +2352,7 @@ int modulelinkemail(
 	NkString userid,
 	NkString email,
 	NkString password,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLinkEmail(
 		ptr,
@@ -2193,9 +2370,9 @@ int modulelinkfacebook(
 	NkString username,
 	NkString token,
 	bool importfriends,
-	NkString **outerror)
+	char **outerror)
 {
-	return c(
+	return cModuleLinkFacebook(
 		ptr,
 		ctx,
 		userid,
@@ -2215,7 +2392,7 @@ int modulelinkgamecenter(
 	NkString salt,
 	NkString signature,
 	NkString publickeyurl,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLinkGameCenter(
 		ptr,
@@ -2241,7 +2418,7 @@ int modulestreamuserlist(
 	bool includenothidden,
 	NkPresence **outpresences,
 	NkU32 **outnumpresences,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamUserList(
 		ptr,
@@ -2265,7 +2442,7 @@ int modulestreamuserget(
 	NkString userid,
 	NkString sessionid,
 	NkPresenceMeta **outmeta,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamUserGet(
 		ptr,
@@ -2291,7 +2468,7 @@ int modulestreamuserjoin(
 	bool persistence,
 	NkString status,
 	bool **outjoined,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamUserJoin(
 		ptr,
@@ -2319,7 +2496,7 @@ int modulestreamuserupdate(
 	bool hidden,
 	bool persistence,
 	NkString status,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamUserUpdate(
 		ptr,
@@ -2343,7 +2520,7 @@ int modulestreamuserleave(
 	NkString label,
 	NkString userid,
 	NkString sessionid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamUserLeave(
 		ptr,
@@ -2363,7 +2540,7 @@ int modulestreamuserkick(
 	NkString subcontext,
 	NkString label,
 	NkPresence presence,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamUserKick(
 		ptr,
@@ -2382,7 +2559,7 @@ int modulestreamcount(
 	NkString subcontext,
 	NkString label,
 	NkU64 **outcount,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamCount(
 		ptr,
@@ -2400,7 +2577,7 @@ int modulestreamclose(
 	NkString subject,
 	NkString subcontext,
 	NkString label,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamClose(
 		ptr,
@@ -2421,7 +2598,7 @@ int modulestreamsend(
 	NkPresence *presences,
 	NkU32 numpresences,
 	bool reliable,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamSend(
 		ptr,
@@ -2443,10 +2620,10 @@ int modulestreamsendraw(
 	NkString subcontext,
 	NkString label,
 	NkEnvelope msg,
-	NkPresence *presences,
+	const NkPresence *presences,
 	NkU32 numpresences,
 	bool reliable,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStreamSendRaw(
 		ptr,
@@ -2465,7 +2642,7 @@ int modulesessiondisconnect(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString sessionid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleSessionDisconnect(
 		ptr,
@@ -2480,7 +2657,7 @@ int modulematchcreate(
 	NkString module,
 	NkMapAny params,
 	NkString **outmatchid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleMatchCreate(
 		ptr,
@@ -2496,7 +2673,7 @@ int modulematchget(
 	const NkContext *ctx,
 	NkString id,
 	NkMatch **outmatch,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleMatchGet(
 		ptr,
@@ -2517,7 +2694,7 @@ int modulematchlist(
 	NkString query,
 	NkMatch **outmatches,
 	NkU32 **outnummatches,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleMatchList(
 		ptr,
@@ -2542,7 +2719,7 @@ int modulenotificationsend(
 	NkU64 code,
 	NkString sender,
 	bool persistent,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleNotificationSend(
 		ptr,
@@ -2561,7 +2738,7 @@ int modulenotificationssend(
 	const NkContext *ctx,
 	const NkNotificationSend *notifications,
 	NkU32 numnotifications,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleNotificationsSend(
 		ptr,
@@ -2580,7 +2757,7 @@ int modulewalletupdate(
 	bool updateledger,
 	NkMapI64 **outupdated,
 	NkMapI64 **outprevious,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleWalletUpdate(
 		ptr,
@@ -2602,7 +2779,7 @@ int modulewalletsupdate(
 	bool updateledger,
 	NkWalletUpdateResult **outresults,
 	NkU32 **outnumresults,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleWalletsUpdate(
 		ptr,
@@ -2621,7 +2798,7 @@ int modulewalletledgerupdate(
 	NkString itemid,
 	NkMapAny metadata,
 	NkWalletLedgerItem **outitem,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleWalletLedgerUpdate(
 		ptr,
@@ -2641,7 +2818,7 @@ int modulewalletledgerlist(
 	NkWalletLedgerItem **outitems,
 	NkU32 **outnumitems,
 	NkString **outcursor,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleWalletLedgerList(
 		ptr,
@@ -2665,7 +2842,7 @@ int modulestoragelist(
 	NkStorageObject **outobjs,
 	NkU32 **outnumobjs,
 	NkString **outcursor,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStorageList(
 		ptr,
@@ -2687,7 +2864,7 @@ int modulestorageread(
 	NkU32 numreads,
 	NkStorageObject **outobjs,
 	NkU32 **outnumobjs,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStorageRead(
 		ptr,
@@ -2706,7 +2883,7 @@ int modulestoragewrite(
 	NkU32 numwrites,
 	NkStorageObjectAck **outacks,
 	NkU32 **outnumacks,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStorageWrite(
 		ptr,
@@ -2723,7 +2900,7 @@ int modulestoragedelete(
 	const NkContext *ctx,
 	const NkStorageDelete *deletes,
 	NkU32 numdeletes,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleStorageDelete(
 		ptr,
@@ -2747,7 +2924,7 @@ int modulemultiupdate(
 	NkU32 **outnumacks,
 	NkWalletUpdateResult **outresults,
 	NkU32 **outnumresults,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleMultiUpdate(
 		ptr,
@@ -2775,7 +2952,7 @@ int moduleleaderboardcreate(
 	NkString op,
 	NkString resetschedule,
 	NkMapAny metadata,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLeaderboardCreate(
 		ptr,
@@ -2804,7 +2981,7 @@ int moduleleaderboardrecordslist(
 	NkU32 **outnumownerrecords,
 	NkString **outnextcursor,
 	NkString **outprevcursor,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLeaderboardRecordsList(
 		ptr,
@@ -2833,7 +3010,7 @@ int moduleleaderboardrecordwrite(
 	NkI64 subscore,
 	NkMapAny metadata,
 	NkLeaderboardRecord **outrecord,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLeaderboardRecordWrite(
 		ptr,
@@ -2852,7 +3029,7 @@ int moduleleaderboarddelete(
 	const NkContext *ctx,
 	NkString id,
 	NkString ownerid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLeaderboardDelete(
 		ptr,
@@ -2867,7 +3044,7 @@ int moduleleaderboardrecorddelete(
 	const NkContext *ctx,
 	NkString id,
 	NkString ownerid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleLeaderboardRecordDelete(
 		ptr,
@@ -2882,7 +3059,7 @@ int moduletournamentdelete(
 	const NkContext *ctx,
 	NkString id,
 	NkString ownerid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleTournamentDelete(
 		ptr,
@@ -2897,7 +3074,7 @@ int modulegroupdelete(
 	const NkContext *ctx,
 	NkString id,
 	NkString ownerid,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupDelete(
 		ptr,
@@ -2923,7 +3100,7 @@ int moduletournamentcreate(
 	NkU32 maxsize,
 	NkU32 maxnumscore,
 	bool joinrequired,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleTournamentCreate(
 		ptr,
@@ -2950,7 +3127,7 @@ int moduletournamentaddattempt(
 	NkString id,
 	NkString ownerid,
 	NkU64 count,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleTournamentAddAttempt(
 		ptr,
@@ -2967,7 +3144,7 @@ int moduletournamentjoin(
 	NkString id,
 	NkString ownerid,
 	NkString username,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleTournamentJoin(
 		ptr,
@@ -2985,7 +3162,7 @@ int moduletournamentsgetid(
 	NkU32 numtournamentids,
 	NkTournament **outtournaments,
 	NkU32 **outnumtournaments,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleTournamentsGetId(
 		ptr,
@@ -3009,7 +3186,7 @@ int moduletournamentlist(
 	NkString id,
 	NkTournamentList **outtournaments,
 	NkU32 **outnumtournaments,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleTournamentList(
 		ptr,
@@ -3041,7 +3218,7 @@ int moduletournamentrecordslist(
 	NkU32 **outnumownerrecords,
 	NkString **outnextcursor,
 	NkString **outprevcursor,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleTournamentRecordsList(
 		ptr,
@@ -3071,7 +3248,7 @@ int moduletournamentrecordwrite(
 	NkI64 subscore,
 	NkMapAny metadata,
 	NkLeaderboardRecord **outrecord,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleTournamentRecordWrite(
 		ptr,
@@ -3095,7 +3272,7 @@ int moduletournamentrecordshaystack(
 	NkI64 expiry,
 	NkLeaderboardRecord **outrecords,
 	NkU32 **outnumrecords,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleTournamentRecordsHaystack(
 		ptr,
@@ -3116,7 +3293,7 @@ int modulegroupsgetid(
 	NkU32 numgroupids,
 	NkGroup **outgroups,
 	NkU32 **outnumgroups,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupsGetId(
 		ptr,
@@ -3141,7 +3318,7 @@ int modulegroupcreate(
 	NkMapAny metadata,
 	NkU32 maxcount,
 	NkGroup **outgroup,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupCreate(
 		ptr,
@@ -3171,7 +3348,7 @@ int modulegroupupdate(
 	bool open,
 	NkMapAny metadata,
 	NkU32 maxcount,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupUpdate(
 		ptr,
@@ -3194,7 +3371,7 @@ int modulegroupuserjoin(
 	NkString groupid,
 	NkString userid,
 	NkString username,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupUserJoin(
 		ptr,
@@ -3211,7 +3388,7 @@ int modulegroupuserleave(
 	NkString groupid,
 	NkString userid,
 	NkString username,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupUserLeave(
 		ptr,
@@ -3228,7 +3405,7 @@ int modulegroupusersadd(
 	NkString groupid,
 	const NkString *userids,
 	NkU32 numuserids,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupUsersAdd(
 		ptr,
@@ -3245,7 +3422,7 @@ int modulegroupusersdemote(
 	NkString groupid,
 	const NkString *userids,
 	NkU32 numuserids,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupUsersDemote(
 		ptr,
@@ -3262,7 +3439,7 @@ int modulegroupuserskick(
 	NkString groupid,
 	const NkString *userids,
 	NkU32 numuserids,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupUsersKick(
 		ptr,
@@ -3279,7 +3456,7 @@ int modulegroupuserspromote(
 	NkString groupid,
 	const NkString *userids,
 	NkU32 numuserids,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupUsersPromote(
 		ptr,
@@ -3300,7 +3477,7 @@ int modulegroupuserslist(
 	NkGroupUserListGroupUser **outusers,
 	NkU32 **outnumusers,
 	NkString **outcursor,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleGroupUsersList(
 		ptr,
@@ -3325,7 +3502,7 @@ int moduleusergroupslist(
 	NkUserGroupListUserGroup **outusers,
 	NkU32 **outnumusers,
 	NkString **outcursor,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleUserGroupsList(
 		ptr,
@@ -3350,7 +3527,7 @@ int modulefriendslist(
 	NkFriend **outfriends,
 	NkU32 **outnumfriends,
 	NkString **outcursor,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleFriendsList(
 		ptr,
@@ -3369,7 +3546,7 @@ int moduleevent(
 	const void *ptr,
 	const NkContext *ctx,
 	NkEvent evt,
-	NkString **outerror)
+	char **outerror)
 {
 	return cModuleEvent(
 		ptr,
@@ -3382,9 +3559,9 @@ int initializerregisterrpc(
 	const void *ptr,
 	NkString id,
 	const NkRpcFn fn,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerRpc(
+	return cInitializerRegisterRpc(
 		ptr,
 		id,
 		fn,
@@ -3395,9 +3572,9 @@ int initializerregisterbeforert(
 	const void *ptr,
 	NkString id,
 	const NkBeforeRtCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeRt(
+	return cInitializerRegisterBeforeRt(
 		ptr,
 		id,
 		cb,
@@ -3408,9 +3585,9 @@ int initializerregisterafterrt(
 	const void *ptr,
 	NkString id,
 	const NkAfterRtCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterRt(
+	return cInitializerRegisterAfterRt(
 		ptr,
 		id,
 		cb,
@@ -3420,9 +3597,9 @@ int initializerregisterafterrt(
 int initializerregistermatchmakermatched(
 	const void *ptr,
 	const NkMatchmakerMatchedCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerMatchmakerMatched(
+	return cInitializerRegisterMatchmakerMatched(
 		ptr,
 		cb,
 		outerror);
@@ -3432,9 +3609,9 @@ int initializerregistermatch(
 	const void *ptr,
 	NkString name,
 	const NkMatchCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerMatch(
+	return cInitializerRegisterMatch(
 		ptr,
 		name,
 		cb,
@@ -3444,9 +3621,9 @@ int initializerregistermatch(
 int initializerregistertournamentend(
 	const void *ptr,
 	const NkTournamentCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerTournamentEnd(
+	return cInitializerRegisterTournamentEnd(
 		ptr,
 		cb,
 		outerror);
@@ -3455,9 +3632,9 @@ int initializerregistertournamentend(
 int initializerregistertournamentreset(
 	const void *ptr,
 	const NkTournamentCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerTournamentReset(
+	return cInitializerRegisterTournamentReset(
 		ptr,
 		cb,
 		outerror);
@@ -3466,9 +3643,9 @@ int initializerregistertournamentreset(
 int initializerregisterleaderboardend(
 	const void *ptr,
 	const NkLeaderBoardCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerLeaderBoardEnd(
+	return cInitializerRegisterLeaderBoardEnd(
 		ptr,
 		cb,
 		outerror);
@@ -3477,9 +3654,9 @@ int initializerregisterleaderboardend(
 int initializerregisterleaderboardreset(
 	const void *ptr,
 	const NkLeaderBoardCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerLeaderBoardReset(
+	return cInitializerRegisterLeaderBoardReset(
 		ptr,
 		cb,
 		outerror);
@@ -3488,9 +3665,9 @@ int initializerregisterleaderboardreset(
 int initializerregisterbeforegetaccount(
 	const void *ptr,
 	const NkCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeGetAccount(
+	return cInitializerRegisterBeforeGetAccount(
 		ptr,
 		cb,
 		outerror);
@@ -3499,9 +3676,9 @@ int initializerregisterbeforegetaccount(
 int initializerregisteraftergetaccount(
 	const void *ptr,
 	const NkAfterGetAccountCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterGetAccount(
+	return cInitializerRegisterAfterGetAccount(
 		ptr,
 		cb,
 		outerror);
@@ -3510,9 +3687,9 @@ int initializerregisteraftergetaccount(
 int initializerregisterbeforeupdateaccount(
 	const void *ptr,
 	const NkBeforeUpdateAccountCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUpdateAccount(
+	return cInitializerRegisterBeforeUpdateAccount(
 		ptr,
 		cb,
 		outerror);
@@ -3521,9 +3698,9 @@ int initializerregisterbeforeupdateaccount(
 int initializerregisterafterupdateaccount(
 	const void *ptr,
 	const NkAfterUpdateAccountCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUpdateAccount(
+	return cInitializerRegisterAfterUpdateAccount(
 		ptr,
 		cb,
 		outerror);
@@ -3532,9 +3709,9 @@ int initializerregisterafterupdateaccount(
 int initializerregisterbeforesessionrefresh(
 	const void *ptr,
 	const NkBeforeSessionRefreshCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeSessionRefresh(
+	return cInitializerRegisterBeforeSessionRefresh(
 		ptr,
 		cb,
 		outerror);
@@ -3543,9 +3720,9 @@ int initializerregisterbeforesessionrefresh(
 int initializerregisteraftersessionrefresh(
 	const void *ptr,
 	const NkAfterSessionRefreshCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterSessionRefresh(
+	return cInitializerRegisterAfterSessionRefresh(
 		ptr,
 		cb,
 		outerror);
@@ -3554,9 +3731,9 @@ int initializerregisteraftersessionrefresh(
 int initializerregisterbeforeauthenticateapple(
 	const void *ptr,
 	const NkBeforeAuthenticateAppleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAuthenticateApple(
+	return cInitializerRegisterBeforeAuthenticateApple(
 		ptr,
 		cb,
 		outerror);
@@ -3565,9 +3742,9 @@ int initializerregisterbeforeauthenticateapple(
 int initializerregisterafterauthenticateapple(
 	const void *ptr,
 	const NkAfterAuthenticateAppleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAuthenticateApple(
+	return cInitializerRegisterAfterAuthenticateApple(
 		ptr,
 		cb,
 		outerror);
@@ -3576,9 +3753,9 @@ int initializerregisterafterauthenticateapple(
 int initializerregisterbeforeauthenticatecustom(
 	const void *ptr,
 	const NkBeforeAuthenticateCustomCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAuthenticateCustom(
+	return cInitializerRegisterBeforeAuthenticateCustom(
 		ptr,
 		cb,
 		outerror);
@@ -3587,9 +3764,9 @@ int initializerregisterbeforeauthenticatecustom(
 int initializerregisterafterauthenticatecustom(
 	const void *ptr,
 	const NkAfterAuthenticateCustomCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAuthenticateCustom(
+	return cInitializerRegisterAfterAuthenticateCustom(
 		ptr,
 		cb,
 		outerror);
@@ -3598,9 +3775,9 @@ int initializerregisterafterauthenticatecustom(
 int initializerregisterbeforeauthenticatedevice(
 	const void *ptr,
 	const NkBeforeAuthenticateDeviceCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAuthenticateDevice(
+	return cInitializerRegisterBeforeAuthenticateDevice(
 		ptr,
 		cb,
 		outerror);
@@ -3609,9 +3786,9 @@ int initializerregisterbeforeauthenticatedevice(
 int initializerregisterafterauthenticatedevice(
 	const void *ptr,
 	const NkAfterAuthenticateDeviceCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAuthenticateDevice(
+	return cInitializerRegisterAfterAuthenticateDevice(
 		ptr,
 		cb,
 		outerror);
@@ -3620,17 +3797,20 @@ int initializerregisterafterauthenticatedevice(
 int initializerregisterbeforeauthenticateemail(
 	const void *ptr,
 	const NkBeforeAuthenticateEmailCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-
+	return cInitializerRegisterBeforeAuthenticateEmail(
+		ptr,
+		cb,
+		outerror);
 }
 
 int initializerregisterafterauthenticateemail(
 	const void *ptr,
 	const NkAfterAuthenticateEmailCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAuthenticateEmail(
+	return cInitializerRegisterAfterAuthenticateEmail(
 		ptr,
 		cb,
 		outerror);
@@ -3639,9 +3819,9 @@ int initializerregisterafterauthenticateemail(
 int initializerregisterbeforeauthenticatefacebook(
 	const void *ptr,
 	const NkBeforeAuthenticateFacebookCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAuthenticateFacebook(
+	return cInitializerRegisterBeforeAuthenticateFacebook(
 		ptr,
 		cb,
 		outerror);
@@ -3650,9 +3830,9 @@ int initializerregisterbeforeauthenticatefacebook(
 int initializerregisterafterauthenticatefacebook(
 	const void *ptr,
 	const NkAfterAuthenticateFacebookCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAuthenticateFacebook(
+	return cInitializerRegisterAfterAuthenticateFacebook(
 		ptr,
 		cb,
 		outerror);
@@ -3661,9 +3841,9 @@ int initializerregisterafterauthenticatefacebook(
 int initializerregisterbeforeauthenticatefacebookinstantgame(
 	const void *ptr,
 	const NkBeforeAuthenticateFacebookInstantGameCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAuthenticateFacebookInstantGame(
+	return cInitializerRegisterBeforeAuthenticateFacebookInstantGame(
 		ptr,
 		cb,
 		outerror);
@@ -3672,9 +3852,9 @@ int initializerregisterbeforeauthenticatefacebookinstantgame(
 int initializerregisterafterauthenticatefacebookinstantgame(
 	const void *ptr,
 	const NkAfterAuthenticateFacebookInstantGameCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAuthenticateFacebookInstantGame(
+	return cInitializerRegisterAfterAuthenticateFacebookInstantGame(
 		ptr,
 		cb,
 		outerror);
@@ -3683,9 +3863,9 @@ int initializerregisterafterauthenticatefacebookinstantgame(
 int initializerregisterbeforeauthenticategamecenter(
 	const void *ptr,
 	const NkBeforeAuthenticateGameCenterCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAuthenticateGameCenter(
+	return cInitializerRegisterBeforeAuthenticateGameCenter(
 		ptr,
 		cb,
 		outerror);
@@ -3694,9 +3874,9 @@ int initializerregisterbeforeauthenticategamecenter(
 int initializerregisterafterauthenticategamecenter(
 	const void *ptr,
 	const NkAfterAuthenticateGameCenterCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAuthenticateGameCenter(
+	return cInitializerRegisterAfterAuthenticateGameCenter(
 		ptr,
 		cb,
 		outerror);
@@ -3705,9 +3885,9 @@ int initializerregisterafterauthenticategamecenter(
 int initializerregisterbeforeauthenticategoogle(
 	const void *ptr,
 	const NkBeforeAuthenticateGoogleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAuthenticateGoogle(
+	return cInitializerRegisterBeforeAuthenticateGoogle(
 		ptr,
 		cb,
 		outerror);
@@ -3716,9 +3896,9 @@ int initializerregisterbeforeauthenticategoogle(
 int initializerregisterafterauthenticategoogle(
 	const void *ptr,
 	const NkAfterAuthenticateGoogleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAuthenticateGoogle(
+	return cInitializerRegisterAfterAuthenticateGoogle(
 		ptr,
 		cb,
 		outerror);
@@ -3727,9 +3907,9 @@ int initializerregisterafterauthenticategoogle(
 int initializerregisterbeforeauthenticatesteam(
 	const void *ptr,
 	const NkBeforeAuthenticateSteamCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAuthenticateSteam(
+	return cInitializerRegisterBeforeAuthenticateSteam(
 		ptr,
 		cb,
 		outerror);
@@ -3738,9 +3918,9 @@ int initializerregisterbeforeauthenticatesteam(
 int initializerregisterafterauthenticatesteam(
 	const void *ptr,
 	const NkAfterAuthenticateSteamCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAuthenticateSteam(
+	return cInitializerRegisterAfterAuthenticateSteam(
 		ptr,
 		cb,
 		outerror);
@@ -3749,9 +3929,9 @@ int initializerregisterafterauthenticatesteam(
 int initializerregisterbeforelistchannelmessages(
 	const void *ptr,
 	const NkBeforeListChannelMessagesCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListChannelMessages(
+	return cInitializerRegisterBeforeListChannelMessages(
 		ptr,
 		cb,
 		outerror);
@@ -3760,9 +3940,9 @@ int initializerregisterbeforelistchannelmessages(
 int initializerregisterafterlistchannelmessages(
 	const void *ptr,
 	const NkAfterListChannelMessagesCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListChannelMessages(
+	return cInitializerRegisterAfterListChannelMessages(
 		ptr,
 		cb,
 		outerror);
@@ -3771,9 +3951,9 @@ int initializerregisterafterlistchannelmessages(
 int initializerregisterbeforelistfriends(
 	const void *ptr,
 	const NkBeforeListFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListFriends(
+	return cInitializerRegisterBeforeListFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3782,9 +3962,9 @@ int initializerregisterbeforelistfriends(
 int initializerregisterafterlistfriends(
 	const void *ptr,
 	const NkAfterListFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListFriends(
+	return cInitializerRegisterAfterListFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3793,9 +3973,9 @@ int initializerregisterafterlistfriends(
 int initializerregisterbeforeaddfriends(
 	const void *ptr,
 	const NkBeforeAddFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAddFriends(
+	return cInitializerRegisterBeforeAddFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3804,9 +3984,9 @@ int initializerregisterbeforeaddfriends(
 int initializerregisterafteraddfriends(
 	const void *ptr,
 	const NkAfterAddFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAddFriends(
+	return cInitializerRegisterAfterAddFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3815,9 +3995,9 @@ int initializerregisterafteraddfriends(
 int initializerregisterbeforedeletefriends(
 	const void *ptr,
 	const NkBeforeDeleteFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeDeleteFriends(
+	return cInitializerRegisterBeforeDeleteFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3826,9 +4006,9 @@ int initializerregisterbeforedeletefriends(
 int initializerregisterafterdeletefriends(
 	const void *ptr,
 	const NkAfterDeleteFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterDeleteFriends(
+	return cInitializerRegisterAfterDeleteFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3837,9 +4017,9 @@ int initializerregisterafterdeletefriends(
 int initializerregisterbeforeblockfriends(
 	const void *ptr,
 	const NkBeforeBlockFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeBlockFriends(
+	return cInitializerRegisterBeforeBlockFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3848,9 +4028,9 @@ int initializerregisterbeforeblockfriends(
 int initializerregisterafterblockfriends(
 	const void *ptr,
 	const NkAfterBlockFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterBlockFriends(
+	return cInitializerRegisterAfterBlockFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3859,9 +4039,9 @@ int initializerregisterafterblockfriends(
 int initializerregisterbeforeimportfacebookfriends(
 	const void *ptr,
 	const NkBeforeImportFacebookFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeImportFacebookFriends(
+	return cInitializerRegisterBeforeImportFacebookFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3870,9 +4050,9 @@ int initializerregisterbeforeimportfacebookfriends(
 int initializerregisterafterimportfacebookfriends(
 	const void *ptr,
 	const NkAfterImportFacebookFriendsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterImportFacebookFriends(
+	return cInitializerRegisterAfterImportFacebookFriends(
 		ptr,
 		cb,
 		outerror);
@@ -3881,9 +4061,9 @@ int initializerregisterafterimportfacebookfriends(
 int initializerregisterbeforecreategroup(
 	const void *ptr,
 	const NkBeforeCreateGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeCreateGroup(
+	return cInitializerRegisterBeforeCreateGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3892,9 +4072,9 @@ int initializerregisterbeforecreategroup(
 int initializerregisteraftercreategroup(
 	const void *ptr,
 	const NkAfterCreateGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterCreateGroup(
+	return cInitializerRegisterAfterCreateGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3903,9 +4083,9 @@ int initializerregisteraftercreategroup(
 int initializerregisterbeforeupdategroup(
 	const void *ptr,
 	const NkBeforeUpdateGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUpdateGroup(
+	return cInitializerRegisterBeforeUpdateGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3914,9 +4094,9 @@ int initializerregisterbeforeupdategroup(
 int initializerregisterafterupdategroup(
 	const void *ptr,
 	const NkAfterUpdateGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUpdateGroup(
+	return cInitializerRegisterAfterUpdateGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3925,9 +4105,9 @@ int initializerregisterafterupdategroup(
 int initializerregisterbeforedeletegroup(
 	const void *ptr,
 	const NkBeforeDeleteGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeDeleteGroup(
+	return cInitializerRegisterBeforeDeleteGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3936,9 +4116,9 @@ int initializerregisterbeforedeletegroup(
 int initializerregisterafterdeletegroup(
 	const void *ptr,
 	const NkAfterDeleteGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterDeleteGroup(
+	return cInitializerRegisterAfterDeleteGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3947,9 +4127,9 @@ int initializerregisterafterdeletegroup(
 int initializerregisterbeforejoingroup(
 	const void *ptr,
 	const NkBeforeJoinGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeJoinGroup(
+	return cInitializerRegisterBeforeJoinGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3958,9 +4138,9 @@ int initializerregisterbeforejoingroup(
 int initializerregisterafterjoingroup(
 	const void *ptr,
 	const NkAfterJoinGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterJoinGroup(
+	return cInitializerRegisterAfterJoinGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3969,9 +4149,9 @@ int initializerregisterafterjoingroup(
 int initializerregisterbeforeleavegroup(
 	const void *ptr,
 	const NkBeforeLeaveGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLeaveGroup(
+	return cInitializerRegisterBeforeLeaveGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3980,9 +4160,9 @@ int initializerregisterbeforeleavegroup(
 int initializerregisterafterleavegroup(
 	const void *ptr,
 	const NkAfterLeaveGroupCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLeaveGroup(
+	return cInitializerRegisterAfterLeaveGroup(
 		ptr,
 		cb,
 		outerror);
@@ -3991,9 +4171,9 @@ int initializerregisterafterleavegroup(
 int initializerregisterbeforeaddgroupusers(
 	const void *ptr,
 	const NkBeforeAddGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeAddGroupUsers(
+	return cInitializerRegisterBeforeAddGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4002,9 +4182,9 @@ int initializerregisterbeforeaddgroupusers(
 int initializerregisterafteraddgroupusers(
 	const void *ptr,
 	const NkAfterAddGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterAddGroupUsers(
+	return cInitializerRegisterAfterAddGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4013,9 +4193,9 @@ int initializerregisterafteraddgroupusers(
 int initializerregisterbeforebangroupusers(
 	const void *ptr,
 	const NkBeforeBanGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeBanGroupUsers(
+	return cInitializerRegisterBeforeBanGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4024,9 +4204,9 @@ int initializerregisterbeforebangroupusers(
 int initializerregisterafterbangroupusers(
 	const void *ptr,
 	const NkAfterBanGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterBanGroupUsers(
+	return cInitializerRegisterAfterBanGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4035,9 +4215,9 @@ int initializerregisterafterbangroupusers(
 int initializerregisterbeforekickgroupusers(
 	const void *ptr,
 	const NkBeforeKickGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeKickGroupUsers(
+	return cInitializerRegisterBeforeKickGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4046,20 +4226,20 @@ int initializerregisterbeforekickgroupusers(
 int initializerregisterafterkickgroupusers(
 	const void *ptr,
 	const NkAfterKickGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterKickGroupUsers(
+	return cInitializerRegisterAfterKickGroupUsers(
 		ptr,
 		cb,
 		outerror);
 }
 
-InitializerBeforePromoteGroupUsers(
+int InitializerBeforePromoteGroupUsers(
 	const void *ptr,
 	const NkBeforePromoteGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforePromoteGroupUsers(
+	return cInitializerRegisterBeforePromoteGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4068,9 +4248,9 @@ InitializerBeforePromoteGroupUsers(
 int initializerregisterafterpromotegroupusers(
 	const void *ptr,
 	const NkAfterPromoteGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterPromoteGroupUsers(
+	return cInitializerRegisterAfterPromoteGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4079,9 +4259,9 @@ int initializerregisterafterpromotegroupusers(
 int initializerregisterbeforedemotegroupusers(
 	const void *ptr,
 	const NkBeforeDemoteGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeDemoteGroupUsers(
+	return cInitializerRegisterBeforeDemoteGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4090,9 +4270,9 @@ int initializerregisterbeforedemotegroupusers(
 int initializerregisterafterdemotegroupusers(
 	const void *ptr,
 	const NkAfterDemoteGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterDemoteGroupUsers(
+	return cInitializerRegisterAfterDemoteGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4102,9 +4282,9 @@ int initializerregisterafterdemotegroupusers(
 int initializerregisterbeforelistgroupusers(
 	const void *ptr,
 	const NkBeforeListGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListGroupUsers(
+	return cInitializerRegisterBeforeListGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4113,9 +4293,9 @@ int initializerregisterbeforelistgroupusers(
 int initializerregisterafterlistgroupusers(
 	const void *ptr,
 	const NkAfterListGroupUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListGroupUsers(
+	return cInitializerRegisterAfterListGroupUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4124,9 +4304,9 @@ int initializerregisterafterlistgroupusers(
 int initializerregisterbeforelistusergroups(
 	const void *ptr,
 	const NkBeforeListUserGroupsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListUserGroups(
+	return cInitializerRegisterBeforeListUserGroups(
 		ptr,
 		cb,
 		outerror);
@@ -4135,9 +4315,9 @@ int initializerregisterbeforelistusergroups(
 int initializerregisterafterlistusergroups(
 	const void *ptr,
 	const NkAfterListUserGroupsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListUserGroups(
+	return cInitializerRegisterAfterListUserGroups(
 		ptr,
 		cb,
 		outerror);
@@ -4146,9 +4326,9 @@ int initializerregisterafterlistusergroups(
 int initializerregisterbeforelistgroups(
 	const void *ptr,
 	const NkBeforeListGroupsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListGroups(
+	return cInitializerRegisterBeforeListGroups(
 		ptr,
 		cb,
 		outerror);
@@ -4157,9 +4337,9 @@ int initializerregisterbeforelistgroups(
 int initializerregisterafterlistgroups(
 	const void *ptr,
 	const NkAfterListGroupsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListGroups(
+	return cInitializerRegisterAfterListGroups(
 		ptr,
 		cb,
 		outerror);
@@ -4168,9 +4348,9 @@ int initializerregisterafterlistgroups(
 int initializerregisterbeforedeleteleaderboardrecord(
 	const void *ptr,
 	const NkBeforeDeleteLeaderboardRecordCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeDeleteLeaderboardRecord(
+	return cInitializerRegisterBeforeDeleteLeaderboardRecord(
 		ptr,
 		cb,
 		outerror);
@@ -4179,9 +4359,9 @@ int initializerregisterbeforedeleteleaderboardrecord(
 int initializerregisterafterdeleteleaderboardrecord(
 	const void *ptr,
 	const NkAfterDeleteLeaderboardRecordCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterDeleteLeaderboardRecord(
+	return cInitializerRegisterAfterDeleteLeaderboardRecord(
 		ptr,
 		cb,
 		outerror);
@@ -4190,9 +4370,9 @@ int initializerregisterafterdeleteleaderboardrecord(
 int initializerregisterbeforelistleaderboardrecords(
 	const void *ptr,
 	const NkBeforeListLeaderboardRecordsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListLeaderboardRecords(
+	return cInitializerRegisterBeforeListLeaderboardRecords(
 		ptr,
 		cb,
 		outerror);
@@ -4201,9 +4381,9 @@ int initializerregisterbeforelistleaderboardrecords(
 int initializerregisterafterlistleaderboardrecords(
 	const void *ptr,
 	const NkAfterListLeaderboardRecordsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListLeaderboardRecords(
+	return cInitializerRegisterAfterListLeaderboardRecords(
 		ptr,
 		cb,
 		outerror);
@@ -4212,9 +4392,9 @@ int initializerregisterafterlistleaderboardrecords(
 int initializerregisterbeforewriteleaderboardrecord(
 	const void *ptr,
 	const NkBeforeWriteLeaderboardRecordCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeWriteLeaderboardRecord(
+	return cInitializerRegisterBeforeWriteLeaderboardRecord(
 		ptr,
 		cb,
 		outerror);
@@ -4223,9 +4403,9 @@ int initializerregisterbeforewriteleaderboardrecord(
 int initializerregisterafterwriteleaderboardrecord(
 	const void *ptr,
 	const NkAfterWriteLeaderboardRecordCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterWriteLeaderboardRecord(
+	return cInitializerRegisterAfterWriteLeaderboardRecord(
 		ptr,
 		cb,
 		outerror);
@@ -4234,9 +4414,9 @@ int initializerregisterafterwriteleaderboardrecord(
 int initializerregisterbeforelistleaderboardrecordsaroundowner(
 	const void *ptr,
 	const NkBeforeListLeaderboardRecordsAroundOwnerCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListLeaderboardRecordsAroundOwner(
+	return cInitializerRegisterBeforeListLeaderboardRecordsAroundOwner(
 		ptr,
 		cb,
 		outerror);
@@ -4245,9 +4425,9 @@ int initializerregisterbeforelistleaderboardrecordsaroundowner(
 int initializerregisterafterlistleaderboardrecordsaroundowner(
 	const void *ptr,
 	const NkAfterListLeaderboardRecordsAroundOwnerCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListLeaderboardRecordsAroundOwner(
+	return cInitializerRegisterAfterListLeaderboardRecordsAroundOwner(
 		ptr,
 		cb,
 		outerror);
@@ -4256,9 +4436,9 @@ int initializerregisterafterlistleaderboardrecordsaroundowner(
 int initializerregisterbeforelinkapple(
 	const void *ptr,
 	const NkBeforeLinkAppleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLinkApple(
+	return cInitializerRegisterBeforeLinkApple(
 		ptr,
 		cb,
 		outerror);
@@ -4267,9 +4447,9 @@ int initializerregisterbeforelinkapple(
 int initializerregisterafterlinkapple(
 	const void *ptr,
 	const NkAfterLinkAppleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLinkApple(
+	return cInitializerRegisterAfterLinkApple(
 		ptr,
 		cb,
 		outerror);
@@ -4278,9 +4458,9 @@ int initializerregisterafterlinkapple(
 int initializerregisterbeforelinkcustom(
 	const void *ptr,
 	const NkBeforeLinkCustomCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLinkCustom(
+	return cInitializerRegisterBeforeLinkCustom(
 		ptr,
 		cb,
 		outerror);
@@ -4289,9 +4469,9 @@ int initializerregisterbeforelinkcustom(
 int initializerregisterafterlinkcustom(
 	const void *ptr,
 	const NkAfterLinkCustomCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLinkCustom(
+	return cInitializerRegisterAfterLinkCustom(
 		ptr,
 		cb,
 		outerror);
@@ -4300,9 +4480,9 @@ int initializerregisterafterlinkcustom(
 int initializerregisterbeforelinkdevice(
 	const void *ptr,
 	const NkBeforeLinkDeviceCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLinkDevice(
+	return cInitializerRegisterBeforeLinkDevice(
 		ptr,
 		cb,
 		outerror);
@@ -4311,9 +4491,9 @@ int initializerregisterbeforelinkdevice(
 int initializerregisterafterlinkdevice(
 	const void *ptr,
 	const NkAfterLinkDeviceCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLinkDevice(
+	return cInitializerRegisterAfterLinkDevice(
 		ptr,
 		cb,
 		outerror);
@@ -4322,9 +4502,9 @@ int initializerregisterafterlinkdevice(
 int initializerregisterbeforelinkemail(
 	const void *ptr,
 	const NkBeforeLinkEmailCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLinkEmail(
+	return cInitializerRegisterBeforeLinkEmail(
 		ptr,
 		cb,
 		outerror);
@@ -4333,9 +4513,9 @@ int initializerregisterbeforelinkemail(
 int initializerregisterafterlinkemail(
 	const void *ptr,
 	const NkAfterLinkEmailCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLinkEmail(
+	return cInitializerRegisterAfterLinkEmail(
 		ptr,
 		cb,
 		outerror);
@@ -4344,9 +4524,9 @@ int initializerregisterafterlinkemail(
 int initializerregisterbeforelinkfacebook(
 	const void *ptr,
 	const NkBeforeLinkFacebookCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLinkFacebook(
+	return cInitializerRegisterBeforeLinkFacebook(
 		ptr,
 		cb,
 		outerror);
@@ -4355,9 +4535,9 @@ int initializerregisterbeforelinkfacebook(
 int initializerregisterafterlinkfacebook(
 	const void *ptr,
 	const NkAfterLinkFacebookCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLinkFacebook(
+	return cInitializerRegisterAfterLinkFacebook(
 		ptr,
 		cb,
 		outerror);
@@ -4366,9 +4546,9 @@ int initializerregisterafterlinkfacebook(
 int initializerregisterbeforelinkfacebookinstantgame(
 	const void *ptr,
 	const NkBeforeLinkFacebookInstantGameCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLinkFacebookInstantGame(
+	return cInitializerRegisterBeforeLinkFacebookInstantGame(
 		ptr,
 		cb,
 		outerror);
@@ -4377,9 +4557,9 @@ int initializerregisterbeforelinkfacebookinstantgame(
 int initializerregisterafterlinkfacebookinstantgame(
 	const void *ptr,
 	const NkAfterLinkFacebookInstantGameCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLinkFacebookInstantGame(
+	return cInitializerRegisterAfterLinkFacebookInstantGame(
 		ptr,
 		cb,
 		outerror);
@@ -4388,9 +4568,9 @@ int initializerregisterafterlinkfacebookinstantgame(
 int initializerregisterbeforelinkgamecenter(
 	const void *ptr,
 	const NkBeforeLinkGameCenterCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLinkGameCenter(
+	return cInitializerRegisterBeforeLinkGameCenter(
 		ptr,
 		cb,
 		outerror);
@@ -4399,9 +4579,9 @@ int initializerregisterbeforelinkgamecenter(
 int initializerregisterafterlinkgamecenter(
 	const void *ptr,
 	const NkAfterLinkGameCenterCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLinkGameCenter(
+	return cInitializerRegisterAfterLinkGameCenter(
 		ptr,
 		cb,
 		outerror);
@@ -4410,9 +4590,9 @@ int initializerregisterafterlinkgamecenter(
 int initializerregisterbeforelinkgoogle(
 	const void *ptr,
 	const NkBeforeLinkGoogleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLinkGoogle(
+	return cInitializerRegisterBeforeLinkGoogle(
 		ptr,
 		cb,
 		outerror);
@@ -4421,9 +4601,9 @@ int initializerregisterbeforelinkgoogle(
 int initializerregisterafterlinkgoogle(
 	const void *ptr,
 	const NkAfterLinkGoogleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLinkGoogle(
+	return cInitializerRegisterAfterLinkGoogle(
 		ptr,
 		cb,
 		outerror);
@@ -4432,9 +4612,9 @@ int initializerregisterafterlinkgoogle(
 int initializerregisterbeforelinksteam(
 	const void *ptr,
 	const NkBeforeLinkSteamCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeLinkSteam(
+	return cInitializerRegisterBeforeLinkSteam(
 		ptr,
 		cb,
 		outerror);
@@ -4443,9 +4623,9 @@ int initializerregisterbeforelinksteam(
 int initializerregisterafterlinksteam(
 	const void *ptr,
 	const NkAfterLinkSteamCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterLinkSteam(
+	return cInitializerRegisterAfterLinkSteam(
 		ptr,
 		cb,
 		outerror);
@@ -4454,9 +4634,9 @@ int initializerregisterafterlinksteam(
 int initializerregisterbeforelistmatches(
 	const void *ptr,
 	const NkBeforeListMatchesCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListMatches(
+	return cInitializerRegisterBeforeListMatches(
 		ptr,
 		cb,
 		outerror);
@@ -4465,9 +4645,9 @@ int initializerregisterbeforelistmatches(
 int initializerregisterafterlistmatches(
 	const void *ptr,
 	const NkAfterListMatchesCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListMatches(
+	return cInitializerRegisterAfterListMatches(
 		ptr,
 		cb,
 		outerror);
@@ -4476,9 +4656,9 @@ int initializerregisterafterlistmatches(
 int initializerregisterbeforelistnotifications(
 	const void *ptr,
 	const NkBeforeListNotificationsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListNotifications(
+	return cInitializerRegisterBeforeListNotifications(
 		ptr,
 		cb,
 		outerror);
@@ -4487,9 +4667,9 @@ int initializerregisterbeforelistnotifications(
 int initializerregisterafterlistnotifications(
 	const void *ptr,
 	const NkAfterListNotificationsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListNotifications(
+	return cInitializerRegisterAfterListNotifications(
 		ptr,
 		cb,
 		outerror);
@@ -4498,9 +4678,9 @@ int initializerregisterafterlistnotifications(
 int initializerregisterbeforedeletenotifications(
 	const void *ptr,
 	const NkBeforeDeleteNotificationsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeDeleteNotifications(
+	return cInitializerRegisterBeforeDeleteNotifications(
 		ptr,
 		cb,
 		outerror);
@@ -4509,9 +4689,9 @@ int initializerregisterbeforedeletenotifications(
 int initializerregisterafterdeletenotifications(
 	const void *ptr,
 	const NkAfterDeleteNotificationsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterDeleteNotifications(
+	return cInitializerRegisterAfterDeleteNotifications(
 		ptr,
 		cb,
 		outerror);
@@ -4520,9 +4700,9 @@ int initializerregisterafterdeletenotifications(
 int initializerregisterbeforeliststorageobjects(
 	const void *ptr,
 	const NkBeforeListStorageObjectsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListStorageObjects(
+	return cInitializerRegisterBeforeListStorageObjects(
 		ptr,
 		cb,
 		outerror);
@@ -4531,9 +4711,9 @@ int initializerregisterbeforeliststorageobjects(
 int initializerregisterafterliststorageobjects(
 	const void *ptr,
 	const NkAfterListStorageObjectsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListStorageObjects(
+	return cInitializerRegisterAfterListStorageObjects(
 		ptr,
 		cb,
 		outerror);
@@ -4542,9 +4722,9 @@ int initializerregisterafterliststorageobjects(
 int initializerregisterbeforereadstorageobjects(
 	const void *ptr,
 	const NkBeforeReadStorageObjectsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeReadStorageObjects(
+	return cInitializerRegisterBeforeReadStorageObjects(
 		ptr,
 		cb,
 		outerror);
@@ -4553,9 +4733,9 @@ int initializerregisterbeforereadstorageobjects(
 int initializerregisterafterreadstorageobjects(
 	const void *ptr,
 	const NkAfterReadStorageObjectsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterReadStorageObjects(
+	return cInitializerRegisterAfterReadStorageObjects(
 		ptr,
 		cb,
 		outerror);
@@ -4564,9 +4744,9 @@ int initializerregisterafterreadstorageobjects(
 int initializerregisterbeforewritestorageobjects(
 	const void *ptr,
 	const NkBeforeWriteStorageObjectsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeWriteStorageObjects(
+	return cInitializerRegisterBeforeWriteStorageObjects(
 		ptr,
 		cb,
 		outerror);
@@ -4575,9 +4755,9 @@ int initializerregisterbeforewritestorageobjects(
 int initializerregisterafterwritestorageobjects(
 	const void *ptr,
 	const NkAfterWriteStorageObjectsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterWriteStorageObjects(
+	return cInitializerRegisterAfterWriteStorageObjects(
 		ptr,
 		cb,
 		outerror);
@@ -4586,9 +4766,9 @@ int initializerregisterafterwritestorageobjects(
 int initializerregisterbeforedeletestorageobjects(
 	const void *ptr,
 	const NkBeforeDeleteStorageObjectsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeDeleteStorageObjects(
+	return cInitializerRegisterBeforeDeleteStorageObjects(
 		ptr,
 		cb,
 		outerror);
@@ -4597,9 +4777,9 @@ int initializerregisterbeforedeletestorageobjects(
 int initializerregisterafterdeletestorageobjects(
 	const void *ptr,
 	const NkAfterDeleteStorageObjectsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterDeleteStorageObjects(
+	return cInitializerRegisterAfterDeleteStorageObjects(
 		ptr,
 		cb,
 		outerror);
@@ -4608,9 +4788,9 @@ int initializerregisterafterdeletestorageobjects(
 int initializerregisterbeforejointournament(
 	const void *ptr,
 	const NkBeforeJoinTournamentCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeJoinTournament(
+	return cInitializerRegisterBeforeJoinTournament(
 		ptr,
 		cb,
 		outerror);
@@ -4619,9 +4799,9 @@ int initializerregisterbeforejointournament(
 int initializerregisterafterjointournament(
 	const void *ptr,
 	const NkAfterJoinTournamentCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterJoinTournament(
+	return cInitializerRegisterAfterJoinTournament(
 		ptr,
 		cb,
 		outerror);
@@ -4630,9 +4810,9 @@ int initializerregisterafterjointournament(
 int initializerregisterbeforelisttournamentrecords(
 	const void *ptr,
 	const NkBeforeListTournamentRecordsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListTournamentRecords(
+	return cInitializerRegisterBeforeListTournamentRecords(
 		ptr,
 		cb,
 		outerror);
@@ -4641,9 +4821,9 @@ int initializerregisterbeforelisttournamentrecords(
 int initializerregisterafterlisttournamentrecords(
 	const void *ptr,
 	const NkAfterListTournamentRecordsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListTournamentRecords(
+	return cInitializerRegisterAfterListTournamentRecords(
 		ptr,
 		cb,
 		outerror);
@@ -4652,9 +4832,9 @@ int initializerregisterafterlisttournamentrecords(
 int initializerregisterbeforelisttournaments(
 	const void *ptr,
 	const NkBeforeListTournamentsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListTournaments(
+	return cInitializerRegisterBeforeListTournaments(
 		ptr,
 		cb,
 		outerror);
@@ -4663,9 +4843,9 @@ int initializerregisterbeforelisttournaments(
 int initializerregisterafterlisttournaments(
 	const void *ptr,
 	const NkAfterListTournamentsCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListTournaments(
+	return cInitializerRegisterAfterListTournaments(
 		ptr,
 		cb,
 		outerror);
@@ -4674,9 +4854,9 @@ int initializerregisterafterlisttournaments(
 int initializerregisterbeforewritetournamentrecord(
 	const void *ptr,
 	const NkBeforeWriteTournamentRecordCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeWriteTournamentRecord(
+	return cInitializerRegisterBeforeWriteTournamentRecord(
 		ptr,
 		cb,
 		outerror);
@@ -4685,9 +4865,9 @@ int initializerregisterbeforewritetournamentrecord(
 int initializerregisterafterwritetournamentrecord(
 	const void *ptr,
 	const NkAfterWriteTournamentRecordCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterWriteTournamentRecord(
+	return cInitializerRegisterAfterWriteTournamentRecord(
 		ptr,
 		cb,
 		outerror);
@@ -4696,9 +4876,9 @@ int initializerregisterafterwritetournamentrecord(
 int initializerregisterbeforelisttournamentrecordsaroundowner(
 	const void *ptr,
 	const NkBeforeListTournamentRecordsAroundOwnerCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeListTournamentRecordsAroundOwner(
+	return cInitializerRegisterBeforeListTournamentRecordsAroundOwner(
 		ptr,
 		cb,
 		outerror);
@@ -4707,9 +4887,9 @@ int initializerregisterbeforelisttournamentrecordsaroundowner(
 int initializerregisterafterlisttournamentrecordsaroundowner(
 	const void *ptr,
 	const NkAfterListTournamentRecordsAroundOwnerCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterListTournamentRecordsAroundOwner(
+	return cInitializerRegisterAfterListTournamentRecordsAroundOwner(
 		ptr,
 		cb,
 		outerror);
@@ -4718,9 +4898,9 @@ int initializerregisterafterlisttournamentrecordsaroundowner(
 int initializerregisterbeforeunlinkapple(
 	const void *ptr,
 	const NkBeforeUnlinkAppleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUnlinkApple(
+	return cInitializerRegisterBeforeUnlinkApple(
 		ptr,
 		cb,
 		outerror);
@@ -4729,9 +4909,9 @@ int initializerregisterbeforeunlinkapple(
 int initializerregisterafterunlinkapple(
 	const void *ptr,
 	const NkAfterUnlinkAppleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUnlinkApple(
+	return cInitializerRegisterAfterUnlinkApple(
 		ptr,
 		cb,
 		outerror);
@@ -4740,9 +4920,9 @@ int initializerregisterafterunlinkapple(
 int initializerregisterbeforeunlinkcustom(
 	const void *ptr,
 	const NkBeforeUnlinkCustomCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUnlinkCustom(
+	return cInitializerRegisterBeforeUnlinkCustom(
 		ptr,
 		cb,
 		outerror);
@@ -4751,9 +4931,9 @@ int initializerregisterbeforeunlinkcustom(
 int initializerregisterafterunlinkcustom(
 	const void *ptr,
 	const NkAfterUnlinkCustomCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUnlinkCustom(
+	return cInitializerRegisterAfterUnlinkCustom(
 		ptr,
 		cb,
 		outerror);
@@ -4762,9 +4942,9 @@ int initializerregisterafterunlinkcustom(
 int initializerregisterbeforeunlinkdevice(
 	const void *ptr,
 	const NkBeforeUnlinkDeviceCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUnlinkDevice(
+	return cInitializerRegisterBeforeUnlinkDevice(
 		ptr,
 		cb,
 		outerror);
@@ -4773,9 +4953,9 @@ int initializerregisterbeforeunlinkdevice(
 int initializerregisterafterunlinkdevice(
 	const void *ptr,
 	const NkAfterUnlinkDeviceCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUnlinkDevice(
+	return cInitializerRegisterAfterUnlinkDevice(
 		ptr,
 		cb,
 		outerror);
@@ -4784,9 +4964,9 @@ int initializerregisterafterunlinkdevice(
 int initializerregisterbeforeunlinkemail(
 	const void *ptr,
 	const NkBeforeUnlinkEmailCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUnlinkEmail(
+	return cInitializerRegisterBeforeUnlinkEmail(
 		ptr,
 		cb,
 		outerror);
@@ -4795,9 +4975,9 @@ int initializerregisterbeforeunlinkemail(
 int initializerregisterafterunlinkemail(
 	const void *ptr,
 	const NkAfterUnlinkEmailCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUnlinkEmail(
+	return cInitializerRegisterAfterUnlinkEmail(
 		ptr,
 		cb,
 		outerror);
@@ -4806,9 +4986,9 @@ int initializerregisterafterunlinkemail(
 int initializerregisterbeforeunlinkfacebook(
 	const void *ptr,
 	const NkBeforeUnlinkFacebookCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUnlinkFacebook(
+	return cInitializerRegisterBeforeUnlinkFacebook(
 		ptr,
 		cb,
 		outerror);
@@ -4817,9 +4997,9 @@ int initializerregisterbeforeunlinkfacebook(
 int initializerregisterafterunlinkfacebook(
 	const void *ptr,
 	const NkAfterUnlinkFacebookCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUnlinkFacebook(
+	return cInitializerRegisterAfterUnlinkFacebook(
 		ptr,
 		cb,
 		outerror);
@@ -4828,9 +5008,9 @@ int initializerregisterafterunlinkfacebook(
 int initializerregisterbeforeunlinkfacebookinstantgame(
 	const void *ptr,
 	const NkBeforeUnlinkFacebookInstantGameCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUnlinkFacebookInstantGame(
+	return cInitializerRegisterBeforeUnlinkFacebookInstantGame(
 		ptr,
 		cb,
 		outerror);
@@ -4839,9 +5019,9 @@ int initializerregisterbeforeunlinkfacebookinstantgame(
 int initializerregisterafterunlinkfacebookinstantgame(
 	const void *ptr,
 	const NkAfterUnlinkFacebookInstantGameCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUnlinkFacebookInstantGame(
+	return cInitializerRegisterAfterUnlinkFacebookInstantGame(
 		ptr,
 		cb,
 		outerror);
@@ -4850,9 +5030,9 @@ int initializerregisterafterunlinkfacebookinstantgame(
 int initializerregisterbeforeunlinkgamecenter(
 	const void *ptr,
 	const NkBeforeUnlinkGameCenterCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUnlinkGameCenter(
+	return cInitializerRegisterBeforeUnlinkGameCenter(
 		ptr,
 		cb,
 		outerror);
@@ -4861,9 +5041,9 @@ int initializerregisterbeforeunlinkgamecenter(
 int initializerregisterafterunlinkgamecenter(
 	const void *ptr,
 	const NkAfterUnlinkGameCenterCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUnlinkGameCenter(
+	return cInitializerRegisterAfterUnlinkGameCenter(
 		ptr,
 		cb,
 		outerror);
@@ -4872,9 +5052,9 @@ int initializerregisterafterunlinkgamecenter(
 int initializerregisterbeforeunlinkgoogle(
 	const void *ptr,
 	const NkBeforeUnlinkGoogleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUnlinkGoogle(
+	return cInitializerRegisterBeforeUnlinkGoogle(
 		ptr,
 		cb,
 		outerror);
@@ -4883,9 +5063,9 @@ int initializerregisterbeforeunlinkgoogle(
 int initializerregisterafterunlinkgoogle(
 	const void *ptr,
 	const NkAfterUnlinkGoogleCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUnlinkGoogle(
+	return cInitializerRegisterAfterUnlinkGoogle(
 		ptr,
 		cb,
 		outerror);
@@ -4894,9 +5074,9 @@ int initializerregisterafterunlinkgoogle(
 int initializerregisterbeforeunlinksteam(
 	const void *ptr,
 	const NkBeforeUnlinkSteamCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeUnlinkSteam(
+	return cInitializerRegisterBeforeUnlinkSteam(
 		ptr,
 		cb,
 		outerror);
@@ -4905,9 +5085,9 @@ int initializerregisterbeforeunlinksteam(
 int initializerregisterafterunlinksteam(
 	const void *ptr,
 	const NkAfterUnlinkSteamCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterUnlinkSteam(
+	return cInitializerRegisterAfterUnlinkSteam(
 		ptr,
 		cb,
 		outerror);
@@ -4916,9 +5096,9 @@ int initializerregisterafterunlinksteam(
 int initializerregisterbeforegetusers(
 	const void *ptr,
 	const NkBeforeGetUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerBeforeGetUsers(
+	return cInitializerRegisterBeforeGetUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4927,9 +5107,9 @@ int initializerregisterbeforegetusers(
 int initializerregisteraftergetusers(
 	const void *ptr,
 	const NkAfterGetUsersCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerAfterGetUsers(
+	return cInitializerRegisterAfterGetUsers(
 		ptr,
 		cb,
 		outerror);
@@ -4938,9 +5118,9 @@ int initializerregisteraftergetusers(
 int initializerregisterevent(
 	const void *ptr,
 	const NkEventCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerEvent(
+	return cInitializerRegisterEvent(
 		ptr,
 		cb,
 		outerror);
@@ -4949,9 +5129,9 @@ int initializerregisterevent(
 int initializerregistereventsessionstart(
 	const void *ptr,
 	const NkEventCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerEventSessionStart(
+	return cInitializerRegisterEventSessionStart(
 		ptr,
 		cb,
 		outerror);
@@ -4960,9 +5140,9 @@ int initializerregistereventsessionstart(
 int initializerregistereventsessionend(
 	const void *ptr,
 	const NkEventCallbackFn cb,
-	NkString **outerror)
+	char **outerror)
 {
-	return cInitializerEventSessionEnd(
+	return cInitializerRegisterEventSessionEnd(
 		ptr,
 		cb,
 		outerror);

@@ -218,7 +218,7 @@ extern "C"
 	typedef int (*NkModuleAccountsGetIdFn)(
 		const void *ptr,
 		const NkContext *ctx,
-		NkString *userids,
+		const NkString *userids,
 		NkU32 numuserids,
 		NkAccount **outaccounts,
 		NkU32 **outnumaccounts,
@@ -259,7 +259,7 @@ extern "C"
 	typedef int (*NkModuleUsersGetFn)(
 		const void *ptr,
 		const NkContext *ctx,
-		NkString *keys,
+		const NkString *keys,
 		NkU32 numkeys,
 		NkUser **outusers,
 		NkU32 **outnumusers,
@@ -268,7 +268,7 @@ extern "C"
 	typedef int (*NkModuleUsersBanFn)(
 		const void *ptr,
 		const NkContext *ctx,
-		NkString *userids,
+		const NkString *userids,
 		NkU32 numids,
 		NkString **outerror);
 
@@ -411,7 +411,7 @@ extern "C"
 		NkString subcontext,
 		NkString label,
 		NkString data,
-		NkPresence *presences,
+		const NkPresence *presences,
 		NkU32 numpresences,
 		bool reliable,
 		NkString **outerror);
@@ -428,7 +428,7 @@ extern "C"
 		NkString subcontext,
 		NkString label,
 		NkEnvelope msg,
-		NkPresence *presences,
+		const NkPresence *presences,
 		NkU32 numpresences,
 		bool reliable,
 		NkString **outerror);
@@ -3304,7 +3304,7 @@ extern "C"
 		const NkEventCallbackFn cb,
 		NkString **outerror);
 
-	typedef struct
+	typedef struct NkInitializer
 	{
 		const void *ptr;
 		NkInitializerRpcFn registerrpc;
