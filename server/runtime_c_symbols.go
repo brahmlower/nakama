@@ -24,5 +24,5 @@ type CSymbols struct {
 // Load simply fills out the function pointer fields; if missing a function pointer will be
 // nil
 func (s *CSymbols) Load(lib unsafe.Pointer) {
-	s.initModule = DLSym(lib, "nk_init_module")
+	s.initModule = DLSym(lib, "nkinitmodule")
 }

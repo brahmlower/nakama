@@ -5151,6 +5151,6 @@ int initializerregistereventsessionend(
 */
 import "C"
 
-func nkStringGo(s C.NkString) string {
+func GoStringN(s C.NkString) string {
 	return C.GoStringN(s.p, C.int(s.n))
 }

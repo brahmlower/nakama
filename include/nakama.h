@@ -14,7 +14,7 @@
 
 // NOTE: In order to implement a c-module, you must provide the following function:
 //
-// int nk_init_module(NkContext, NkLogger, NkDb, NkModule, NkInitializer);
+// int nkinitmodule(NkContext, NkLogger, NkDb, NkModule, NkInitializer);
 
 #ifndef NAKAMA_H
 #define NAKAMA_H

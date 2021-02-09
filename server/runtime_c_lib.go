@@ -1676,6 +1676,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/mattn/go-pointer"
@@ -1858,11 +1859,8 @@ func cLogger(logger runtime.Logger) C.NkLogger {
 }
 
 func cNakamaModule(nk runtime.NakamaModule) C.NkModule {
-	call := &RuntimeCNakamaModuleCall{}
-	call.nk = nk
-
 	ret := C.NkModule{}
-	ret.ptr = pointer.Save(call)
+	ret.ptr = pointer.Save(nk)
 	ret.authenticateapple = C.NkModuleAuthenticateFn(C.moduleauthenticateapple)
 	ret.authenticatecustom = C.NkModuleAuthenticateFn(C.moduleauthenticatecustom)
 	ret.authenticatedevice = C.NkModuleAuthenticateFn(C.moduleauthenticatedevice)
@@ -1979,18 +1977,17 @@ func (c *CLib) initModule(ctx context.Context, logger runtime.Logger, db *sql.DB
 	cLogger := cLogger(logger)
 	cInitializer := cInitializer(initializer)
 
-	C.initmodule(c.syms.initModule, cCtx, cLogger, cDb, cNk, cInitializer)
+	err := C.initmodule(c.syms.initModule, cCtx, cLogger, cDb, cNk, cInitializer)
 
-	for _, alloc := range pointer.Restore(cCtx.ptr).(*RuntimeCContextCall).allocs {
-		C.free(alloc)
-	}
-
-	for _, alloc := range pointer.Restore(cLogger.ptr).(*RuntimeCNakamaModuleCall).allocs {
-		C.free(alloc)
-	}
-
+	pointer.Unref(cDb.ptr)
+	pointer.Unref(cCtx.ptr)
 	pointer.Unref(cLogger.ptr)
 	pointer.Unref(cNk.ptr)
+	pointer.Unref(cInitializer.ptr)
+
+	if err != 0 {
+		return fmt.Errorf("Could not initialize c-module: %d", err)
+	}
 
 	return nil
 }

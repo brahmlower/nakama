@@ -44,7 +44,7 @@ func (c *RuntimeCContextCall) goStringNk(s string) *C.NkString {
 //export cContextValue
 func cContextValue(pCtx unsafe.Pointer, key C.NkString, outValue *C.NkString) {
 	call := pointer.Restore(pCtx).(*RuntimeCContextCall)
-	retValue := call.ctx.Value(nkStringGo(key))
+	retValue := call.ctx.Value(GoStringN(key))
 	outValue = call.goStringNk(fmt.Sprintf("%v", retValue))
 }
 
