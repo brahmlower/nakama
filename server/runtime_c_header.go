@@ -2013,7 +2013,7 @@ int moduleaccountupdateid(
 		outerror);
 }
 
-int ModuleAccountDeleteId(
+int moduleaccountdeleteid(
 		const void *ptr,
 		const NkContext *ctx,
 		NkString userid,
@@ -4234,7 +4234,7 @@ int initializerregisterafterkickgroupusers(
 		outerror);
 }
 
-int InitializerBeforePromoteGroupUsers(
+int initializerregisterbeforepromotegroupusers(
 	const void *ptr,
 	const NkBeforePromoteGroupUsersCallbackFn cb,
 	char **outerror)

@@ -46,18 +46,18 @@ extern "C"
 		ptrdiff_t n;
 	} NkString;
 
-	const NkU8 NK_U8_T = 0;
-	const NkU8 NK_U16_T = 1;
-	const NkU8 NK_U32_T = 2;
-	const NkU8 NK_U64_T = 3;
-	const NkU8 NK_I8_T = 4;
-	const NkU8 NK_I16_T = 5;
-	const NkU8 NK_I32_T = 6;
-	const NkU8 NK_I64_T = 7;
-	const NkU8 NK_F32_T = 8;
-	const NkU8 NK_F64_T = 9;
-	const NkU8 NK_STRING_T = 10;
-	const NkU8 NK_LAST_T = 11;
+	// const NkU8 NK_U8_T = 0;
+	// const NkU8 NK_U16_T = 1;
+	// const NkU8 NK_U32_T = 2;
+	// const NkU8 NK_U64_T = 3;
+	// const NkU8 NK_I8_T = 4;
+	// const NkU8 NK_I16_T = 5;
+	// const NkU8 NK_I32_T = 6;
+	// const NkU8 NK_I64_T = 7;
+	// const NkU8 NK_F32_T = 8;
+	// const NkU8 NK_F64_T = 9;
+	// const NkU8 NK_STRING_T = 10;
+	// const NkU8 NK_LAST_T = 11;
 
 	typedef struct NkAny
 	{
@@ -991,7 +991,7 @@ extern "C"
 		NkModuleTournamentRecordsListFn tournamentrecordslist;
 		NkModuleTournamentRecordWriteFn tournamentrecordwrite;
 		NkModuleTournamentRecordsHaystackFn tournamentrecordshaystack;
-		NkModuleGroupsGetIdFn groupgetid;
+		NkModuleGroupsGetIdFn groupsgetid;
 		NkModuleGroupCreateFn groupcreate;
 		NkModuleGroupUpdateFn groupupdate;
 		NkModuleDeleteFn groupdelete;

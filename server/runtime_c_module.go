@@ -43,7 +43,7 @@ func (c *RuntimeCNakamaModuleCall) goStringNk(s string) *C.NkString {
 //export cModuleAuthenticateApple
 func cModuleAuthenticateApple(pNk unsafe.Pointer, pCtx unsafe.Pointer, token, userName C.NkString, create bool, outUserID, outUserName, outErr **C.char, outCreated **bool) int {
 	// call := pointer.Restore(pNk).(*RuntimeCNakamaModuleCall)
-	// ctx := pointer.Restore(pCtx).(context.Context)
+	_ = pointer.Restore(pCtx).(context.Context)
 	// retUserID, retUserName, retCreated, err := call.nk.AuthenticateApple(ctx, nkStringGo(token), nkStringGo(userName), create)
 	// outCreated = &retCreated
 	// outUserID = call.goStringNk(retUserID)
@@ -472,7 +472,7 @@ func cModuleUnlinkSteam(
 	return 0
 }
 
-//export
+//export cModuleLinkEmail
 func cModuleLinkEmail(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
@@ -609,7 +609,7 @@ func cModuleStreamCount(
 	return 0
 }
 
-//export
+//export cModuleStreamClose
 func cModuleStreamClose(
 	pNk unsafe.Pointer,
 	mode C.NkU8,
