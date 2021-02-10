@@ -19,33 +19,18 @@ import "C"
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 	"unsafe"
 
 	"github.com/heroiclabs/nakama-common/runtime"
-	"github.com/mattn/go-pointer"
+	// "github.com/mattn/go-pointer"
 )
 
-type RuntimeCContextCall struct {
-	ctx    context.Context
-	allocs []unsafe.Pointer
-}
-
-func (c *RuntimeCContextCall) goStringNk(s string) *C.NkString {
-	var ret *C.NkString
-	ret.p = C.CString(s)
-	ret.n = C.long(len(s))
-
-	c.allocs = append(c.allocs, unsafe.Pointer(ret.p))
-
-	return ret
-}
-
 //export cContextValue
-func cContextValue(pCtx unsafe.Pointer, key C.NkString, outValue *C.NkString) {
-	call := pointer.Restore(pCtx).(*RuntimeCContextCall)
-	retValue := call.ctx.Value(GoStringN(key))
-	outValue = call.goStringNk(fmt.Sprintf("%v", retValue))
+func cContextValue(pCtx unsafe.Pointer, key C.NkString, outValue **C.char) {
+	// call := pointer.Restore(pCtx).(*RuntimeCContextCall)
+	// retValue := call.ctx.Value(goString(key))
+	// outValue = call.goStringNk(fmt.Sprintf("%v", retValue))
 }
 
 func NewRuntimeCContext(ctx context.Context, node string, env map[string]string, mode RuntimeExecutionMode, queryParams map[string][]string, sessionExpiry int64, userID, username string, vars map[string]string, sessionID, clientIP, clientPort string) context.Context {

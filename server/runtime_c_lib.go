@@ -1859,8 +1859,11 @@ func cLogger(logger runtime.Logger) C.NkLogger {
 }
 
 func cNakamaModule(nk runtime.NakamaModule) C.NkModule {
+	call := RuntimeCCall{}
+	call.ptr = pointer.Save(nk)
+
 	ret := C.NkModule{}
-	ret.ptr = pointer.Save(nk)
+	ret.ptr = pointer.Save(&call)
 	ret.authenticateapple = C.NkModuleAuthenticateFn(C.moduleauthenticateapple)
 	ret.authenticatecustom = C.NkModuleAuthenticateFn(C.moduleauthenticatecustom)
 	ret.authenticatedevice = C.NkModuleAuthenticateFn(C.moduleauthenticatedevice)
@@ -1927,7 +1930,7 @@ func cNakamaModule(nk runtime.NakamaModule) C.NkModule {
 	ret.leaderboarddelete = C.NkModuleDeleteFn(C.moduleleaderboarddelete)
 	ret.leaderboardrecordslist = C.NkModuleLeaderboardRecordsListFn(C.moduleleaderboardrecordslist)
 	ret.leaderboardrecordwrite = C.NkModuleLeaderboardRecordWriteFn(C.moduleleaderboardrecordwrite)
-	ret.leaderboardrecorddelete = C.NkModuleDeleteFn(C.moduleleaderboardrecorddelete)
+	ret.leaderboardrecorddelete = C.NkModuleLeaderboardRecordDeleteFn(C.moduleleaderboardrecorddelete)
 	ret.tournamentcreate = C.NkModuleTournamentCreateFn(C.moduletournamentcreate)
 	ret.tournamentdelete = C.NkModuleDeleteFn(C.moduletournamentdelete)
 	ret.tournamentaddattempt = C.NkModuleTournamentAddAttemptFn(C.moduletournamentaddattempt)
@@ -1979,10 +1982,11 @@ func (c *CLib) initModule(ctx context.Context, logger runtime.Logger, db *sql.DB
 
 	err := C.initmodule(c.syms.initModule, cCtx, cLogger, cDb, cNk, cInitializer)
 
+	pointer.Restore(cNk.ptr).(*RuntimeCCall).unref()
+
 	pointer.Unref(cDb.ptr)
 	pointer.Unref(cCtx.ptr)
 	pointer.Unref(cLogger.ptr)
-	pointer.Unref(cNk.ptr)
 	pointer.Unref(cInitializer.ptr)
 
 	if err != 0 {

@@ -14,32 +14,21 @@
 
 package server
 
-// #include "../include/nakama.h"
-import "C"
-
 import (
 	"unsafe"
 
-	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/mattn/go-pointer"
 )
 
-//export cLoggerDebug
-func cLoggerDebug(p unsafe.Pointer, s C.NkString) {
-	pointer.Restore(p).(runtime.Logger).Debug(goString(s))
+type RuntimeCCall struct {
+	ptr    unsafe.Pointer
+	refs []unsafe.Pointer
 }
 
-//export cLoggerError
-func cLoggerError(p unsafe.Pointer, s C.NkString) {
-	pointer.Restore(p).(runtime.Logger).Error(goString(s))
-}
+func (r *RuntimeCCall) unref() {
+	for _, ptr := range r.refs {
+		pointer.Unref(ptr)
+	}
 
-//export cLoggerInfo
-func cLoggerInfo(p unsafe.Pointer, s C.NkString) {
-	pointer.Restore(p).(runtime.Logger).Info(goString(s))
-}
-
-//export cLoggerWarn
-func cLoggerWarn(p unsafe.Pointer, s C.NkString) {
-	pointer.Restore(p).(runtime.Logger).Warn(goString(s))
+	pointer.Unref(r.ptr)
 }

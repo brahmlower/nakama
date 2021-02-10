@@ -14,7 +14,21 @@
 
 package server
 
-// #include "../include/nakama.h"
+/*
+#include "../include/nakama.h"
+
+extern bool *mallocbool(NkU32);
+
+extern NkAccount *mallocnkaccount(NkU32);
+
+extern NkI64 *mallocnki64(NkU32);
+
+extern NkUser *mallocnkuser(NkU32);
+
+extern void nkaccountset(NkAccount *, NkU32, NkAccount);
+
+extern void nkuserset(NkUser *, NkU32, NkUser);
+*/
 import "C"
 
 import (
@@ -31,23 +45,25 @@ func cModuleAuthenticateApple(
 	pCtx unsafe.Pointer,
 	token,
 	userName C.NkString,
-	create bool,
+	create C.bool,
 	outUserID,
 	outUserName,
 	outErr **C.char,
-	outCreated **bool) int {
-	nk := pointer.Restore(pNk).(runtime.NakamaModule)
+	outCreated **C.bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUserID, retUserName, retCreated, err := nk.AuthenticateApple(ctx, GoStringN(token), GoStringN(userName), create)
-	*outUserID = C.CString(retUserID)
-	*outUserName = C.CString(retUserName)
-	**outCreated = retCreated
-
+	retUserID, retUserName, created, err := nk.AuthenticateApple(ctx, goString(token), goString(userName), bool(create))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
+
+	*outUserID = C.CString(retUserID)
+	*outUserName = C.CString(retUserName)
+	*outCreated = C.mallocbool(1)
+	**outCreated = C.bool(created)
 
 	return 0
 }
@@ -58,23 +74,25 @@ func cModuleAuthenticateCustom(
 	pCtx unsafe.Pointer,
 	userID,
 	userName C.NkString,
-	create bool,
+	create C.bool,
 	outUserID,
 	outUserName,
 	outErr **C.char,
-	outCreated **bool) int {
-	nk := pointer.Restore(pNk).(runtime.NakamaModule)
+	outCreated **C.bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUserID, retUserName, retCreated, err := nk.AuthenticateCustom(ctx, GoStringN(userID), GoStringN(userName), create)
-	*outUserID = C.CString(retUserID)
-	*outUserName = C.CString(retUserName)
-	**outCreated = retCreated
-
+	retUserID, retUserName, created, err := nk.AuthenticateCustom(ctx, goString(userID), goString(userName), bool(create))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
+
+	*outUserID = C.CString(retUserID)
+	*outUserName = C.CString(retUserName)
+	*outCreated = C.mallocbool(1)
+	**outCreated = C.bool(created)
 
 	return 0
 }
@@ -85,23 +103,25 @@ func cModuleAuthenticateDevice(
 	pCtx unsafe.Pointer,
 	userID,
 	userName C.NkString,
-	create bool,
+	create C.bool,
 	outUserID,
 	outUserName,
 	outErr **C.char,
-	outCreated **bool) int {
-	nk := pointer.Restore(pNk).(runtime.NakamaModule)
+	outCreated **C.bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUserID, retUserName, retCreated, err := nk.AuthenticateDevice(ctx, GoStringN(userID), GoStringN(userName), create)
-	*outUserID = C.CString(retUserID)
-	*outUserName = C.CString(retUserName)
-	**outCreated = retCreated
-
+	retUserID, retUserName, created, err := nk.AuthenticateDevice(ctx, goString(userID), goString(userName), bool(create))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
+
+	*outUserID = C.CString(retUserID)
+	*outUserName = C.CString(retUserName)
+	*outCreated = C.mallocbool(1)
+	**outCreated = C.bool(created)
 
 	return 0
 }
@@ -113,23 +133,25 @@ func cModuleAuthenticateEmail(
 	email,
 	password,
 	userName C.NkString,
-	create bool,
+	create C.bool,
 	outUserID,
 	outUserName,
 	outErr **C.char,
-	outCreated **bool) int {
-	nk := pointer.Restore(pNk).(runtime.NakamaModule)
+	outCreated **C.bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUserID, retUserName, retCreated, err := nk.AuthenticateEmail(ctx, GoStringN(email), GoStringN(password), GoStringN(userName), create)
-	*outUserID = C.CString(retUserID)
-	*outUserName = C.CString(retUserName)
-	**outCreated = retCreated
-
+	retUserID, retUserName, created, err := nk.AuthenticateEmail(ctx, goString(email), goString(password), goString(userName), bool(create))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
+
+	*outUserID = C.CString(retUserID)
+	*outUserName = C.CString(retUserName)
+	*outCreated = C.mallocbool(1)
+	**outCreated = C.bool(created)
 
 	return 0
 }
@@ -139,25 +161,27 @@ func cModuleAuthenticateFacebook(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	token C.NkString,
-	importFriends bool,
+	importFriends C.bool,
 	userName C.NkString,
-	create bool,
+	create C.bool,
 	outUserID,
 	outUserName,
 	outErr **C.char,
-	outCreated **bool) int {
-	nk := pointer.Restore(pNk).(runtime.NakamaModule)
+	outCreated **C.bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUserID, retUserName, retCreated, err := nk.AuthenticateFacebook(ctx, GoStringN(token), importFriends, GoStringN(userName), create)
-	*outUserID = C.CString(retUserID)
-	*outUserName = C.CString(retUserName)
-	**outCreated = retCreated
-
+	retUserID, retUserName, created, err := nk.AuthenticateFacebook(ctx, goString(token), bool(importFriends), goString(userName), bool(create))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
+
+	*outUserID = C.CString(retUserID)
+	*outUserName = C.CString(retUserName)
+	*outCreated = C.mallocbool(1)
+	**outCreated = C.bool(created)
 
 	return 0
 }
@@ -168,23 +192,25 @@ func cModuleAuthenticateFacebookInstantGame(
 	pCtx unsafe.Pointer,
 	userID,
 	userName C.NkString,
-	create bool,
+	create C.bool,
 	outUserID,
 	outUserName,
 	outErr **C.char,
-	outCreated **bool) int {
-	nk := pointer.Restore(pNk).(runtime.NakamaModule)
+	outCreated **C.bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUserID, retUserName, retCreated, err := nk.AuthenticateFacebookInstantGame(ctx, GoStringN(userID), GoStringN(userName), create)
-	*outUserID = C.CString(retUserID)
-	*outUserName = C.CString(retUserName)
-	**outCreated = retCreated
-
+	retUserID, retUserName, created, err := nk.AuthenticateFacebookInstantGame(ctx, goString(userID), goString(userName), bool(create))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
+
+	*outUserID = C.CString(retUserID)
+	*outUserName = C.CString(retUserName)
+	*outCreated = C.mallocbool(1)
+	**outCreated = C.bool(created)
 
 	return 0
 }
@@ -200,23 +226,25 @@ func cModuleAuthenticateGameCenter(
 	signature,
 	publicKeyURL,
 	userName C.NkString,
-	create bool,
+	create C.bool,
 	outUserID,
 	outUserName,
 	outErr **C.char,
-	outCreated **bool) int {
-	nk := pointer.Restore(pNk).(runtime.NakamaModule)
+	outCreated **C.bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUserID, retUserName, retCreated, err := nk.AuthenticateGameCenter(ctx, GoStringN(userID), GoStringN(bundleID), timestamp, GoStringN(salt), GoStringN(signature), GoStringN(publicKeyURL), GoStringN(userName), create)
-	*outUserID = C.CString(retUserID)
-	*outUserName = C.CString(retUserName)
-	**outCreated = retCreated
-
+	retUserID, retUserName, created, err := nk.AuthenticateGameCenter(ctx, goString(userID), goString(bundleID), timestamp, goString(salt), goString(signature), goString(publicKeyURL), goString(userName), bool(create))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
+
+	*outUserID = C.CString(retUserID)
+	*outUserName = C.CString(retUserName)
+	*outCreated = C.mallocbool(1)
+	**outCreated = C.bool(created)
 
 	return 0
 }
@@ -227,23 +255,25 @@ func cModuleAuthenticateGoogle(
 	pCtx unsafe.Pointer,
 	userID,
 	userName C.NkString,
-	create bool,
+	create C.bool,
 	outUserID,
 	outUserName,
 	outErr **C.char,
-	outCreated **bool) int {
-	nk := pointer.Restore(pNk).(runtime.NakamaModule)
+	outCreated **C.bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUserID, retUserName, retCreated, err := nk.AuthenticateGoogle(ctx, GoStringN(userID), GoStringN(userName), create)
-	*outUserID = C.CString(retUserID)
-	*outUserName = C.CString(retUserName)
-	**outCreated = retCreated
-
+	retUserID, retUserName, created, err := nk.AuthenticateGoogle(ctx, goString(userID), goString(userName), bool(create))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
+
+	*outUserID = C.CString(retUserID)
+	*outUserName = C.CString(retUserName)
+	*outCreated = C.mallocbool(1)
+	**outCreated = C.bool(created)
 
 	return 0
 }
@@ -254,23 +284,25 @@ func cModuleAuthenticateSteam(
 	pCtx unsafe.Pointer,
 	userID,
 	userName C.NkString,
-	create bool,
+	create C.bool,
 	outUserID,
 	outUserName,
 	outErr **C.char,
-	outCreated **bool) int {
-	nk := pointer.Restore(pNk).(runtime.NakamaModule)
+	outCreated **C.bool) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUserID, retUserName, retCreated, err := nk.AuthenticateSteam(ctx, GoStringN(userID), GoStringN(userName), create)
-	*outUserID = C.CString(retUserID)
-	*outUserName = C.CString(retUserName)
-	**outCreated = retCreated
-
+	retUserID, retUserName, created, err := nk.AuthenticateSteam(ctx, goString(userID), goString(userName), bool(create))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
+
+	*outUserID = C.CString(retUserID)
+	*outUserName = C.CString(retUserName)
+	*outCreated = C.mallocbool(1)
+	**outCreated = C.bool(created)
 
 	return 0
 }
@@ -284,8 +316,21 @@ func cModuleAuthenticateTokenGenerate(
 	vars C.NkMapString,
 	outToken **C.char,
 	outExpiry **C.NkI64,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	retToken, retExpiry, err := nk.AuthenticateTokenGenerate(goString(userID), goString(userName), int64(expiry), goMapString(vars))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	*outToken = C.CString(retToken)
+	*outExpiry = C.mallocnki64(1)
+	**outExpiry = C.NkI64(retExpiry)
+
+	return 0
 }
 
 //export cModuleAccountGetId
@@ -294,8 +339,24 @@ func cModuleAccountGetId(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	outAccount **C.NkAccount,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retAccount, err := nk.AccountGetId(ctx, goString(userID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	ptr := pointer.Save(retAccount)
+	call.refs = append(call.refs, ptr)
+
+	*outAccount = C.mallocnkaccount(1)
+	(*outAccount).ptr = ptr
+
+	return 0
 }
 
 //export cModuleAccountsGetId
@@ -303,11 +364,34 @@ func cModuleAccountsGetId(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	userIDs *C.NkString,
-	numUserIDSs C.NkU32,
+	numUserIDs C.NkU32,
 	outAccounts **C.NkAccount,
 	outNumAccounts **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retAccounts, err := nk.AccountsGetId(ctx, goStringArray(userIDs, numUserIDs))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	numAccounts := C.NkU32(len(retAccounts))
+	*outAccounts = C.mallocnkaccount(numAccounts)
+	**outNumAccounts = numAccounts // TODO: Malloc this?
+
+	for idx, retAccount := range retAccounts {
+		ptr := pointer.Save(retAccount)
+		call.refs = append(call.refs, ptr)
+
+		outAccount := C.NkAccount{}
+		outAccount.ptr = ptr
+		C.nkaccountset(*outAccounts, C.NkU32(idx), outAccount)
+	}
+
+	return 0
 }
 
 //export cModuleAccountUpdateId
@@ -322,8 +406,18 @@ func cModuleAccountUpdateId(
 	location C.NkString,
 	langTag C.NkString,
 	avatarURL C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.AccountUpdateId(ctx, goString(userID), goString(userName), goMapAny(metadata), goString(displayName), goString(timeZone), goString(location), goString(langTag), goString(avatarURL))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAccountDeleteId
@@ -331,9 +425,19 @@ func cModuleAccountDeleteId(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	userID C.NkString,
-	recorded bool,
-	outError **C.char) int {
-	return 1
+	recorded C.bool,
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.AccountDeleteId(ctx, goString(userID), bool(recorded))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleAccountExportId
@@ -342,8 +446,20 @@ func cModuleAccountExportId(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	outAccount **C.char,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retAccount, err := nk.AccountExportId(ctx, goString(userID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	*outAccount = C.CString(retAccount)
+
+	return 0
 }
 
 //export cModuleUsersGetId
@@ -354,8 +470,31 @@ func cModuleUsersGetId(
 	numKeys C.NkU32,
 	outUsers **C.NkUser,
 	outNumUsers **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUsers, err := nk.UsersGetId(ctx, goStringArray(keys, numKeys))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	numUsers := C.NkU32(len(retUsers))
+	*outUsers = C.mallocnkuser(numUsers)
+	**outNumUsers = numUsers // TODO: Malloc this?
+
+	for idx, retUser := range retUsers {
+		ptr := pointer.Save(retUser)
+		call.refs = append(call.refs, ptr)
+
+		outUser := C.NkUser{}
+		outUser.ptr = ptr
+		C.nkuserset(*outUsers, C.NkU32(idx), outUser)
+	}
+
+	return 0
 }
 
 //export cModuleUsersGetUsername
@@ -366,8 +505,31 @@ func cModuleUsersGetUsername(
 	numKeys C.NkU32,
 	outUsers **C.NkUser,
 	outNumUsers **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUsers, err := nk.UsersGetUsername(ctx, goStringArray(keys, numKeys))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	numUsers := C.NkU32(len(retUsers))
+	*outUsers = C.mallocnkuser(numUsers)
+	**outNumUsers = numUsers // TODO: Malloc this?
+
+	for idx, retUser := range retUsers {
+		ptr := pointer.Save(retUser)
+		call.refs = append(call.refs, ptr)
+
+		outUser := C.NkUser{}
+		outUser.ptr = ptr
+		C.nkuserset(*outUsers, C.NkU32(idx), outUser)
+	}
+
+	return 0
 }
 
 //export cModuleUsersBanId
@@ -376,8 +538,18 @@ func cModuleUsersBanId(
 	pCtx unsafe.Pointer,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UsersBanId(ctx, goStringArray(userIDs, numUserIDs))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUsersUnbanId
@@ -386,8 +558,18 @@ func cModuleUsersUnbanId(
 	pCtx unsafe.Pointer,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UsersUnbanId(ctx, goStringArray(userIDs, numUserIDs))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLinkApple
@@ -396,8 +578,18 @@ func cModuleLinkApple(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LinkApple(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLinkCustom
@@ -406,8 +598,18 @@ func cModuleLinkCustom(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LinkCustom(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLinkDevice
@@ -416,8 +618,18 @@ func cModuleLinkDevice(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LinkDevice(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLinkFacebookInstantGame
@@ -426,8 +638,18 @@ func cModuleLinkFacebookInstantGame(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LinkFacebookInstantGame(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLinkGoogle
@@ -436,8 +658,18 @@ func cModuleLinkGoogle(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LinkGoogle(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLinkSteam
@@ -446,8 +678,18 @@ func cModuleLinkSteam(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LinkSteam(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUnlinkApple
@@ -456,8 +698,18 @@ func cModuleUnlinkApple(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UnlinkApple(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUnlinkCustom
@@ -466,8 +718,18 @@ func cModuleUnlinkCustom(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UnlinkCustom(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUnlinkDevice
@@ -476,8 +738,18 @@ func cModuleUnlinkDevice(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UnlinkDevice(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUnlinkEmail
@@ -486,8 +758,18 @@ func cModuleUnlinkEmail(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UnlinkEmail(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUnlinkFacebook
@@ -496,8 +778,18 @@ func cModuleUnlinkFacebook(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UnlinkFacebook(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUnlinkFacebookInstantGame
@@ -506,8 +798,18 @@ func cModuleUnlinkFacebookInstantGame(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UnlinkFacebookInstantGame(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUnlinkGameCenter
@@ -521,8 +823,18 @@ func cModuleUnlinkGameCenter(
 	salt C.NkString,
 	signature C.NkString,
 	publicKeyURL C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UnlinkGameCenter(ctx, goString(userID), goString(playerID), goString(bundleID), int64(timestamp), goString(salt), goString(signature), goString(publicKeyURL))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUnlinkGoogle
@@ -531,8 +843,18 @@ func cModuleUnlinkGoogle(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UnlinkGoogle(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleUnlinkSteam
@@ -541,8 +863,18 @@ func cModuleUnlinkSteam(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.UnlinkSteam(ctx, goString(userID), goString(linkID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLinkEmail
@@ -552,8 +884,18 @@ func cModuleLinkEmail(
 	userID C.NkString,
 	email C.NkString,
 	password C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LinkEmail(ctx, goString(userID), goString(email), goString(password))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLinkFacebook
@@ -563,9 +905,19 @@ func cModuleLinkFacebook(
 	userID C.NkString,
 	userName C.NkString,
 	token C.NkString,
-	importFriends bool,
-	outError **C.char) int {
-	return 1
+	importFriends C.bool,
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LinkFacebook(ctx, goString(userID), goString(userName), goString(token), bool(importFriends))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLinkGameCenter
@@ -579,8 +931,18 @@ func cModuleLinkGameCenter(
 	salt C.NkString,
 	signature C.NkString,
 	publicKeyURL C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LinkGameCenter(ctx, goString(userID), goString(playerID), goString(bundleID), int64(timestamp), goString(salt), goString(signature), goString(publicKeyURL))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleStreamUserList
@@ -590,12 +952,12 @@ func cModuleStreamUserList(
 	subject C.NkString,
 	subContext C.NkString,
 	label C.NkString,
-	includeHidden bool,
-	includeNotHidden bool,
+	includeHidden C.bool,
+	includeNotHidden C.bool,
 	outPresences **C.NkPresence,
 	outNumPresences **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleStreamUserGet
@@ -608,8 +970,8 @@ func cModuleStreamUserGet(
 	userID C.NkString,
 	sessionID C.NkString,
 	outMeta **C.NkPresenceMeta,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleStreamUserJoin
@@ -621,12 +983,12 @@ func cModuleStreamUserJoin(
 	label C.NkString,
 	userID C.NkString,
 	sessionID C.NkString,
-	hidden bool,
-	persistence bool,
+	hidden C.bool,
+	persistence C.bool,
 	status C.NkString,
-	outJoined **bool,
-	outError **C.char) int {
-	return 1
+	outJoined **C.bool,
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleStreamUserUpdate
@@ -638,11 +1000,20 @@ func cModuleStreamUserUpdate(
 	label C.NkString,
 	userID C.NkString,
 	sessionID C.NkString,
-	hidden bool,
-	persistence bool,
+	hidden C.bool,
+	persistence C.bool,
 	status C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	err := nk.StreamUserUpdate(uint8(mode), goString(subject), goString(subContext), goString(label), goString(userID), goString(sessionID), bool(hidden), bool(persistence), goString(status))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleStreamUserLeave
@@ -654,8 +1025,17 @@ func cModuleStreamUserLeave(
 	label C.NkString,
 	userID C.NkString,
 	sessionID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	err := nk.StreamUserLeave(uint8(mode), goString(subject), goString(subContext), goString(label), goString(userID), goString(sessionID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleStreamUserKick
@@ -666,8 +1046,8 @@ func cModuleStreamUserKick(
 	subContext C.NkString,
 	label C.NkString,
 	presence C.NkPresence,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleStreamCount
@@ -678,8 +1058,19 @@ func cModuleStreamCount(
 	subContext C.NkString,
 	label C.NkString,
 	outCount **C.NkU64,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	retCount, err := nk.StreamCount(uint8(mode), goString(subject), goString(subContext), goString(label))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	**outCount = C.NkU64(retCount) // TODO: Malloc this?
+
+	return 0
 }
 
 //export cModuleStreamClose
@@ -689,8 +1080,17 @@ func cModuleStreamClose(
 	subject C.NkString,
 	subContext C.NkString,
 	label C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	err := nk.StreamClose(uint8(mode), goString(subject), goString(subContext), goString(label))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleStreamSend
@@ -703,9 +1103,9 @@ func cModuleStreamSend(
 	data C.NkString,
 	presences *C.NkPresence,
 	numPresences C.NkU32,
-	reliable bool,
-	outError **C.char) int {
-	return 1
+	reliable C.bool,
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleStreamSendRaw
@@ -718,9 +1118,9 @@ func cModuleStreamSendRaw(
 	msg C.NkEnvelope,
 	presences *C.NkPresence,
 	numPresences C.NkU32,
-	reliable bool,
-	outError **C.char) int {
-	return 1
+	reliable C.bool,
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleSessionDisconnect
@@ -728,8 +1128,18 @@ func cModuleSessionDisconnect(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	sessionID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.SessionDisconnect(ctx, goString(sessionID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleMatchCreate
@@ -738,9 +1148,21 @@ func cModuleMatchCreate(
 	pCtx unsafe.Pointer,
 	module C.NkString,
 	params C.NkMapAny,
-	outMatchId **C.char,
-	outError **C.char) int {
-	return 1
+	outMatchID **C.char,
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retMatchID, err := nk.MatchCreate(ctx, goString(module), goMapAny(params))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	*outMatchID = C.CString(retMatchID)
+
+	return 0
 }
 
 //export cModuleMatchGet
@@ -749,8 +1171,8 @@ func cModuleMatchGet(
 	pCtx unsafe.Pointer,
 	id C.NkString,
 	outMatch **C.NkMatch,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleMatchList
@@ -758,15 +1180,15 @@ func cModuleMatchList(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	limit C.NkU32,
-	authoritative bool,
+	authoritative C.bool,
 	label C.NkString,
 	minSize *C.NkU32,
 	maxSize *C.NkU32,
 	query C.NkString,
 	outmatches **C.NkMatch,
 	outNumMatches **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleNotificationSend
@@ -778,9 +1200,19 @@ func cModuleNotificationSend(
 	content C.NkMapAny,
 	code C.NkU64,
 	sender C.NkString,
-	persistent bool,
-	outError **C.char) int {
-	return 1
+	persistent C.bool,
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.NotificationSend(ctx, goString(userID), goString(subject), goMapAny(content), int(code), goString(sender), bool(persistent))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleNotificationsSend
@@ -789,8 +1221,8 @@ func cModuleNotificationsSend(
 	pCtx unsafe.Pointer,
 	notifications *C.NkNotificationSend,
 	numNotifications C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleWalletUpdate
@@ -800,11 +1232,11 @@ func cModuleWalletUpdate(
 	userID C.NkString,
 	changeset C.NkMapI64,
 	metadata C.NkMapAny,
-	updateLedger bool,
+	updateLedger C.bool,
 	outUpdated **C.NkMapI64,
 	outPrevious **C.NkMapI64,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleWalletsUpdate
@@ -813,11 +1245,11 @@ func cModuleWalletsUpdate(
 	pCtx unsafe.Pointer,
 	updates *C.NkWalletUpdate,
 	numUpdates C.NkU32,
-	updateLedger bool,
+	updateLedger C.bool,
 	outResults **C.NkWalletUpdateResult,
 	outNumResults **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleWalletLedgerUpdate
@@ -827,8 +1259,8 @@ func cModuleWalletLedgerUpdate(
 	itemID C.NkString,
 	metadata C.NkMapAny,
 	outItem **C.NkWalletLedgerItem,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleWalletLedgerList
@@ -841,8 +1273,8 @@ func cModuleWalletLedgerList(
 	outItems **C.NkWalletLedgerItem,
 	outNumItems **C.NkU32,
 	outCursor **C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleStorageList
@@ -856,8 +1288,8 @@ func cModuleStorageList(
 	outobjs **C.NkStorageObject,
 	outNumObjs **C.NkU32,
 	outCursor **C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleStorageRead
@@ -868,8 +1300,8 @@ func cModuleStorageRead(
 	numReads C.NkU32,
 	outObjs **C.NkStorageObject,
 	outNumObjs **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleStorageWrite
@@ -880,8 +1312,8 @@ func cModuleStorageWrite(
 	numWrites C.NkU32,
 	outAcks **C.NkStorageObjectAck,
 	outNumAcks **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleStorageDelete
@@ -890,8 +1322,8 @@ func cModuleStorageDelete(
 	pCtx unsafe.Pointer,
 	deletes *C.NkStorageDelete,
 	numDeletes C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleMultiUpdate
@@ -904,13 +1336,13 @@ func cModuleMultiUpdate(
 	numStorageWrites C.NkU32,
 	walletUpdates *C.NkWalletUpdate,
 	numWalletUpdates C.NkU32,
-	updateLedger bool,
+	updateLedger C.bool,
 	outAcks **C.NkStorageObjectAck,
 	outNumAcks **C.NkU32,
 	outResults **C.NkWalletUpdateResult,
 	outNumResults **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleLeaderboardCreate
@@ -918,13 +1350,23 @@ func cModuleLeaderboardCreate(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	id C.NkString,
-	authoritative bool,
+	authoritative C.bool,
 	sortOrder C.NkString,
 	op C.NkString,
 	resetSchedule C.NkString,
 	metadata C.NkMapAny,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LeaderboardCreate(ctx, goString(id), bool(authoritative), goString(sortOrder), goString(op), goString(resetSchedule), goMapAny(metadata))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLeaderboardRecordsList
@@ -943,8 +1385,8 @@ func cModuleLeaderboardRecordsList(
 	outNumOwnerRecords **C.NkU32,
 	outNextCursor **C.NkString,
 	outPrevCursor **C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleLeaderboardRecordWrite
@@ -957,8 +1399,8 @@ func cModuleLeaderboardRecordWrite(
 	subscore C.NkI64,
 	metadata C.NkMapAny,
 	outRecord **C.NkLeaderboardRecord,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleLeaderboardDelete
@@ -966,9 +1408,18 @@ func cModuleLeaderboardDelete(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	id C.NkString,
-	ownerID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LeaderboardDelete(ctx, goString(id))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleLeaderboardRecordDelete
@@ -977,8 +1428,18 @@ func cModuleLeaderboardRecordDelete(
 	pCtx unsafe.Pointer,
 	id C.NkString,
 	ownerID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.LeaderboardRecordDelete(ctx, goString(id), goString(ownerID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleTournamentDelete
@@ -986,9 +1447,18 @@ func cModuleTournamentDelete(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	id C.NkString,
-	ownerID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.TournamentDelete(ctx, goString(id))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleGroupDelete
@@ -996,9 +1466,18 @@ func cModuleGroupDelete(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	id C.NkString,
-	ownerID C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.GroupDelete(ctx, goString(id))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleTournamentCreate
@@ -1017,9 +1496,9 @@ func cModuleTournamentCreate(
 	duration C.NkU32,
 	maxSize C.NkU32,
 	maxNumScore C.NkU32,
-	joinRequired bool,
-	outError **C.char) int {
-	return 1
+	joinRequired C.bool,
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleTournamentAddAttempt
@@ -1029,8 +1508,18 @@ func cModuleTournamentAddAttempt(
 	id C.NkString,
 	ownerID C.NkString,
 	count C.NkU64,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.TournamentAddAttempt(ctx, goString(id), goString(ownerID), int(count))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleTournamentJoin
@@ -1040,8 +1529,18 @@ func cModuleTournamentJoin(
 	id C.NkString,
 	ownerID C.NkString,
 	userName C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.TournamentJoin(ctx, goString(id), goString(ownerID), goString(userName))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleTournamentsGetId
@@ -1052,8 +1551,8 @@ func cModuleTournamentsGetId(
 	numTournamentIDs C.NkU32,
 	outTournaments **C.NkTournament,
 	outNumTournaments **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleTournamentList
@@ -1069,8 +1568,8 @@ func cModuleTournamentList(
 	id C.NkString,
 	outTournaments **C.NkTournamentList,
 	outNumTournaments **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleTournamentRecordsList
@@ -1089,8 +1588,8 @@ func cModuleTournamentRecordsList(
 	outNumOwnerRecords **C.NkU32,
 	outNextCursor **C.NkString,
 	outPrevCursor **C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleTournamentRecordWrite
@@ -1104,8 +1603,8 @@ func cModuleTournamentRecordWrite(
 	subscore C.NkI64,
 	metadata C.NkMapAny,
 	outRecord **C.NkLeaderboardRecord,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleTournamentRecordsHaystack
@@ -1118,8 +1617,8 @@ func cModuleTournamentRecordsHaystack(
 	expiry C.NkI64,
 	outRecords **C.NkLeaderboardRecord,
 	outNumRecords **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleGroupsGetId
@@ -1130,8 +1629,8 @@ func cModuleGroupsGetId(
 	numGroupIDs C.NkU32,
 	outGroups **C.NkGroup,
 	outNumGroups **C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleGroupCreate
@@ -1144,12 +1643,12 @@ func cModuleGroupCreate(
 	langTag C.NkString,
 	description C.NkString,
 	avatarURL C.NkString,
-	open bool,
+	open C.bool,
 	metadata C.NkMapAny,
 	maxCount C.NkU32,
 	outGroup **C.NkGroup,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleGroupUpdate
@@ -1162,11 +1661,21 @@ func cModuleGroupUpdate(
 	langTag C.NkString,
 	description C.NkString,
 	avatarURL C.NkString,
-	open bool,
+	open C.bool,
 	metadata C.NkMapAny,
 	maxCount C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.GroupUpdate(ctx, goString(userID), goString(name), goString(creatorID), goString(langTag), goString(description), goString(avatarURL), bool(open), goMapAny(metadata), int(maxCount))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleGroupUserJoin
@@ -1176,8 +1685,18 @@ func cModuleGroupUserJoin(
 	groupID C.NkString,
 	userID C.NkString,
 	userName C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.GroupUserJoin(ctx, goString(groupID), goString(userID), goString(userName))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleGroupUserLeave
@@ -1187,8 +1706,18 @@ func cModuleGroupUserLeave(
 	groupID C.NkString,
 	userID C.NkString,
 	userName C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.GroupUserLeave(ctx, goString(groupID), goString(userID), goString(userName))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleGroupUsersAdd
@@ -1198,8 +1727,18 @@ func cModuleGroupUsersAdd(
 	groupID C.NkString,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.GroupUsersAdd(ctx, goString(groupID), goStringArray(userIDs, numUserIDs))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleGroupUsersDemote
@@ -1209,8 +1748,18 @@ func cModuleGroupUsersDemote(
 	groupID C.NkString,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.GroupUsersDemote(ctx, goString(groupID), goStringArray(userIDs, numUserIDs))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleGroupUsersKick
@@ -1220,8 +1769,18 @@ func cModuleGroupUsersKick(
 	groupID C.NkString,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.GroupUsersKick(ctx, goString(groupID), goStringArray(userIDs, numUserIDs))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleGroupUsersPromote
@@ -1231,8 +1790,18 @@ func cModuleGroupUsersPromote(
 	groupID C.NkString,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.GroupUsersPromote(ctx, goString(groupID), goStringArray(userIDs, numUserIDs))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleGroupUsersList
@@ -1246,8 +1815,8 @@ func cModuleGroupUsersList(
 	outUsers **C.NkGroupUserListGroupUser,
 	outNumUsers **C.NkU32,
 	outCursor **C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleUserGroupsList
@@ -1261,8 +1830,8 @@ func cModuleUserGroupsList(
 	outUsers **C.NkUserGroupListUserGroup,
 	outNumUsers **C.NkU32,
 	outCursor **C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleFriendsList
@@ -1276,8 +1845,8 @@ func cModuleFriendsList(
 	outFriends **C.NkFriend,
 	outNumFriends **C.NkU32,
 	outCursor **C.NkString,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }
 
 //export cModuleEvent
@@ -1285,6 +1854,6 @@ func cModuleEvent(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	evt C.NkEvent,
-	outError **C.char) int {
-	return 1
+	outErr **C.char) int {
+	return -1
 }

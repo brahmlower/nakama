@@ -46,57 +46,59 @@ extern "C"
 		ptrdiff_t n;
 	} NkString;
 
-	// const NkU8 NK_U8_T = 0;
-	// const NkU8 NK_U16_T = 1;
-	// const NkU8 NK_U32_T = 2;
-	// const NkU8 NK_U64_T = 3;
-	// const NkU8 NK_I8_T = 4;
-	// const NkU8 NK_I16_T = 5;
-	// const NkU8 NK_I32_T = 6;
-	// const NkU8 NK_I64_T = 7;
-	// const NkU8 NK_F32_T = 8;
-	// const NkU8 NK_F64_T = 9;
-	// const NkU8 NK_STRING_T = 10;
-	// const NkU8 NK_LAST_T = 11;
+	#define NK_U8_T 0
+	#define NK_U16_T 1
+	#define NK_U32_T 2
+	#define NK_U64_T 3
+	#define NK_I8_T 4
+	#define NK_I16_T 5
+	#define NK_I32_T 6
+	#define NK_I64_T 7
+	#define NK_F32_T 8
+	#define NK_F64_T 9
+	#define NK_STRING_T 10
+	#define NK_LAST_T 11
+
+	typedef union NkValue
+	{
+		NkU8 u8;
+		NkU16 u16;
+		NkU32 u32;
+		NkU64 u64;
+		NkI8 i8;
+		NkI16 i16;
+		NkI32 i32;
+		NkI64 i64;
+		NkF32 f32;
+		NkF64 f64;
+		NkString s;
+	} NkValue;
 
 	typedef struct NkAny
 	{
-		NkU8 type;
-		union NkValue
-		{
-			NkU8 u8;
-			NkU16 u16;
-			NkU32 u32;
-			NkU64 u64;
-			NkI8 i8;
-			NkI16 i16;
-			NkI32 i32;
-			NkI64 i64;
-			NkF32 f32;
-			NkF64 f64;
-			NkString s;
-		} value;
+		NkU8 ty;
+		NkValue val;
 	} NkAny;
 
 	typedef struct NkMapAny
 	{
-		NkU32 count;
+		NkU32 cnt;
 		NkString *keys;
-		NkAny *values;
+		NkAny *vals;
 	} NkMapAny;
 
 	typedef struct NkMapI64
 	{
-		NkU32 count;
+		NkU32 cnt;
 		NkString *keys;
-		NkI64 *values;
+		NkI64 *vals;
 	} NkMapI64;
 
 	typedef struct NkMapString
 	{
-		NkU32 count;
+		NkU32 cnt;
 		NkString *keys;
-		NkString *values;
+		NkString *vals;
 	} NkMapString;
 
 	typedef void (*NkContextValueFn)(
@@ -681,6 +683,12 @@ extern "C"
 		const void *ptr,
 		const NkContext *ctx,
 		NkString id,
+		NkString **outerror);
+
+	typedef int (*NkModuleLeaderboardRecordDeleteFn)(
+		const void *ptr,
+		const NkContext *ctx,
+		NkString id,
 		NkString ownerid,
 		NkString **outerror);
 
@@ -981,7 +989,7 @@ extern "C"
 		NkModuleDeleteFn leaderboarddelete;
 		NkModuleLeaderboardRecordsListFn leaderboardrecordslist;
 		NkModuleLeaderboardRecordWriteFn leaderboardrecordwrite;
-		NkModuleDeleteFn leaderboardrecorddelete;
+		NkModuleLeaderboardRecordDeleteFn leaderboardrecorddelete;
 		NkModuleTournamentCreateFn tournamentcreate;
 		NkModuleDeleteFn tournamentdelete;
 		NkModuleTournamentAddAttemptFn tournamentaddattempt;

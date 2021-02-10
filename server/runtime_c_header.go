@@ -673,7 +673,6 @@ extern int cModuleLeaderboardDelete(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
-	NkString ownerid,
 	char **outerror);
 
 extern int cModuleLeaderboardRecordDelete(
@@ -687,14 +686,12 @@ extern int cModuleTournamentDelete(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
-	NkString ownerid,
 	char **outerror);
 
 extern int cModuleGroupDelete(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
-	NkString ownerid,
 	char **outerror);
 
 extern int cModuleTournamentCreate(
@@ -3028,14 +3025,12 @@ int moduleleaderboarddelete(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
-	NkString ownerid,
 	char **outerror)
 {
 	return cModuleLeaderboardDelete(
 		ptr,
 		ctx,
 		id,
-		ownerid,
 		outerror);
 }
 
@@ -3058,14 +3053,12 @@ int moduletournamentdelete(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
-	NkString ownerid,
 	char **outerror)
 {
 	return cModuleTournamentDelete(
 		ptr,
 		ctx,
 		id,
-		ownerid,
 		outerror);
 }
 
@@ -3073,14 +3066,12 @@ int modulegroupdelete(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString id,
-	NkString ownerid,
 	char **outerror)
 {
 	return cModuleGroupDelete(
 		ptr,
 		ctx,
 		id,
-		ownerid,
 		outerror);
 }
 
@@ -5150,7 +5141,3 @@ int initializerregistereventsessionend(
 
 */
 import "C"
-
-func GoStringN(s C.NkString) string {
-	return C.GoStringN(s.p, C.int(s.n))
-}
