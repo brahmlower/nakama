@@ -21,13 +21,49 @@ extern bool *mallocbool(NkU32);
 
 extern NkAccount *mallocnkaccount(NkU32);
 
+extern NkLeaderboardRecord *mallocnkleaderboardrecord(NkU32);
+
+extern NkMapI64 *mallocnkmapi64(NkU32);
+
+extern NkMatch *mallocnkmatch(NkU32);
+
+extern NkPresence *mallocnkpresence(NkU32);
+
+extern NkPresenceMeta *mallocnkpresencemeta(NkU32);
+
 extern NkI64 *mallocnki64(NkU32);
+
+extern NkU32 *mallocnku32(NkU32);
+
+extern NkU64 *mallocnku64(NkU32);
+
+extern NkStorageObject *mallocnkstorageobject(NkU32);
+
+extern NkTournament *mallocnktournament(NkU32);
 
 extern NkUser *mallocnkuser(NkU32);
 
+extern NkWalletLedgerItem *mallocnkwalletledgeritem(NkU32);
+
+extern NkWalletUpdateResult *mallocnkwalletupdateresult(NkU32);
+
 extern void nkaccountset(NkAccount *, NkU32, NkAccount);
 
+extern void nkmapi64set(NkMapI64 *, NkU32, NkString, NkI64);
+
+extern void nkmatchset(NkMatch *, NkU32, NkMatch);
+
+extern void nkpresenceset(NkPresence *, NkU32, NkPresence);
+
+extern void nkstorageobjectset(NkStorageObject *, NkU32, NkStorageObject);
+
+extern void nktournamentset(NkTournament *, NkU32, NkTournament);
+
 extern void nkuserset(NkUser *, NkU32, NkUser);
+
+extern void nkwalletledgeritemset(NkWalletLedgerItem *, NkU32, NkWalletLedgerItem);
+
+extern void nkwalletupdateresultset(NkWalletUpdateResult *, NkU32, NkWalletUpdateResult);
 */
 import "C"
 
@@ -352,7 +388,6 @@ func cModuleAccountGetId(
 
 	ptr := pointer.Save(retAccount)
 	call.refs = append(call.refs, ptr)
-
 	*outAccount = C.mallocnkaccount(1)
 	(*outAccount).ptr = ptr
 
@@ -371,7 +406,7 @@ func cModuleAccountsGetId(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retAccounts, err := nk.AccountsGetId(ctx, goStringArray(userIDs, numUserIDs))
+	retAccounts, err := nk.AccountsGetId(ctx, goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -380,7 +415,8 @@ func cModuleAccountsGetId(
 
 	numAccounts := C.NkU32(len(retAccounts))
 	*outAccounts = C.mallocnkaccount(numAccounts)
-	**outNumAccounts = numAccounts // TODO: Malloc this?
+	*outNumAccounts = C.mallocnku32(1)
+	**outNumAccounts = numAccounts
 
 	for idx, retAccount := range retAccounts {
 		ptr := pointer.Save(retAccount)
@@ -474,7 +510,7 @@ func cModuleUsersGetId(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUsers, err := nk.UsersGetId(ctx, goStringArray(keys, numKeys))
+	retUsers, err := nk.UsersGetId(ctx, goStrings(keys, numKeys))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -483,7 +519,7 @@ func cModuleUsersGetId(
 
 	numUsers := C.NkU32(len(retUsers))
 	*outUsers = C.mallocnkuser(numUsers)
-	**outNumUsers = numUsers // TODO: Malloc this?
+	**outNumUsers = numUsers
 
 	for idx, retUser := range retUsers {
 		ptr := pointer.Save(retUser)
@@ -509,7 +545,7 @@ func cModuleUsersGetUsername(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	retUsers, err := nk.UsersGetUsername(ctx, goStringArray(keys, numKeys))
+	retUsers, err := nk.UsersGetUsername(ctx, goStrings(keys, numKeys))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -518,7 +554,7 @@ func cModuleUsersGetUsername(
 
 	numUsers := C.NkU32(len(retUsers))
 	*outUsers = C.mallocnkuser(numUsers)
-	**outNumUsers = numUsers // TODO: Malloc this?
+	**outNumUsers = numUsers
 
 	for idx, retUser := range retUsers {
 		ptr := pointer.Save(retUser)
@@ -542,7 +578,7 @@ func cModuleUsersBanId(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	err := nk.UsersBanId(ctx, goStringArray(userIDs, numUserIDs))
+	err := nk.UsersBanId(ctx, goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -562,7 +598,7 @@ func cModuleUsersUnbanId(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	err := nk.UsersUnbanId(ctx, goStringArray(userIDs, numUserIDs))
+	err := nk.UsersUnbanId(ctx, goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -957,7 +993,30 @@ func cModuleStreamUserList(
 	outPresences **C.NkPresence,
 	outNumPresences **C.NkU32,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	retPresences, err := nk.StreamUserList(uint8(mode), goString(subject), goString(subContext), goString(label), bool(includeHidden), bool(includeNotHidden))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	numPresences := C.NkU32(len(retPresences))
+	*outPresences = C.mallocnkpresence(numPresences)
+	*outNumPresences = C.mallocnku32(1)
+	**outNumPresences = numPresences
+
+	for idx, retPresence := range retPresences {
+		ptr := pointer.Save(retPresence)
+		call.refs = append(call.refs, ptr)
+
+		outPresence := C.NkPresence{}
+		outPresence.ptr = ptr
+		C.nkpresenceset(*outPresences, C.NkU32(idx), outPresence)
+	}
+
+	return 0
 }
 
 //export cModuleStreamUserGet
@@ -971,7 +1030,21 @@ func cModuleStreamUserGet(
 	sessionID C.NkString,
 	outMeta **C.NkPresenceMeta,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	retMeta, err := nk.StreamUserGet(uint8(mode), goString(subject), goString(subContext), goString(label), goString(userID), goString(sessionID))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	ptr := pointer.Save(retMeta)
+	*outMeta = C.mallocnkpresencemeta(1)
+	(*outMeta).ptr = ptr
+	call.refs = append(call.refs, ptr)
+
+	return 0
 }
 
 //export cModuleStreamUserJoin
@@ -988,7 +1061,19 @@ func cModuleStreamUserJoin(
 	status C.NkString,
 	outJoined **C.bool,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	retJoined, err := nk.StreamUserJoin(uint8(mode), goString(subject), goString(subContext), goString(label), goString(userID), goString(sessionID), bool(hidden), bool(persistence), goString(status))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	*outJoined = C.mallocbool(1)
+	**outJoined = C.bool(retJoined)
+
+	return 0
 }
 
 //export cModuleStreamUserUpdate
@@ -1047,7 +1132,17 @@ func cModuleStreamUserKick(
 	label C.NkString,
 	presence C.NkPresence,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	user := pointer.Restore(presence.ptr).(runtime.Presence)
+	err := nk.StreamUserKick(uint8(mode), goString(subject), goString(subContext), goString(label), user)
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleStreamCount
@@ -1068,7 +1163,8 @@ func cModuleStreamCount(
 		return 1
 	}
 
-	**outCount = C.NkU64(retCount) // TODO: Malloc this?
+	*outCount = C.mallocnku64(1)
+	**outCount = C.NkU64(retCount)
 
 	return 0
 }
@@ -1105,7 +1201,16 @@ func cModuleStreamSend(
 	numPresences C.NkU32,
 	reliable C.bool,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	err := nk.StreamSend(uint8(mode), goString(subject), goString(subContext), goString(label), goString(data), goPresences(presences, numPresences), bool(reliable))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleStreamSendRaw
@@ -1120,7 +1225,16 @@ func cModuleStreamSendRaw(
 	numPresences C.NkU32,
 	reliable C.bool,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	err := nk.StreamSendRaw(uint8(mode), goString(subject), goString(subContext), goString(label), goEnvelope(msg), goPresences(presences, numPresences), bool(reliable))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleSessionDisconnect
@@ -1172,7 +1286,22 @@ func cModuleMatchGet(
 	id C.NkString,
 	outMatch **C.NkMatch,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retMatch, err := nk.MatchGet(ctx, goString(id))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	ptr := pointer.Save(retMatch)
+	call.refs = append(call.refs, ptr)
+	*outMatch = C.mallocnkmatch(1)
+	(*outMatch).ptr = ptr
+
+	return 0
 }
 
 //export cModuleMatchList
@@ -1185,10 +1314,41 @@ func cModuleMatchList(
 	minSize *C.NkU32,
 	maxSize *C.NkU32,
 	query C.NkString,
-	outmatches **C.NkMatch,
+	outMatches **C.NkMatch,
 	outNumMatches **C.NkU32,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	var goMinSize, goMaxSize *int
+	if minSize != nil {
+		*goMinSize = int(*minSize)
+	}
+	if maxSize != nil {
+		*goMaxSize = int(*maxSize)
+	}
+	retMatches, err := nk.MatchList(ctx, int(limit), bool(authoritative), goString(label), goMinSize, goMaxSize, goString(query))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	numMatches := C.NkU32(len(retMatches))
+	*outMatches = C.mallocnkmatch(numMatches)
+	*outNumMatches = C.mallocnku32(1)
+	**outNumMatches = numMatches
+
+	for idx, retMatch := range retMatches {
+		ptr := pointer.Save(retMatch)
+		call.refs = append(call.refs, ptr)
+
+		outMatch := C.NkMatch{}
+		outMatch.ptr = ptr
+		C.nkmatchset(*outMatches, C.NkU32(idx), outMatch)
+	}
+
+	return 0
 }
 
 //export cModuleNotificationSend
@@ -1222,7 +1382,17 @@ func cModuleNotificationsSend(
 	notifications *C.NkNotificationSend,
 	numNotifications C.NkU32,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.NotificationsSend(ctx, goNotificationSends(notifications, numNotifications))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleWalletUpdate
@@ -1236,7 +1406,20 @@ func cModuleWalletUpdate(
 	outUpdated **C.NkMapI64,
 	outPrevious **C.NkMapI64,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retUpdated, retPrevious, err := nk.WalletUpdate(ctx, goString(userID), goMapI64(changeset), goMapAny(metadata), bool(updateLedger))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	*outUpdated = cNkMapI64(retUpdated)
+	*outPrevious = cNkMapI64(retPrevious)
+
+	return 0
 }
 
 //export cModuleWalletsUpdate
@@ -1249,7 +1432,31 @@ func cModuleWalletsUpdate(
 	outResults **C.NkWalletUpdateResult,
 	outNumResults **C.NkU32,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retResults, err := nk.WalletsUpdate(ctx, goWalletUpdates(updates, numUpdates), bool(updateLedger))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	numResults := C.NkU32(len(retResults))
+	*outResults = C.mallocnkwalletupdateresult(numResults)
+	*outNumResults = C.mallocnku32(1)
+	**outNumResults = numResults
+
+	for idx, retResult := range retResults {
+		ptr := pointer.Save(retResult)
+		call.refs = append(call.refs, ptr)
+
+		outResult := C.NkWalletUpdateResult{}
+		outResult.ptr = ptr
+		C.nkwalletupdateresultset(*outResults, C.NkU32(idx), outResult)
+	}
+
+	return 0
 }
 
 //export cModuleWalletLedgerUpdate
@@ -1260,7 +1467,24 @@ func cModuleWalletLedgerUpdate(
 	metadata C.NkMapAny,
 	outItem **C.NkWalletLedgerItem,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retItem, err := nk.WalletLedgerUpdate(ctx, goString(itemID), goMapAny(metadata))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	ptr := pointer.Save(retItem)
+	call.refs = append(call.refs, ptr)
+
+	*outItem = C.mallocnkwalletledgeritem(1)
+	**outItem = C.NkWalletLedgerItem{}
+	(**outItem).ptr = ptr
+
+	return 0
 }
 
 //export cModuleWalletLedgerList
@@ -1272,9 +1496,34 @@ func cModuleWalletLedgerList(
 	cursor C.NkString,
 	outItems **C.NkWalletLedgerItem,
 	outNumItems **C.NkU32,
-	outCursor **C.NkString,
+	outCursor **C.char,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retItems, retCursor, err := nk.WalletLedgerList(ctx, goString(userID), int(limit), goString(cursor))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	numItems := C.NkU32(len(retItems))
+	*outNumItems = C.mallocnku32(1)
+	**outNumItems = numItems
+
+	*outItems = C.mallocnkwalletledgeritem(numItems)
+	for idx, retItem := range retItems {
+		ptr := pointer.Save(retItem)
+		call.refs = append(call.refs, ptr)
+		outItem := C.NkWalletLedgerItem{}
+		outItem.ptr = ptr
+		C.nkwalletledgeritemset(*outItems, C.NkU32(idx), outItem)
+	}
+
+	*outCursor = C.CString(retCursor)
+
+	return 0
 }
 
 //export cModuleStorageList
@@ -1285,11 +1534,33 @@ func cModuleStorageList(
 	collection C.NkString,
 	limit C.NkU32,
 	cursor C.NkString,
-	outobjs **C.NkStorageObject,
+	outObjs **C.NkStorageObject,
 	outNumObjs **C.NkU32,
-	outCursor **C.NkString,
+	outCursor **C.char,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retObjs, retCursor, err := nk.StorageList(ctx, goString(userID), goString(collection), int(limit), goString(cursor))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	numObjs := C.NkU32(len(retObjs))
+	*outNumObjs = C.mallocnku32(1)
+	**outNumObjs = numObjs
+
+	*outObjs = C.mallocnkstorageobject(numObjs)
+	for idx, _ := range retObjs {
+		outObj := C.NkStorageObject{}
+		C.nkstorageobjectset(*outObjs, C.NkU32(idx), outObj)
+	}
+
+	*outCursor = C.CString(retCursor)
+
+	return 0
 }
 
 //export cModuleStorageRead
@@ -1383,8 +1654,8 @@ func cModuleLeaderboardRecordsList(
 	outNumRecords **C.NkU32,
 	outOwnerRecords **C.NkLeaderboardRecord,
 	outNumOwnerRecords **C.NkU32,
-	outNextCursor **C.NkString,
-	outPrevCursor **C.NkString,
+	outNextCursor **C.char,
+	outPrevCursor **C.char,
 	outErr **C.char) int {
 	return -1
 }
@@ -1395,12 +1666,29 @@ func cModuleLeaderboardRecordWrite(
 	pCtx unsafe.Pointer,
 	id C.NkString,
 	ownerID C.NkString,
+	userName C.NkString,
 	score C.NkI64,
 	subscore C.NkI64,
 	metadata C.NkMapAny,
 	outRecord **C.NkLeaderboardRecord,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retRecord, err := nk.LeaderboardRecordWrite(ctx, goString(id), goString(ownerID), goString(userName), int64(score), int64(subscore), goMapAny(metadata))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	*outRecord = C.mallocnkleaderboardrecord(1)
+	**outRecord = C.NkLeaderboardRecord{}
+
+	// TODO!
+	_ = retRecord
+
+	return 0
 }
 
 //export cModuleLeaderboardDelete
@@ -1486,6 +1774,7 @@ func cModuleTournamentCreate(
 	pCtx unsafe.Pointer,
 	id C.NkString,
 	sortOrder C.NkString,
+	operator C.NkString,
 	resetSchedule C.NkString,
 	metadata C.NkMapAny,
 	title C.NkString,
@@ -1498,7 +1787,17 @@ func cModuleTournamentCreate(
 	maxNumScore C.NkU32,
 	joinRequired C.bool,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	err := nk.TournamentCreate(ctx, goString(id), goString(sortOrder), goString(operator), goString(resetSchedule), goMapAny(metadata), goString(title), goString(description), int(category), int(startTime), int(endTime), int(duration), int(maxSize), int(maxNumScore), bool(joinRequired))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	return 0
 }
 
 //export cModuleTournamentAddAttempt
@@ -1552,7 +1851,27 @@ func cModuleTournamentsGetId(
 	outTournaments **C.NkTournament,
 	outNumTournaments **C.NkU32,
 	outErr **C.char) int {
-	return -1
+	call := pointer.Restore(pNk).(*RuntimeCCall)
+	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
+	ctx := pointer.Restore(pCtx).(context.Context)
+	retTournaments, err := nk.TournamentsGetId(ctx, goStrings(tournamentIDs, numTournamentIDs))
+	if err != nil {
+		*outErr = C.CString(err.Error())
+
+		return 1
+	}
+
+	numTournaments := C.NkU32(len(retTournaments))
+	*outNumTournaments = C.mallocnku32(1)
+	**outNumTournaments = numTournaments
+
+	*outTournaments = C.mallocnktournament(numTournaments)
+	for idx, _ := range retTournaments {
+		outTournament := C.NkTournament{}
+		C.nktournamentset(*outTournaments, C.NkU32(idx), outTournament)
+	}
+
+	return 0
 }
 
 //export cModuleTournamentList
@@ -1586,8 +1905,8 @@ func cModuleTournamentRecordsList(
 	outNumRecords **C.NkU32,
 	outOwnerRecords **C.NkLeaderboardRecord,
 	outNumOwnerRecords **C.NkU32,
-	outNextCursor **C.NkString,
-	outPrevCursor **C.NkString,
+	outNextCursor **C.char,
+	outPrevCursor **C.char,
 	outErr **C.char) int {
 	return -1
 }
@@ -1731,7 +2050,7 @@ func cModuleGroupUsersAdd(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	err := nk.GroupUsersAdd(ctx, goString(groupID), goStringArray(userIDs, numUserIDs))
+	err := nk.GroupUsersAdd(ctx, goString(groupID), goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -1752,7 +2071,7 @@ func cModuleGroupUsersDemote(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	err := nk.GroupUsersDemote(ctx, goString(groupID), goStringArray(userIDs, numUserIDs))
+	err := nk.GroupUsersDemote(ctx, goString(groupID), goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -1773,7 +2092,7 @@ func cModuleGroupUsersKick(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	err := nk.GroupUsersKick(ctx, goString(groupID), goStringArray(userIDs, numUserIDs))
+	err := nk.GroupUsersKick(ctx, goString(groupID), goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -1794,7 +2113,7 @@ func cModuleGroupUsersPromote(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	err := nk.GroupUsersPromote(ctx, goString(groupID), goStringArray(userIDs, numUserIDs))
+	err := nk.GroupUsersPromote(ctx, goString(groupID), goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -1814,7 +2133,7 @@ func cModuleGroupUsersList(
 	cursor C.NkString,
 	outUsers **C.NkGroupUserListGroupUser,
 	outNumUsers **C.NkU32,
-	outCursor **C.NkString,
+	outCursor **C.char,
 	outErr **C.char) int {
 	return -1
 }
@@ -1829,7 +2148,7 @@ func cModuleUserGroupsList(
 	cursor C.NkString,
 	outUsers **C.NkUserGroupListUserGroup,
 	outNumUsers **C.NkU32,
-	outCursor **C.NkString,
+	outCursor **C.char,
 	outErr **C.char) int {
 	return -1
 }
@@ -1844,7 +2163,7 @@ func cModuleFriendsList(
 	cursor C.NkString,
 	outFriends **C.NkFriend,
 	outNumFriends **C.NkU32,
-	outCursor **C.NkString,
+	outCursor **C.char,
 	outErr **C.char) int {
 	return -1
 }

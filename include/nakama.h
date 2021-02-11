@@ -104,7 +104,7 @@ extern "C"
 	typedef void (*NkContextValueFn)(
 		const void *ptr,
 		NkString key,
-		NkString **outvalue);
+		char **outvalue);
 
 	typedef struct NkContext
 	{
@@ -152,9 +152,9 @@ extern "C"
 		NkString password,
 		NkString username,
 		bool create,
-		NkString **outuserid,
-		NkString **outusername,
-		NkString **outerror,
+		char **outuserid,
+		char **outusername,
+		char **outerror,
 		bool **outcreated);
 
 	typedef int (*NkModuleAuthenticateFacebookFn)(
@@ -164,9 +164,9 @@ extern "C"
 		bool importfriends,
 		NkString username,
 		bool create,
-		NkString **outuserid,
-		NkString **outusername,
-		NkString **outerror,
+		char **outuserid,
+		char **outusername,
+		char **outerror,
 		bool **outcreated);
 
 	typedef int (*NkModuleAuthenticateFn)(
@@ -175,9 +175,9 @@ extern "C"
 		NkString userid,
 		NkString username,
 		bool create,
-		NkString **outuserid,
-		NkString **outusername,
-		NkString **outerror,
+		char **outuserid,
+		char **outusername,
+		char **outerror,
 		bool **outcreated);
 
 	typedef int (*NkModuleAuthenticateGameCenterFn)(
@@ -191,9 +191,9 @@ extern "C"
 		NkString publickeyurl,
 		NkString username,
 		bool create,
-		NkString **outuserid,
-		NkString **outusername,
-		NkString **outerror,
+		char **outuserid,
+		char **outusername,
+		char **outerror,
 		bool **outcreated);
 
 	typedef int (*NkModuleAuthenticateTokenGenerateFn)(
@@ -201,9 +201,9 @@ extern "C"
 		NkString username,
 		NkI64 expiry,
 		NkMapString vars,
-		NkString **outtoken,
+		char **outtoken,
 		NkI64 **outexpiry,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccount
 	{
@@ -215,7 +215,7 @@ extern "C"
 		const NkContext *ctx,
 		NkString userid,
 		NkAccount **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleAccountsGetIdFn)(
 		const void *ptr,
@@ -224,7 +224,7 @@ extern "C"
 		NkU32 numuserids,
 		NkAccount **outaccounts,
 		NkU32 **outnumaccounts,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleAccountUpdateIdFn)(
 		const void *ptr,
@@ -237,21 +237,21 @@ extern "C"
 		NkString location,
 		NkString langtag,
 		NkString avatarurl,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleAccountDeleteIdFn)(
 		const void *ptr,
 		const NkContext *ctx,
 		NkString userid,
 		bool recorded,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleAccountExportIdFn)(
 		const void *ptr,
 		const NkContext *ctx,
 		NkString userid,
-		NkString **outaccount,
-		NkString **outerror);
+		char **outaccount,
+		char **outerror);
 
 	typedef struct NkUser
 	{
@@ -265,21 +265,21 @@ extern "C"
 		NkU32 numkeys,
 		NkUser **outusers,
 		NkU32 **outnumusers,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleUsersBanFn)(
 		const void *ptr,
 		const NkContext *ctx,
 		const NkString *userids,
 		NkU32 numids,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleLinkFn)(
 		const void *ptr,
 		const NkContext *ctx,
 		NkString userid,
 		NkString linkid,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleLinkEmailFn)(
 		const void *ptr,
@@ -287,7 +287,7 @@ extern "C"
 		NkString userid,
 		NkString email,
 		NkString password,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleLinkFacebookFn)(
 		const void *ptr,
@@ -296,7 +296,7 @@ extern "C"
 		NkString username,
 		NkString token,
 		bool importfriends,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleLinkGameCenterFn)(
 		const void *ptr,
@@ -308,7 +308,7 @@ extern "C"
 		NkString salt,
 		NkString signature,
 		NkString publickeyurl,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkPresence
 	{
@@ -325,7 +325,7 @@ extern "C"
 		bool includenothidden,
 		NkPresence **outpresences,
 		NkU32 **outnumpresences,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkPresenceMeta
 	{
@@ -341,7 +341,7 @@ extern "C"
 		NkString userid,
 		NkString sessionid,
 		NkPresenceMeta **outmeta,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleStreamUserJoinFn)(
 		const void *ptr,
@@ -355,7 +355,7 @@ extern "C"
 		bool persistence,
 		NkString status,
 		bool **outjoined,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleStreamUserUpdateFn)(
 		const void *ptr,
@@ -368,7 +368,7 @@ extern "C"
 		bool hidden,
 		bool persistence,
 		NkString status,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleStreamUserLeaveFn)(
 		const void *ptr,
@@ -378,7 +378,7 @@ extern "C"
 		NkString label,
 		NkString userid,
 		NkString sessionid,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleStreamUserKickFn)(
 		const void *ptr,
@@ -387,7 +387,7 @@ extern "C"
 		NkString subcontext,
 		NkString label,
 		NkPresence presence,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleStreamCountFn)(
 		const void *ptr,
@@ -396,7 +396,7 @@ extern "C"
 		NkString subcontext,
 		NkString label,
 		NkU64 **outcount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleStreamCloseFn)(
 		const void *ptr,
@@ -404,7 +404,7 @@ extern "C"
 		NkString subject,
 		NkString subcontext,
 		NkString label,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleStreamSendFn)(
 		const void *ptr,
@@ -416,7 +416,7 @@ extern "C"
 		const NkPresence *presences,
 		NkU32 numpresences,
 		bool reliable,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkEnvelope
 	{
@@ -433,21 +433,21 @@ extern "C"
 		const NkPresence *presences,
 		NkU32 numpresences,
 		bool reliable,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleSessionDisconnectFn)(
 		const void *ptr,
 		const NkContext *ctx,
 		NkString sessionid,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleMatchCreateFn)(
 		const void *ptr,
 		const NkContext *ctx,
 		NkString module,
 		NkMapAny params,
-		NkString **outmatchid,
-		NkString **outerror);
+		char **outmatchid,
+		char **outerror);
 
 	typedef struct NkMatch
 	{
@@ -459,7 +459,7 @@ extern "C"
 		const NkContext *ctx,
 		NkString id,
 		NkMatch **outmatch,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleMatchListFn)(
 		const void *ptr,
@@ -472,7 +472,7 @@ extern "C"
 		NkString query,
 		NkMatch **outmatches,
 		NkU32 **outnummatches,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleNotificationSendFn)(
 		const void *ptr,
@@ -483,7 +483,7 @@ extern "C"
 		NkU64 code,
 		NkString sender,
 		bool persistent,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkNotificationSend
 	{
@@ -495,7 +495,7 @@ extern "C"
 		const NkContext *ctx,
 		const NkNotificationSend *notifications,
 		NkU32 numnotifications,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleWalletUpdateFn)(
 		const void *ptr,
@@ -506,11 +506,13 @@ extern "C"
 		bool updateledger,
 		NkMapI64 **outupdated,
 		NkMapI64 **outprevious,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkWalletUpdate
 	{
-		const void *ptr;
+		NkString userid;
+		NkMapI64 changeset;
+		NkMapAny metadata;
 	} NkWalletUpdate;
 
 	typedef struct NkWalletUpdateResult
@@ -526,7 +528,7 @@ extern "C"
 		bool updateledger,
 		NkWalletUpdateResult **outresults,
 		NkU32 **outnumresults,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkWalletLedgerItem
 	{
@@ -539,7 +541,7 @@ extern "C"
 		NkString itemid,
 		NkMapAny metadata,
 		NkWalletLedgerItem **outitem,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleWalletLedgerListFn)(
 		const void *ptr,
@@ -549,8 +551,8 @@ extern "C"
 		NkString cursor,
 		NkWalletLedgerItem **outitems,
 		NkU32 **outnumitems,
-		NkString **outcursor,
-		NkString **outerror);
+		char **outcursor,
+		char **outerror);
 
 	typedef struct NkStorageObject
 	{
@@ -566,8 +568,8 @@ extern "C"
 		NkString cursor,
 		NkStorageObject **outobjs,
 		NkU32 **outnumobjs,
-		NkString **outcursor,
-		NkString **outerror);
+		char **outcursor,
+		char **outerror);
 
 	typedef struct NkStorageRead
 	{
@@ -581,7 +583,7 @@ extern "C"
 		NkU32 numreads,
 		NkStorageObject **outobjs,
 		NkU32 **outnumobjs,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkStorageWrite
 	{
@@ -600,7 +602,7 @@ extern "C"
 		NkU32 numwrites,
 		NkStorageObjectAck **outacks,
 		NkU32 **outnumacks,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkStorageDelete
 	{
@@ -612,7 +614,7 @@ extern "C"
 		const NkContext *ctx,
 		const NkStorageDelete *deletes,
 		NkU32 numdeletes,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountUpdate
 	{
@@ -633,7 +635,7 @@ extern "C"
 		NkU32 **outnumacks,
 		NkWalletUpdateResult **outresults,
 		NkU32 **outnumresults,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleLeaderboardCreateFn)(
 		const void *ptr,
@@ -644,7 +646,7 @@ extern "C"
 		NkString op,
 		NkString resetschedule,
 		NkMapAny metadata,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkLeaderboardRecord
 	{
@@ -664,33 +666,34 @@ extern "C"
 		NkU32 **outnumrecords,
 		NkLeaderboardRecord **outownerrecords,
 		NkU32 **outnumownerrecords,
-		NkString **outnextcursor,
-		NkString **outprevcursor,
-		NkString **outerror);
+		char **outnextcursor,
+		char **outprevcursor,
+		char **outerror);
 
 	typedef int (*NkModuleLeaderboardRecordWriteFn)(
 		const void *ptr,
 		const NkContext *ctx,
 		NkString id,
 		NkString ownerid,
+		NkString username,
 		NkI64 score,
 		NkI64 subscore,
 		NkMapAny metadata,
 		NkLeaderboardRecord **outrecord,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleDeleteFn)(
 		const void *ptr,
 		const NkContext *ctx,
 		NkString id,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleLeaderboardRecordDeleteFn)(
 		const void *ptr,
 		const NkContext *ctx,
 		NkString id,
 		NkString ownerid,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleTournamentCreateFn)(
 		const void *ptr,
@@ -708,7 +711,7 @@ extern "C"
 		NkU32 maxsize,
 		NkU32 maxnumscore,
 		bool joinrequired,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleTournamentAddAttemptFn)(
 		const void *ptr,
@@ -716,7 +719,7 @@ extern "C"
 		NkString id,
 		NkString ownerid,
 		NkU64 count,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleTournamentJoinFn)(
 		const void *ptr,
@@ -724,7 +727,7 @@ extern "C"
 		NkString id,
 		NkString ownerid,
 		NkString username,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkTournament
 	{
@@ -738,7 +741,7 @@ extern "C"
 		NkU32 numtournamentids,
 		NkTournament **outtournaments,
 		NkU32 **outnumtournaments,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkTournamentList
 	{
@@ -757,7 +760,7 @@ extern "C"
 		NkString id,
 		NkTournamentList **outtournaments,
 		NkU32 **outnumtournaments,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleTournamentRecordsListFn)(
 		const void *ptr,
@@ -772,9 +775,9 @@ extern "C"
 		NkU32 **outnumrecords,
 		NkLeaderboardRecord **outownerrecords,
 		NkU32 **outnumownerrecords,
-		NkString **outnextcursor,
-		NkString **outprevcursor,
-		NkString **outerror);
+		char **outnextcursor,
+		char **outprevcursor,
+		char **outerror);
 
 	typedef int (*NkModuleTournamentRecordWriteFn)(
 		const void *ptr,
@@ -786,7 +789,7 @@ extern "C"
 		NkI64 subscore,
 		NkMapAny metadata,
 		NkLeaderboardRecord **outrecord,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleTournamentRecordsHaystackFn)(
 		const void *ptr,
@@ -797,7 +800,7 @@ extern "C"
 		NkI64 expiry,
 		NkLeaderboardRecord **outrecords,
 		NkU32 **outnumrecords,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkGroup
 	{
@@ -811,7 +814,7 @@ extern "C"
 		NkU32 numgroupids,
 		NkGroup **outgroups,
 		NkU32 **outnumgroups,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleGroupCreateFn)(
 		const void *ptr,
@@ -826,7 +829,7 @@ extern "C"
 		NkMapAny metadata,
 		NkU32 maxcount,
 		NkGroup **outgroup,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleGroupUpdateFn)(
 		const void *ptr,
@@ -840,7 +843,7 @@ extern "C"
 		bool open,
 		NkMapAny metadata,
 		NkU32 maxcount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleGroupUserFn)(
 		const void *ptr,
@@ -848,7 +851,7 @@ extern "C"
 		NkString groupid,
 		NkString userid,
 		NkString username,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkModuleGroupUsersFn)(
 		const void *ptr,
@@ -856,7 +859,7 @@ extern "C"
 		NkString groupid,
 		const NkString *userids,
 		NkU32 numuserids,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkGroupUserListGroupUser
 	{
@@ -872,8 +875,8 @@ extern "C"
 		NkString cursor,
 		NkGroupUserListGroupUser **outusers,
 		NkU32 **outnumusers,
-		NkString **outcursor,
-		NkString **outerror);
+		char **outcursor,
+		char **outerror);
 
 	typedef struct NkUserGroupListUserGroup
 	{
@@ -889,8 +892,8 @@ extern "C"
 		NkString cursor,
 		NkUserGroupListUserGroup **outusers,
 		NkU32 **outnumusers,
-		NkString **outcursor,
-		NkString **outerror);
+		char **outcursor,
+		char **outerror);
 
 	typedef struct NkFriend
 	{
@@ -906,8 +909,8 @@ extern "C"
 		NkString cursor,
 		NkFriend **outfriends,
 		NkU32 **outnumfriends,
-		NkString **outcursor,
-		NkString **outerror);
+		char **outcursor,
+		char **outerror);
 
 	typedef struct NkEvent
 	{
@@ -918,7 +921,7 @@ extern "C"
 		const void *ptr,
 		const NkContext *ctx,
 		NkEvent evt,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkModule
 	{
@@ -1021,14 +1024,14 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkString payload,
-		NkString **outpayload,
-		NkString **outerror);
+		char **outpayload,
+		char **outerror);
 
 	typedef int (*NkInitializerRpcFn)(
 		const void *ptr,
 		NkString id,
 		const NkRpcFn fn,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkBeforeRtCallbackFn)(
 		NkContext ctx,
@@ -1037,13 +1040,13 @@ extern "C"
 		NkModule nk,
 		NkEnvelope envelope,
 		NkEnvelope **outenvelope,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeRtFn)(
 		const void *ptr,
 		NkString id,
 		const NkBeforeRtCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterRtCallbackFn)(
 		NkContext ctx,
@@ -1052,13 +1055,13 @@ extern "C"
 		NkModule nk,
 		NkEnvelope envelope,
 		NkEnvelope **outenvelope,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterRtFn)(
 		const void *ptr,
 		NkString id,
 		const NkAfterRtCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkMatchmakerEntry
 	{
@@ -1072,13 +1075,13 @@ extern "C"
 		NkModule nk,
 		const NkMatchmakerEntry *entries,
 		int numentries,
-		NkString **outmatchid,
-		NkString **outerror);
+		char **outmatchid,
+		char **outerror);
 
 	typedef int (*NkInitializerMatchmakerMatchedFn)(
 		const void *ptr,
 		const NkMatchmakerMatchedCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkMatchCallbackFn)(
 		NkContext ctx,
@@ -1086,13 +1089,13 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		void **outmatch,
-		NkString **outerror); // TODO: outmatch type!
+		char **outerror); // TODO: outmatch type!
 
 	typedef int (*NkInitializerMatchFn)(
 		const void *ptr,
 		NkString name,
 		const NkMatchCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkTournamentCallbackFn)(
 		NkContext ctx,
@@ -1102,12 +1105,12 @@ extern "C"
 		NkTournament tournament,
 		NkI64 end,
 		NkI64 reset,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerTournamentFn)(
 		const void *ptr,
 		const NkTournamentCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkLeaderBoard
 	{
@@ -1121,24 +1124,24 @@ extern "C"
 		NkModule nk,
 		NkLeaderBoard leaderboard,
 		NkI64 reset,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerLeaderBoardFn)(
 		const void *ptr,
 		const NkLeaderBoardCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkCallbackFn)(
 		NkContext ctx,
 		NkLogger logger,
 		NkDb db,
 		NkModule nk,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeGetAccountFn)(
 		const void *ptr,
 		const NkCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterGetAccountCallbackFn)(
 		NkContext ctx,
@@ -1146,12 +1149,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccount **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterGetAccountFn)(
 		const void *ptr,
 		const NkAfterGetAccountCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkUpdateAccountRequest
 	{
@@ -1165,12 +1168,12 @@ extern "C"
 		NkModule nk,
 		NkUpdateAccountRequest req,
 		NkUpdateAccountRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUpdateAccountFn)(
 		const void *ptr,
 		const NkBeforeUpdateAccountCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUpdateAccountCallbackFn)(
 		NkContext ctx,
@@ -1178,12 +1181,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkUpdateAccountRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUpdateAccountFn)(
 		const void *ptr,
 		const NkAfterUpdateAccountCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkSessionRefreshRequest
 	{
@@ -1197,12 +1200,12 @@ extern "C"
 		NkModule nk,
 		NkSessionRefreshRequest req,
 		NkSessionRefreshRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeSessionRefreshFn)(
 		const void *ptr,
 		const NkBeforeSessionRefreshCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkSession
 	{
@@ -1216,12 +1219,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkSessionRefreshRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterSessionRefreshFn)(
 		const void *ptr,
 		const NkAfterSessionRefreshCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAuthenticateAppleRequest
 	{
@@ -1235,12 +1238,12 @@ extern "C"
 		NkModule nk,
 		NkAuthenticateAppleRequest req,
 		NkAuthenticateAppleRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAuthenticateAppleFn)(
 		const void *ptr,
 		const NkBeforeAuthenticateAppleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAuthenticateAppleCallbackFn)(
 		NkContext ctx,
@@ -1249,12 +1252,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkAuthenticateAppleRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAuthenticateAppleFn)(
 		const void *ptr,
 		const NkAfterAuthenticateAppleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAuthenticateCustomRequest
 	{
@@ -1268,12 +1271,12 @@ extern "C"
 		NkModule nk,
 		NkAuthenticateCustomRequest req,
 		NkAuthenticateCustomRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAuthenticateCustomFn)(
 		const void *ptr,
 		const NkBeforeAuthenticateCustomCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAuthenticateCustomCallbackFn)(
 		NkContext ctx,
@@ -1282,12 +1285,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkAuthenticateCustomRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAuthenticateCustomFn)(
 		const void *ptr,
 		const NkAfterAuthenticateCustomCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAuthenticateDeviceRequest
 	{
@@ -1301,12 +1304,12 @@ extern "C"
 		NkModule nk,
 		NkAuthenticateDeviceRequest req,
 		NkAuthenticateDeviceRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAuthenticateDeviceFn)(
 		const void *ptr,
 		const NkBeforeAuthenticateDeviceCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAuthenticateDeviceCallbackFn)(
 		NkContext ctx,
@@ -1315,12 +1318,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkAuthenticateDeviceRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAuthenticateDeviceFn)(
 		const void *ptr,
 		const NkAfterAuthenticateDeviceCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAuthenticateEmailRequest
 	{
@@ -1334,12 +1337,12 @@ extern "C"
 		NkModule nk,
 		NkAuthenticateEmailRequest req,
 		NkAuthenticateEmailRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAuthenticateEmailFn)(
 		const void *ptr,
 		const NkBeforeAuthenticateEmailCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAuthenticateEmailCallbackFn)(
 		NkContext ctx,
@@ -1348,12 +1351,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkAuthenticateEmailRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAuthenticateEmailFn)(
 		const void *ptr,
 		const NkAfterAuthenticateEmailCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAuthenticateFacebookRequest
 	{
@@ -1367,12 +1370,12 @@ extern "C"
 		NkModule nk,
 		NkAuthenticateFacebookRequest req,
 		NkAuthenticateFacebookRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAuthenticateFacebookFn)(
 		const void *ptr,
 		const NkBeforeAuthenticateFacebookCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAuthenticateFacebookCallbackFn)(
 		NkContext ctx,
@@ -1381,12 +1384,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkAuthenticateFacebookRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAuthenticateFacebookFn)(
 		const void *ptr,
 		const NkAfterAuthenticateFacebookCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAuthenticateFacebookInstantGameRequest
 	{
@@ -1400,12 +1403,12 @@ extern "C"
 		NkModule nk,
 		NkAuthenticateFacebookInstantGameRequest req,
 		NkAuthenticateFacebookInstantGameRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAuthenticateFacebookInstantGameFn)(
 		const void *ptr,
 		const NkBeforeAuthenticateFacebookInstantGameCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAuthenticateFacebookInstantGameCallbackFn)(
 		NkContext ctx,
@@ -1414,12 +1417,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkAuthenticateFacebookInstantGameRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAuthenticateFacebookInstantGameFn)(
 		const void *ptr,
 		const NkAfterAuthenticateFacebookInstantGameCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAuthenticateGameCenterRequest
 	{
@@ -1433,12 +1436,12 @@ extern "C"
 		NkModule nk,
 		NkAuthenticateGameCenterRequest req,
 		NkAuthenticateGameCenterRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAuthenticateGameCenterFn)(
 		const void *ptr,
 		const NkBeforeAuthenticateGameCenterCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAuthenticateGameCenterCallbackFn)(
 		NkContext ctx,
@@ -1447,12 +1450,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkAuthenticateGameCenterRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAuthenticateGameCenterFn)(
 		const void *ptr,
 		const NkAfterAuthenticateGameCenterCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAuthenticateGoogleRequest
 	{
@@ -1466,12 +1469,12 @@ extern "C"
 		NkModule nk,
 		NkAuthenticateGoogleRequest req,
 		NkAuthenticateGoogleRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAuthenticateGoogleFn)(
 		const void *ptr,
 		const NkBeforeAuthenticateGoogleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAuthenticateGoogleCallbackFn)(
 		NkContext ctx,
@@ -1480,12 +1483,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkAuthenticateGoogleRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAuthenticateGoogleFn)(
 		const void *ptr,
 		const NkAfterAuthenticateGoogleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAuthenticateSteamRequest
 	{
@@ -1499,12 +1502,12 @@ extern "C"
 		NkModule nk,
 		NkAuthenticateSteamRequest req,
 		NkAuthenticateSteamRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAuthenticateSteamFn)(
 		const void *ptr,
 		const NkBeforeAuthenticateSteamCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAuthenticateSteamCallbackFn)(
 		NkContext ctx,
@@ -1513,12 +1516,12 @@ extern "C"
 		NkModule nk,
 		NkSession session,
 		NkAuthenticateSteamRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAuthenticateSteamFn)(
 		const void *ptr,
 		const NkAfterAuthenticateSteamCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListChannelMessagesRequest
 	{
@@ -1532,12 +1535,12 @@ extern "C"
 		NkModule nk,
 		NkListChannelMessagesRequest req,
 		NkListChannelMessagesRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListChannelMessagesFn)(
 		const void *ptr,
 		const NkBeforeListChannelMessagesCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkChannelMessageList
 	{
@@ -1551,12 +1554,12 @@ extern "C"
 		NkModule nk,
 		NkChannelMessageList msgs,
 		NkListChannelMessagesRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListChannelMessagesFn)(
 		const void *ptr,
 		const NkAfterListChannelMessagesCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListFriendsRequest
 	{
@@ -1570,12 +1573,12 @@ extern "C"
 		NkModule nk,
 		NkListFriendsRequest req,
 		NkListFriendsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListFriendsFn)(
 		const void *ptr,
 		const NkBeforeListFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkFriendList
 	{
@@ -1588,12 +1591,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkFriendList friends,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListFriendsFn)(
 		const void *ptr,
 		const NkAfterListFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAddFriendsRequest
 	{
@@ -1607,12 +1610,12 @@ extern "C"
 		NkModule nk,
 		NkAddFriendsRequest req,
 		NkAddFriendsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAddFriendsFn)(
 		const void *ptr,
 		const NkBeforeAddFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAddFriendsCallbackFn)(
 		NkContext ctx,
@@ -1620,12 +1623,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAddFriendsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAddFriendsFn)(
 		const void *ptr,
 		const NkAfterAddFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkDeleteFriendsRequest
 	{
@@ -1639,12 +1642,12 @@ extern "C"
 		NkModule nk,
 		NkDeleteFriendsRequest req,
 		NkDeleteFriendsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeDeleteFriendsFn)(
 		const void *ptr,
 		const NkBeforeDeleteFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterDeleteFriendsCallbackFn)(
 		NkContext ctx,
@@ -1652,12 +1655,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkDeleteFriendsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterDeleteFriendsFn)(
 		const void *ptr,
 		const NkAfterDeleteFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkBlockFriendsRequest
 	{
@@ -1671,12 +1674,12 @@ extern "C"
 		NkModule nk,
 		NkBlockFriendsRequest req,
 		NkBlockFriendsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeBlockFriendsFn)(
 		const void *ptr,
 		const NkBeforeBlockFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterBlockFriendsCallbackFn)(
 		NkContext ctx,
@@ -1684,12 +1687,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkBlockFriendsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterBlockFriendsFn)(
 		const void *ptr,
 		const NkAfterBlockFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkImportFacebookFriendsRequest
 	{
@@ -1703,12 +1706,12 @@ extern "C"
 		NkModule nk,
 		NkImportFacebookFriendsRequest req,
 		NkImportFacebookFriendsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeImportFacebookFriendsFn)(
 		const void *ptr,
 		const NkBeforeImportFacebookFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterImportFacebookFriendsCallbackFn)(
 		NkContext ctx,
@@ -1716,12 +1719,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkImportFacebookFriendsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterImportFacebookFriendsFn)(
 		const void *ptr,
 		const NkAfterImportFacebookFriendsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkCreateGroupRequest
 	{
@@ -1735,12 +1738,12 @@ extern "C"
 		NkModule nk,
 		NkCreateGroupRequest req,
 		NkCreateGroupRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeCreateGroupFn)(
 		const void *ptr,
 		const NkBeforeCreateGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterCreateGroupCallbackFn)(
 		NkContext ctx,
@@ -1749,12 +1752,12 @@ extern "C"
 		NkModule nk,
 		NkGroup group,
 		NkCreateGroupRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterCreateGroupFn)(
 		const void *ptr,
 		const NkAfterCreateGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkUpdateGroupRequest
 	{
@@ -1768,12 +1771,12 @@ extern "C"
 		NkModule nk,
 		NkUpdateGroupRequest req,
 		NkUpdateGroupRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUpdateGroupFn)(
 		const void *ptr,
 		const NkBeforeUpdateGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUpdateGroupCallbackFn)(
 		NkContext ctx,
@@ -1781,12 +1784,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkUpdateGroupRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUpdateGroupFn)(
 		const void *ptr,
 		const NkAfterUpdateGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkDeleteGroupRequest
 	{
@@ -1800,12 +1803,12 @@ extern "C"
 		NkModule nk,
 		NkDeleteGroupRequest req,
 		NkDeleteGroupRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeDeleteGroupFn)(
 		const void *ptr,
 		const NkBeforeDeleteGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterDeleteGroupCallbackFn)(
 		NkContext ctx,
@@ -1813,12 +1816,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkDeleteGroupRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterDeleteGroupFn)(
 		const void *ptr,
 		const NkAfterDeleteGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkJoinGroupRequest
 	{
@@ -1832,12 +1835,12 @@ extern "C"
 		NkModule nk,
 		NkJoinGroupRequest req,
 		NkJoinGroupRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeJoinGroupFn)(
 		const void *ptr,
 		const NkBeforeJoinGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterJoinGroupCallbackFn)(
 		NkContext ctx,
@@ -1845,12 +1848,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkJoinGroupRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterJoinGroupFn)(
 		const void *ptr,
 		const NkAfterJoinGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkLeaveGroupRequest
 	{
@@ -1864,12 +1867,12 @@ extern "C"
 		NkModule nk,
 		NkLeaveGroupRequest req,
 		NkLeaveGroupRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLeaveGroupFn)(
 		const void *ptr,
 		const NkBeforeLeaveGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLeaveGroupCallbackFn)(
 		NkContext ctx,
@@ -1877,12 +1880,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkLeaveGroupRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLeaveGroupFn)(
 		const void *ptr,
 		const NkAfterLeaveGroupCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAddGroupUsersRequest
 	{
@@ -1896,12 +1899,12 @@ extern "C"
 		NkModule nk,
 		NkAddGroupUsersRequest req,
 		NkAddGroupUsersRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeAddGroupUsersFn)(
 		const void *ptr,
 		const NkBeforeAddGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterAddGroupUsersCallbackFn)(
 		NkContext ctx,
@@ -1909,12 +1912,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAddGroupUsersRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterAddGroupUsersFn)(
 		const void *ptr,
 		const NkAfterAddGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkBanGroupUsersRequest
 	{
@@ -1928,12 +1931,12 @@ extern "C"
 		NkModule nk,
 		NkBanGroupUsersRequest req,
 		NkBanGroupUsersRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeBanGroupUsersFn)(
 		const void *ptr,
 		const NkBeforeBanGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterBanGroupUsersCallbackFn)(
 		NkContext ctx,
@@ -1941,12 +1944,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkBanGroupUsersRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterBanGroupUsersFn)(
 		const void *ptr,
 		const NkAfterBanGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkKickGroupUsersRequest
 	{
@@ -1960,12 +1963,12 @@ extern "C"
 		NkModule nk,
 		NkKickGroupUsersRequest req,
 		NkKickGroupUsersRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeKickGroupUsersFn)(
 		const void *ptr,
 		const NkBeforeKickGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterKickGroupUsersCallbackFn)(
 		NkContext ctx,
@@ -1973,12 +1976,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkKickGroupUsersRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterKickGroupUsersFn)(
 		const void *ptr,
 		const NkAfterKickGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkPromoteGroupUsersRequest
 	{
@@ -1992,12 +1995,12 @@ extern "C"
 		NkModule nk,
 		NkPromoteGroupUsersRequest req,
 		NkPromoteGroupUsersRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforePromoteGroupUsersFn)(
 		const void *ptr,
 		const NkBeforePromoteGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterPromoteGroupUsersCallbackFn)(
 		NkContext ctx,
@@ -2005,12 +2008,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkPromoteGroupUsersRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterPromoteGroupUsersFn)(
 		const void *ptr,
 		const NkAfterPromoteGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkDemoteGroupUsersRequest
 	{
@@ -2024,12 +2027,12 @@ extern "C"
 		NkModule nk,
 		NkDemoteGroupUsersRequest req,
 		NkDemoteGroupUsersRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeDemoteGroupUsersFn)(
 		const void *ptr,
 		const NkBeforeDemoteGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterDemoteGroupUsersCallbackFn)(
 		NkContext ctx,
@@ -2037,12 +2040,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkDemoteGroupUsersRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterDemoteGroupUsersFn)(
 		const void *ptr,
 		const NkAfterDemoteGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListGroupUsersRequest
 	{
@@ -2056,12 +2059,12 @@ extern "C"
 		NkModule nk,
 		NkListGroupUsersRequest req,
 		NkListGroupUsersRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListGroupUsersFn)(
 		const void *ptr,
 		const NkBeforeListGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkGroupUserList
 	{
@@ -2075,12 +2078,12 @@ extern "C"
 		NkModule nk,
 		NkGroupUserList users,
 		NkListGroupUsersRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListGroupUsersFn)(
 		const void *ptr,
 		const NkAfterListGroupUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListUserGroupsRequest
 	{
@@ -2094,12 +2097,12 @@ extern "C"
 		NkModule nk,
 		NkListUserGroupsRequest req,
 		NkListUserGroupsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListUserGroupsFn)(
 		const void *ptr,
 		const NkBeforeListUserGroupsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkUserGroupList
 	{
@@ -2113,12 +2116,12 @@ extern "C"
 		NkModule nk,
 		NkUserGroupList users,
 		NkListUserGroupsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListUserGroupsFn)(
 		const void *ptr,
 		const NkAfterListUserGroupsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListGroupsRequest
 	{
@@ -2132,12 +2135,12 @@ extern "C"
 		NkModule nk,
 		NkListGroupsRequest req,
 		NkListGroupsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListGroupsFn)(
 		const void *ptr,
 		const NkBeforeListGroupsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkGroupList
 	{
@@ -2151,12 +2154,12 @@ extern "C"
 		NkModule nk,
 		NkGroupList users,
 		NkListGroupsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListGroupsFn)(
 		const void *ptr,
 		const NkAfterListGroupsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkDeleteLeaderboardRecordRequest
 	{
@@ -2170,12 +2173,12 @@ extern "C"
 		NkModule nk,
 		NkDeleteLeaderboardRecordRequest req,
 		NkDeleteLeaderboardRecordRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeDeleteLeaderboardRecordFn)(
 		const void *ptr,
 		const NkBeforeDeleteLeaderboardRecordCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterDeleteLeaderboardRecordCallbackFn)(
 		NkContext ctx,
@@ -2183,12 +2186,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkDeleteLeaderboardRecordRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterDeleteLeaderboardRecordFn)(
 		const void *ptr,
 		const NkAfterDeleteLeaderboardRecordCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListLeaderboardRecordsRequest
 	{
@@ -2202,12 +2205,12 @@ extern "C"
 		NkModule nk,
 		NkListLeaderboardRecordsRequest req,
 		NkListLeaderboardRecordsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListLeaderboardRecordsFn)(
 		const void *ptr,
 		const NkBeforeListLeaderboardRecordsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkLeaderboardRecordList
 	{
@@ -2221,12 +2224,12 @@ extern "C"
 		NkModule nk,
 		NkLeaderboardRecordList records,
 		NkListLeaderboardRecordsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListLeaderboardRecordsFn)(
 		const void *ptr,
 		const NkAfterListLeaderboardRecordsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkWriteLeaderboardRecordRequest
 	{
@@ -2240,12 +2243,12 @@ extern "C"
 		NkModule nk,
 		NkWriteLeaderboardRecordRequest req,
 		NkWriteLeaderboardRecordRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeWriteLeaderboardRecordFn)(
 		const void *ptr,
 		const NkBeforeWriteLeaderboardRecordCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterWriteLeaderboardRecordCallbackFn)(
 		NkContext ctx,
@@ -2254,12 +2257,12 @@ extern "C"
 		NkModule nk,
 		NkLeaderboardRecord record,
 		NkWriteLeaderboardRecordRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterWriteLeaderboardRecordFn)(
 		const void *ptr,
 		const NkAfterWriteLeaderboardRecordCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListLeaderboardRecordsAroundOwnerRequest
 	{
@@ -2273,12 +2276,12 @@ extern "C"
 		NkModule nk,
 		NkListLeaderboardRecordsAroundOwnerRequest req,
 		NkListLeaderboardRecordsAroundOwnerRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListLeaderboardRecordsAroundOwnerFn)(
 		const void *ptr,
 		const NkBeforeListLeaderboardRecordsAroundOwnerCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterListLeaderboardRecordsAroundOwnerCallbackFn)(
 		NkContext ctx,
@@ -2287,12 +2290,12 @@ extern "C"
 		NkModule nk,
 		NkLeaderboardRecordList records,
 		NkListLeaderboardRecordsAroundOwnerRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListLeaderboardRecordsAroundOwnerFn)(
 		const void *ptr,
 		const NkAfterListLeaderboardRecordsAroundOwnerCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountApple
 	{
@@ -2306,12 +2309,12 @@ extern "C"
 		NkModule nk,
 		NkAccountApple account,
 		NkAccountApple **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLinkAppleFn)(
 		const void *ptr,
 		const NkBeforeLinkAppleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLinkAppleCallbackFn)(
 		NkContext ctx,
@@ -2319,12 +2322,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountApple account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLinkAppleFn)(
 		const void *ptr,
 		const NkAfterLinkAppleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountCustom
 	{
@@ -2338,12 +2341,12 @@ extern "C"
 		NkModule nk,
 		NkAccountCustom account,
 		NkAccountCustom **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLinkCustomFn)(
 		const void *ptr,
 		const NkBeforeLinkCustomCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLinkCustomCallbackFn)(
 		NkContext ctx,
@@ -2351,12 +2354,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountCustom account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLinkCustomFn)(
 		const void *ptr,
 		const NkAfterLinkCustomCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountDevice
 	{
@@ -2370,12 +2373,12 @@ extern "C"
 		NkModule nk,
 		NkAccountDevice account,
 		NkAccountDevice **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLinkDeviceFn)(
 		const void *ptr,
 		const NkBeforeLinkDeviceCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLinkDeviceCallbackFn)(
 		NkContext ctx,
@@ -2383,12 +2386,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountDevice account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLinkDeviceFn)(
 		const void *ptr,
 		const NkAfterLinkDeviceCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountEmail
 	{
@@ -2402,12 +2405,12 @@ extern "C"
 		NkModule nk,
 		NkAccountEmail account,
 		NkAccountEmail **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLinkEmailFn)(
 		const void *ptr,
 		const NkBeforeLinkEmailCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLinkEmailCallbackFn)(
 		NkContext ctx,
@@ -2415,12 +2418,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountEmail account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLinkEmailFn)(
 		const void *ptr,
 		const NkAfterLinkEmailCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkLinkFacebookRequest
 	{
@@ -2434,12 +2437,12 @@ extern "C"
 		NkModule nk,
 		NkLinkFacebookRequest req,
 		NkLinkFacebookRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLinkFacebookFn)(
 		const void *ptr,
 		const NkBeforeLinkFacebookCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLinkFacebookCallbackFn)(
 		NkContext ctx,
@@ -2447,12 +2450,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkLinkFacebookRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLinkFacebookFn)(
 		const void *ptr,
 		const NkAfterLinkFacebookCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountFacebookInstantGame
 	{
@@ -2466,12 +2469,12 @@ extern "C"
 		NkModule nk,
 		NkAccountFacebookInstantGame account,
 		NkAccountFacebookInstantGame **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLinkFacebookInstantGameFn)(
 		const void *ptr,
 		const NkBeforeLinkFacebookInstantGameCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLinkFacebookInstantGameCallbackFn)(
 		NkContext ctx,
@@ -2479,12 +2482,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountFacebookInstantGame account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLinkFacebookInstantGameFn)(
 		const void *ptr,
 		const NkAfterLinkFacebookInstantGameCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountGameCenter
 	{
@@ -2498,12 +2501,12 @@ extern "C"
 		NkModule nk,
 		NkAccountGameCenter account,
 		NkAccountGameCenter **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLinkGameCenterFn)(
 		const void *ptr,
 		const NkBeforeLinkGameCenterCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLinkGameCenterCallbackFn)(
 		NkContext ctx,
@@ -2511,12 +2514,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountGameCenter account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLinkGameCenterFn)(
 		const void *ptr,
 		const NkAfterLinkGameCenterCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountGoogle
 	{
@@ -2530,12 +2533,12 @@ extern "C"
 		NkModule nk,
 		NkAccountGoogle account,
 		NkAccountGoogle **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLinkGoogleFn)(
 		const void *ptr,
 		const NkBeforeLinkGoogleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLinkGoogleCallbackFn)(
 		NkContext ctx,
@@ -2543,12 +2546,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountGoogle account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLinkGoogleFn)(
 		const void *ptr,
 		const NkAfterLinkGoogleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountSteam
 	{
@@ -2562,12 +2565,12 @@ extern "C"
 		NkModule nk,
 		NkAccountSteam account,
 		NkAccountSteam **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeLinkSteamFn)(
 		const void *ptr,
 		const NkBeforeLinkSteamCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterLinkSteamCallbackFn)(
 		NkContext ctx,
@@ -2575,12 +2578,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountSteam account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterLinkSteamFn)(
 		const void *ptr,
 		const NkAfterLinkSteamCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListMatchesRequest
 	{
@@ -2594,12 +2597,12 @@ extern "C"
 		NkModule nk,
 		NkListMatchesRequest req,
 		NkListMatchesRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListMatchesFn)(
 		const void *ptr,
 		const NkBeforeListMatchesCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkMatchList
 	{
@@ -2613,12 +2616,12 @@ extern "C"
 		NkModule nk,
 		NkMatchList list,
 		NkListMatchesRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListMatchesFn)(
 		const void *ptr,
 		const NkAfterListMatchesCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListNotificationsRequest
 	{
@@ -2632,12 +2635,12 @@ extern "C"
 		NkModule nk,
 		NkListNotificationsRequest req,
 		NkListNotificationsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListNotificationsFn)(
 		const void *ptr,
 		const NkBeforeListNotificationsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkNotificationList
 	{
@@ -2651,12 +2654,12 @@ extern "C"
 		NkModule nk,
 		NkNotificationList list,
 		NkListNotificationsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListNotificationsFn)(
 		const void *ptr,
 		const NkAfterListNotificationsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkDeleteNotificationsRequest
 	{
@@ -2670,12 +2673,12 @@ extern "C"
 		NkModule nk,
 		NkDeleteNotificationsRequest req,
 		NkDeleteNotificationsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeDeleteNotificationsFn)(
 		const void *ptr,
 		const NkBeforeDeleteNotificationsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterDeleteNotificationsCallbackFn)(
 		NkContext ctx,
@@ -2683,12 +2686,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkDeleteNotificationsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterDeleteNotificationsFn)(
 		const void *ptr,
 		const NkAfterDeleteNotificationsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListStorageObjectsRequest
 	{
@@ -2702,12 +2705,12 @@ extern "C"
 		NkModule nk,
 		NkListStorageObjectsRequest req,
 		NkListStorageObjectsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListStorageObjectsFn)(
 		const void *ptr,
 		const NkBeforeListStorageObjectsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkStorageObjectList
 	{
@@ -2721,12 +2724,12 @@ extern "C"
 		NkModule nk,
 		NkStorageObjectList list,
 		NkListStorageObjectsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListStorageObjectsFn)(
 		const void *ptr,
 		const NkAfterListStorageObjectsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkReadStorageObjectsRequest
 	{
@@ -2740,12 +2743,12 @@ extern "C"
 		NkModule nk,
 		NkReadStorageObjectsRequest req,
 		NkReadStorageObjectsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeReadStorageObjectsFn)(
 		const void *ptr,
 		const NkBeforeReadStorageObjectsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkStorageObjects
 	{
@@ -2759,12 +2762,12 @@ extern "C"
 		NkModule nk,
 		NkStorageObjects objs,
 		NkReadStorageObjectsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterReadStorageObjectsFn)(
 		const void *ptr,
 		const NkAfterReadStorageObjectsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkWriteStorageObjectsRequest
 	{
@@ -2778,12 +2781,12 @@ extern "C"
 		NkModule nk,
 		NkWriteStorageObjectsRequest req,
 		NkWriteStorageObjectsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeWriteStorageObjectsFn)(
 		const void *ptr,
 		const NkBeforeWriteStorageObjectsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkStorageObjectAcks
 	{
@@ -2797,12 +2800,12 @@ extern "C"
 		NkModule nk,
 		NkStorageObjectAcks acks,
 		NkWriteStorageObjectsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterWriteStorageObjectsFn)(
 		const void *ptr,
 		const NkAfterWriteStorageObjectsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkDeleteStorageObjectsRequest
 	{
@@ -2816,12 +2819,12 @@ extern "C"
 		NkModule nk,
 		NkDeleteStorageObjectsRequest req,
 		NkDeleteStorageObjectsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeDeleteStorageObjectsFn)(
 		const void *ptr,
 		const NkBeforeDeleteStorageObjectsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterDeleteStorageObjectsCallbackFn)(
 		NkContext ctx,
@@ -2829,12 +2832,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkDeleteStorageObjectsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterDeleteStorageObjectsFn)(
 		const void *ptr,
 		const NkAfterDeleteStorageObjectsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkJoinTournamentRequest
 	{
@@ -2848,12 +2851,12 @@ extern "C"
 		NkModule nk,
 		NkJoinTournamentRequest req,
 		NkJoinTournamentRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeJoinTournamentFn)(
 		const void *ptr,
 		const NkBeforeJoinTournamentCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterJoinTournamentCallbackFn)(
 		NkContext ctx,
@@ -2861,12 +2864,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkJoinTournamentRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterJoinTournamentFn)(
 		const void *ptr,
 		const NkAfterJoinTournamentCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListTournamentRecordsRequest
 	{
@@ -2880,12 +2883,12 @@ extern "C"
 		NkModule nk,
 		NkListTournamentRecordsRequest req,
 		NkListTournamentRecordsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListTournamentRecordsFn)(
 		const void *ptr,
 		const NkBeforeListTournamentRecordsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkTournamentRecordList
 	{
@@ -2899,12 +2902,12 @@ extern "C"
 		NkModule nk,
 		NkTournamentRecordList list,
 		NkListTournamentRecordsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListTournamentRecordsFn)(
 		const void *ptr,
 		const NkAfterListTournamentRecordsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListTournamentsRequest
 	{
@@ -2918,12 +2921,12 @@ extern "C"
 		NkModule nk,
 		NkListTournamentsRequest req,
 		NkListTournamentsRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListTournamentsFn)(
 		const void *ptr,
 		const NkBeforeListTournamentsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterListTournamentsCallbackFn)(
 		NkContext ctx,
@@ -2932,12 +2935,12 @@ extern "C"
 		NkModule nk,
 		NkTournamentList list,
 		NkListTournamentsRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListTournamentsFn)(
 		const void *ptr,
 		const NkAfterListTournamentsCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkWriteTournamentRecordRequest
 	{
@@ -2951,12 +2954,12 @@ extern "C"
 		NkModule nk,
 		NkWriteTournamentRecordRequest req,
 		NkWriteTournamentRecordRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeWriteTournamentRecordFn)(
 		const void *ptr,
 		const NkBeforeWriteTournamentRecordCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterWriteTournamentRecordCallbackFn)(
 		NkContext ctx,
@@ -2965,12 +2968,12 @@ extern "C"
 		NkModule nk,
 		NkLeaderboardRecord record,
 		NkWriteTournamentRecordRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterWriteTournamentRecordFn)(
 		const void *ptr,
 		const NkAfterWriteTournamentRecordCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkListTournamentRecordsAroundOwnerRequest
 	{
@@ -2984,12 +2987,12 @@ extern "C"
 		NkModule nk,
 		NkListTournamentRecordsAroundOwnerRequest req,
 		NkListTournamentRecordsAroundOwnerRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeListTournamentRecordsAroundOwnerFn)(
 		const void *ptr,
 		const NkBeforeListTournamentRecordsAroundOwnerCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterListTournamentRecordsAroundOwnerCallbackFn)(
 		NkContext ctx,
@@ -2998,12 +3001,12 @@ extern "C"
 		NkModule nk,
 		NkTournamentRecordList list,
 		NkListTournamentRecordsAroundOwnerRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterListTournamentRecordsAroundOwnerFn)(
 		const void *ptr,
 		const NkAfterListTournamentRecordsAroundOwnerCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkBeforeUnlinkAppleCallbackFn)(
 		NkContext ctx,
@@ -3012,12 +3015,12 @@ extern "C"
 		NkModule nk,
 		NkAccountApple account,
 		NkAccountApple **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUnlinkAppleFn)(
 		const void *ptr,
 		const NkBeforeUnlinkAppleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUnlinkAppleCallbackFn)(
 		NkContext ctx,
@@ -3025,12 +3028,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountApple account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUnlinkAppleFn)(
 		const void *ptr,
 		const NkAfterUnlinkAppleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkBeforeUnlinkCustomCallbackFn)(
 		NkContext ctx,
@@ -3039,12 +3042,12 @@ extern "C"
 		NkModule nk,
 		NkAccountCustom account,
 		NkAccountCustom **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUnlinkCustomFn)(
 		const void *ptr,
 		const NkBeforeUnlinkCustomCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUnlinkCustomCallbackFn)(
 		NkContext ctx,
@@ -3052,12 +3055,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountCustom account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUnlinkCustomFn)(
 		const void *ptr,
 		const NkAfterUnlinkCustomCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkBeforeUnlinkDeviceCallbackFn)(
 		NkContext ctx,
@@ -3066,12 +3069,12 @@ extern "C"
 		NkModule nk,
 		NkAccountDevice account,
 		NkAccountDevice **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUnlinkDeviceFn)(
 		const void *ptr,
 		const NkBeforeUnlinkDeviceCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUnlinkDeviceCallbackFn)(
 		NkContext ctx,
@@ -3079,12 +3082,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountDevice account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUnlinkDeviceFn)(
 		const void *ptr,
 		const NkAfterUnlinkDeviceCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkBeforeUnlinkEmailCallbackFn)(
 		NkContext ctx,
@@ -3093,12 +3096,12 @@ extern "C"
 		NkModule nk,
 		NkAccountEmail account,
 		NkAccountEmail **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUnlinkEmailFn)(
 		const void *ptr,
 		const NkBeforeUnlinkEmailCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUnlinkEmailCallbackFn)(
 		NkContext ctx,
@@ -3106,12 +3109,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountEmail account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUnlinkEmailFn)(
 		const void *ptr,
 		const NkAfterUnlinkEmailCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkAccountFacebook
 	{
@@ -3125,12 +3128,12 @@ extern "C"
 		NkModule nk,
 		NkAccountFacebook account,
 		NkAccountFacebook **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUnlinkFacebookFn)(
 		const void *ptr,
 		const NkBeforeUnlinkFacebookCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUnlinkFacebookCallbackFn)(
 		NkContext ctx,
@@ -3138,12 +3141,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountFacebook account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUnlinkFacebookFn)(
 		const void *ptr,
 		const NkAfterUnlinkFacebookCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkBeforeUnlinkFacebookInstantGameCallbackFn)(
 		NkContext ctx,
@@ -3152,12 +3155,12 @@ extern "C"
 		NkModule nk,
 		NkAccountFacebookInstantGame account,
 		NkAccountFacebookInstantGame **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUnlinkFacebookInstantGameFn)(
 		const void *ptr,
 		const NkBeforeUnlinkFacebookInstantGameCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUnlinkFacebookInstantGameCallbackFn)(
 		NkContext ctx,
@@ -3165,12 +3168,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountFacebookInstantGame account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUnlinkFacebookInstantGameFn)(
 		const void *ptr,
 		const NkAfterUnlinkFacebookInstantGameCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkBeforeUnlinkGameCenterCallbackFn)(
 		NkContext ctx,
@@ -3179,12 +3182,12 @@ extern "C"
 		NkModule nk,
 		NkAccountGameCenter account,
 		NkAccountGameCenter **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUnlinkGameCenterFn)(
 		const void *ptr,
 		const NkBeforeUnlinkGameCenterCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUnlinkGameCenterCallbackFn)(
 		NkContext ctx,
@@ -3192,12 +3195,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountGameCenter account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUnlinkGameCenterFn)(
 		const void *ptr,
 		const NkAfterUnlinkGameCenterCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkBeforeUnlinkGoogleCallbackFn)(
 		NkContext ctx,
@@ -3206,12 +3209,12 @@ extern "C"
 		NkModule nk,
 		NkAccountGoogle account,
 		NkAccountGoogle **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUnlinkGoogleFn)(
 		const void *ptr,
 		const NkBeforeUnlinkGoogleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUnlinkGoogleCallbackFn)(
 		NkContext ctx,
@@ -3219,12 +3222,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountGoogle account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUnlinkGoogleFn)(
 		const void *ptr,
 		const NkAfterUnlinkGoogleCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkBeforeUnlinkSteamCallbackFn)(
 		NkContext ctx,
@@ -3233,12 +3236,12 @@ extern "C"
 		NkModule nk,
 		NkAccountSteam account,
 		NkAccountSteam **outaccount,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeUnlinkSteamFn)(
 		const void *ptr,
 		const NkBeforeUnlinkSteamCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkAfterUnlinkSteamCallbackFn)(
 		NkContext ctx,
@@ -3246,12 +3249,12 @@ extern "C"
 		NkDb db,
 		NkModule nk,
 		NkAccountSteam account,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterUnlinkSteamFn)(
 		const void *ptr,
 		const NkAfterUnlinkSteamCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkGetUsersRequest
 	{
@@ -3265,12 +3268,12 @@ extern "C"
 		NkModule nk,
 		NkGetUsersRequest req,
 		NkGetUsersRequest **outreq,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerBeforeGetUsersFn)(
 		const void *ptr,
 		const NkBeforeGetUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkUsers
 	{
@@ -3284,33 +3287,33 @@ extern "C"
 		NkModule nk,
 		NkUsers users,
 		NkGetUsersRequest req,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerAfterGetUsersFn)(
 		const void *ptr,
 		const NkAfterGetUsersCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkEventCallbackFn)(
 		NkContext ctx,
 		NkLogger logger,
 		NkEvent evt,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerEventFn)(
 		const void *ptr,
 		const NkEventCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerEventSessionStartFn)(
 		const void *ptr,
 		const NkEventCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef int (*NkInitializerEventSessionEndFn)(
 		const void *ptr,
 		const NkEventCallbackFn cb,
-		NkString **outerror);
+		char **outerror);
 
 	typedef struct NkInitializer
 	{

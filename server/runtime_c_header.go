@@ -43,7 +43,7 @@ extern void cLoggerWarn(
 extern void cContextValue(
 	const void *ptr,
 	NkString key,
-	NkString **outvalue);
+	char **outvalue);
 
 extern int cModuleAuthenticateApple(
 	const void *ptr,
@@ -157,7 +157,7 @@ extern int cModuleAuthenticateTokenGenerate(
 	NkString username,
 	NkI64 expiry,
 	NkMapString vars,
-	NkString **outtoken,
+	char **outtoken,
 	NkI64 **outexpiry,
 	char **outerror);
 
@@ -201,7 +201,7 @@ extern int cModuleAccountExportId(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString userid,
-	NkString **outaccount,
+	char **outaccount,
 	char **outerror);
 
 extern int cModuleUsersGetId(
@@ -496,7 +496,7 @@ extern int cModuleMatchCreate(
 	const NkContext *ctx,
 	NkString module,
 	NkMapAny params,
-	NkString **outmatchid,
+	char **outmatchid,
 	char **outerror);
 
 extern int cModuleMatchGet(
@@ -574,7 +574,7 @@ extern int cModuleWalletLedgerList(
 	NkString cursor,
 	NkWalletLedgerItem **outitems,
 	NkU32 **outnumitems,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror);
 
 extern int cModuleStorageList(
@@ -586,7 +586,7 @@ extern int cModuleStorageList(
 	NkString cursor,
 	NkStorageObject **outobjs,
 	NkU32 **outnumobjs,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror);
 
 extern int cModuleStorageRead(
@@ -654,8 +654,8 @@ extern int cModuleLeaderboardRecordsList(
 	NkU32 **outnumrecords,
 	NkLeaderboardRecord **outownerrecords,
 	NkU32 **outnumownerrecords,
-	NkString **outnextcursor,
-	NkString **outprevcursor,
+	char **outnextcursor,
+	char **outprevcursor,
 	char **outerror);
 
 extern int cModuleLeaderboardRecordWrite(
@@ -663,6 +663,7 @@ extern int cModuleLeaderboardRecordWrite(
 	const NkContext *ctx,
 	NkString id,
 	NkString ownerid,
+	NkString username,
 	NkI64 score,
 	NkI64 subscore,
 	NkMapAny metadata,
@@ -699,6 +700,7 @@ extern int cModuleTournamentCreate(
 	const NkContext *ctx,
 	NkString id,
 	NkString sortorder,
+	NkString operator,
 	NkString resetschedule,
 	NkMapAny metadata,
 	NkString title,
@@ -764,8 +766,8 @@ extern int cModuleTournamentRecordsList(
 	NkU32 **outnumrecords,
 	NkLeaderboardRecord **outownerrecords,
 	NkU32 **outnumownerrecords,
-	NkString **outnextcursor,
-	NkString **outprevcursor,
+	char **outnextcursor,
+	char **outprevcursor,
 	char **outerror);
 
 extern int cModuleTournamentRecordWrite(
@@ -886,7 +888,7 @@ extern int cModuleGroupUsersList(
 	NkString cursor,
 	NkGroupUserListGroupUser **outusers,
 	NkU32 **outnumusers,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror);
 
 extern int cModuleUserGroupsList(
@@ -898,7 +900,7 @@ extern int cModuleUserGroupsList(
 	NkString cursor,
 	NkUserGroupListUserGroup **outusers,
 	NkU32 **outnumusers,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror);
 
 extern int cModuleFriendsList(
@@ -910,7 +912,7 @@ extern int cModuleFriendsList(
 	NkString cursor,
 	NkFriend **outfriends,
 	NkU32 **outnumfriends,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror);
 
 extern int cModuleEvent(
@@ -1663,7 +1665,7 @@ int initmodule(
 void contextvalue(
 	const void *ptr,
 	NkString key,
-	NkString **outvalue)
+	char **outvalue)
 {
 	return cContextValue(
 		ptr,
@@ -1934,7 +1936,7 @@ int moduleauthenticatetokengenerate(
 	NkString username,
 	NkI64 expiry,
 	NkMapString vars,
-	NkString **outtoken,
+	char **outtoken,
 	NkI64 **outexpiry,
 	char **outerror)
 {
@@ -2029,7 +2031,7 @@ int moduleaccountexportid(
 	const void *ptr,
 	const NkContext *ctx,
 	NkString userid,
-	NkString **outaccount,
+	char **outaccount,
 	char **outerror)
 {
 	return cModuleAccountExportId(
@@ -2653,7 +2655,7 @@ int modulematchcreate(
 	const NkContext *ctx,
 	NkString module,
 	NkMapAny params,
-	NkString **outmatchid,
+	char **outmatchid,
 	char **outerror)
 {
 	return cModuleMatchCreate(
@@ -2814,7 +2816,7 @@ int modulewalletledgerlist(
 	NkString cursor,
 	NkWalletLedgerItem **outitems,
 	NkU32 **outnumitems,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror)
 {
 	return cModuleWalletLedgerList(
@@ -2838,7 +2840,7 @@ int modulestoragelist(
 	NkString cursor,
 	NkStorageObject **outobjs,
 	NkU32 **outnumobjs,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror)
 {
 	return cModuleStorageList(
@@ -2976,8 +2978,8 @@ int moduleleaderboardrecordslist(
 	NkU32 **outnumrecords,
 	NkLeaderboardRecord **outownerrecords,
 	NkU32 **outnumownerrecords,
-	NkString **outnextcursor,
-	NkString **outprevcursor,
+	char **outnextcursor,
+	char **outprevcursor,
 	char **outerror)
 {
 	return cModuleLeaderboardRecordsList(
@@ -3003,6 +3005,7 @@ int moduleleaderboardrecordwrite(
 	const NkContext *ctx,
 	NkString id,
 	NkString ownerid,
+	NkString username,
 	NkI64 score,
 	NkI64 subscore,
 	NkMapAny metadata,
@@ -3014,6 +3017,7 @@ int moduleleaderboardrecordwrite(
 		ctx,
 		id,
 		ownerid,
+		username,
 		score,
 		subscore,
 		metadata,
@@ -3080,6 +3084,7 @@ int moduletournamentcreate(
 	const NkContext *ctx,
 	NkString id,
 	NkString sortorder,
+	NkString operator,
 	NkString resetschedule,
 	NkMapAny metadata,
 	NkString title,
@@ -3098,6 +3103,7 @@ int moduletournamentcreate(
 		ctx,
 		id,
 		sortorder,
+		operator,
 		resetschedule,
 		metadata,
 		title,
@@ -3207,8 +3213,8 @@ int moduletournamentrecordslist(
 	NkU32 **outnumrecords,
 	NkLeaderboardRecord **outownerrecords,
 	NkU32 **outnumownerrecords,
-	NkString **outnextcursor,
-	NkString **outprevcursor,
+	char **outnextcursor,
+	char **outprevcursor,
 	char **outerror)
 {
 	return cModuleTournamentRecordsList(
@@ -3467,7 +3473,7 @@ int modulegroupuserslist(
 	NkString cursor,
 	NkGroupUserListGroupUser **outusers,
 	NkU32 **outnumusers,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror)
 {
 	return cModuleGroupUsersList(
@@ -3492,7 +3498,7 @@ int moduleusergroupslist(
 	NkString cursor,
 	NkUserGroupListUserGroup **outusers,
 	NkU32 **outnumusers,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror)
 {
 	return cModuleUserGroupsList(
@@ -3517,7 +3523,7 @@ int modulefriendslist(
 	NkString cursor,
 	NkFriend **outfriends,
 	NkU32 **outnumfriends,
-	NkString **outcursor,
+	char **outcursor,
 	char **outerror)
 {
 	return cModuleFriendsList(
