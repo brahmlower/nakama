@@ -573,7 +573,9 @@ extern "C"
 
 	typedef struct NkStorageRead
 	{
-		const void *ptr;
+		NkString collection;
+		NkString key;
+		NkString userid;
 	} NkStorageRead;
 
 	typedef int (*NkModuleStorageReadFn)(
@@ -587,12 +589,21 @@ extern "C"
 
 	typedef struct NkStorageWrite
 	{
-		const void *ptr;
+		NkString collection;
+		NkString key;
+		NkI32 permissionread;
+		NkI32 permissionwrite;
+		NkString userid;
+		NkString value;
+		NkString version;
 	} NkStorageWrite;
 
 	typedef struct NkStorageObjectAck
 	{
-		const void *ptr;
+		NkString collection;
+		NkString key;
+		NkString userid;
+		NkString version;
 	} NkStorageObjectAck;
 
 	typedef int (*NkModuleStorageWriteFn)(
@@ -606,7 +617,10 @@ extern "C"
 
 	typedef struct NkStorageDelete
 	{
-		const void *ptr;
+		NkString collection;
+		NkString key;
+		NkString userid;
+		NkString version;
 	} NkStorageDelete;
 
 	typedef int (*NkModuleStorageDeleteFn)(
@@ -618,7 +632,14 @@ extern "C"
 
 	typedef struct NkAccountUpdate
 	{
-		const void *ptr;
+		NkString avatarurl;
+		NkString displayname;
+		NkString langtag;
+		NkString location;
+		NkMapAny metadata;
+		NkString timezone;
+		NkString userid;
+		NkString username;
 	} NkAccountUpdate;
 
 	typedef int (*NkModuleMultiUpdateFn)(
@@ -650,7 +671,18 @@ extern "C"
 
 	typedef struct NkLeaderboardRecord
 	{
-		const void *ptr;
+		// LeaderboardId string
+		// OwnerId string
+		// Username *wrapperspb.StringValue
+		// Score int64
+		// Subscore int64
+		// NumScore int32
+		// Metadata string
+		// CreateTime *timestamppb.Timestamp
+		// UpdateTime *timestamppb.Timestamp
+		// ExpiryTime *timestamppb.Timestamp
+		// Rank int64
+		// MaxNumScore uint32
 	} NkLeaderboardRecord;
 
 	typedef int (*NkModuleLeaderboardRecordsListFn)(
@@ -745,7 +777,9 @@ extern "C"
 
 	typedef struct NkTournamentList
 	{
-		const void *ptr;
+		const NkTournament *tournaments;
+		NkU32 numtournaments;
+		NkString cursor;
 	} NkTournamentList;
 
 	typedef int (*NkModuleTournamentListFn)(
@@ -759,7 +793,6 @@ extern "C"
 		NkString cursor,
 		NkString id,
 		NkTournamentList **outtournaments,
-		NkU32 **outnumtournaments,
 		char **outerror);
 
 	typedef int (*NkModuleTournamentRecordsListFn)(
@@ -871,7 +904,7 @@ extern "C"
 		const NkContext *ctx,
 		NkString groupid,
 		NkU32 limit,
-		NkU32 state,
+		const NkU32 *state,
 		NkString cursor,
 		NkGroupUserListGroupUser **outusers,
 		NkU32 **outnumusers,
@@ -888,16 +921,18 @@ extern "C"
 		const NkContext *ctx,
 		NkString userid,
 		NkU32 limit,
-		NkU32 state,
+		const NkU32 *state,
 		NkString cursor,
-		NkUserGroupListUserGroup **outusers,
-		NkU32 **outnumusers,
+		NkUserGroupListUserGroup **outgroups,
+		NkU32 **outnumgroups,
 		char **outcursor,
 		char **outerror);
 
 	typedef struct NkFriend
 	{
-		const void *ptr;
+		// User *User
+		// State *wrapperspb.Int32Value
+		// UpdateTime *timestamppb.Timestamp
 	} NkFriend;
 
 	typedef int (*NkModuleFriendsListFn)(
@@ -905,7 +940,7 @@ extern "C"
 		const NkContext *ctx,
 		NkString userid,
 		NkU32 limit,
-		NkU32 state,
+		const NkU32 *state,
 		NkString cursor,
 		NkFriend **outfriends,
 		NkU32 **outnumfriends,

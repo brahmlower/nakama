@@ -779,7 +779,6 @@ extern int moduletournamentlist(
 	NkString cursor,
 	NkString id,
 	NkTournamentList **outtournaments,
-	NkU32 **outnumtournaments,
 	NkString **outerror);
 
 extern int moduletournamentrecordslist(
@@ -913,7 +912,7 @@ extern int modulegroupuserslist(
 	const NkContext *ctx,
 	NkString groupid,
 	NkU32 limit,
-	NkU32 state,
+	const NkU32 *state,
 	NkString cursor,
 	NkGroupUserListGroupUser **outusers,
 	NkU32 **outnumusers,
@@ -925,7 +924,7 @@ extern int moduleusergroupslist(
 	const NkContext *ctx,
 	NkString userid,
 	NkU32 limit,
-	NkU32 state,
+	const NkU32 *state,
 	NkString cursor,
 	NkUserGroupListUserGroup **outusers,
 	NkU32 **outnumusers,
@@ -937,7 +936,7 @@ extern int modulefriendslist(
 	const NkContext *ctx,
 	NkString userid,
 	NkU32 limit,
-	NkU32 state,
+	const NkU32 *state,
 	NkString cursor,
 	NkFriend **outfriends,
 	NkU32 **outnumfriends,

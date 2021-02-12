@@ -30,6 +30,21 @@ NkAccount *mallocnkaccount(NkU32 cnt)
 	return malloc(sizeof(NkAccount) * cnt);
 }
 
+NkFriend *mallocnkfriend(NkU32 cnt)
+{
+	return malloc(sizeof(NkFriend) * cnt);
+}
+
+NkGroup *mallocnkgroup(NkU32 cnt)
+{
+	return malloc(sizeof(NkGroup) * cnt);
+}
+
+NkGroupUserListGroupUser *mallocnkgroupuserlistgroupuser(NkU32 cnt)
+{
+	return malloc(sizeof(NkGroupUserListGroupUser) * cnt);
+}
+
 NkString *mallocnkstring(NkU32 cnt)
 {
 	return malloc(sizeof(NkAccount) * cnt);
@@ -83,14 +98,29 @@ NkStorageObject *mallocnkstorageobject(NkU32 cnt)
 	return malloc(sizeof(NkStorageObject) * cnt);
 }
 
+NkStorageObjectAck *mallocnkstorageobjectack(NkU32 cnt)
+{
+	return malloc(sizeof(NkStorageObjectAck) * cnt);
+}
+
 NkTournament *mallocnktournament(NkU32 cnt)
 {
 	return malloc(sizeof(NkTournament) * cnt);
 }
 
+NkTournamentList *mallocnktournamentlist(NkU32 cnt)
+{
+	return malloc(sizeof(NkTournamentList) * cnt);
+}
+
 NkUser *mallocnkuser(NkU32 cnt)
 {
 	return malloc(sizeof(NkUser) * cnt);
+}
+
+NkUserGroupListUserGroup *mallocnkusergrouplistusergroup(NkU32 cnt)
+{
+	return malloc(sizeof(NkUserGroupListUserGroup) * cnt);
 }
 
 NkWalletLedgerItem *mallocnkwalletledgeritem(NkU32 cnt)
@@ -103,9 +133,29 @@ NkWalletUpdateResult *mallocnkwalletupdateresult(NkU32 cnt)
 	return malloc(sizeof(NkWalletUpdateResult) * cnt);
 }
 
-void nkaccountset(NkAccount *ptr, NkU32 idx, NkAccount acct)
+void nkaccountset(NkAccount *accts, NkU32 idx, NkAccount acct)
 {
-	ptr[idx] = acct;
+	accts[idx] = acct;
+}
+
+void nkfriendset(NkFriend *friends, NkU32 idx, NkFriend friend)
+{
+	friends[idx] = friend;
+}
+
+void nkgroupset(NkGroup *groups, NkU32 idx, NkGroup group)
+{
+	groups[idx] = group;
+}
+
+void nkleaderboardrecordset(NkLeaderboardRecord *records, NkU32 idx, NkLeaderboardRecord record)
+{
+	records[idx] = record;
+}
+
+void nkgroupuserlistgroupuserset(NkGroupUserListGroupUser *users, NkU32 idx, NkGroupUserListGroupUser user)
+{
+	users[idx] = user;
 }
 
 void nkmapi64set(NkMapI64 *ptr, NkU32 idx, NkString key, NkI64 val)
@@ -114,74 +164,104 @@ void nkmapi64set(NkMapI64 *ptr, NkU32 idx, NkString key, NkI64 val)
 	ptr->vals[idx] = val;
 }
 
-void nkmatchset(NkMatch *ptr, NkU32 idx, NkMatch match)
+void nkmatchset(NkMatch *matches, NkU32 idx, NkMatch match)
 {
-	ptr[idx] = match;
+	matches[idx] = match;
 }
 
-void nkpresenceset(NkPresence *ptr, NkU32 idx, NkPresence presence)
+void nkpresenceset(NkPresence *presences, NkU32 idx, NkPresence presence)
 {
-	ptr[idx] = presence;
+	presences[idx] = presence;
 }
 
-void nkstorageobjectset(NkStorageObject *ptr, NkU32 idx, NkStorageObject obj)
+void nkstorageobjectset(NkStorageObject *objs, NkU32 idx, NkStorageObject obj)
 {
-	ptr[idx] = obj;
+	objs[idx] = obj;
 }
 
-void nktournamentset(NkTournament *ptr, NkU32 idx, NkTournament tournament)
+void nkstorageobjectackset(NkStorageObjectAck *acks, NkU32 idx, NkStorageObjectAck ack)
 {
-	ptr[idx] = tournament;
+	acks[idx] = ack;
 }
 
-void nkuserset(NkUser *ptr, NkU32 idx, NkUser acct)
+void nktournamentset(NkTournament *tournaments, NkU32 idx, NkTournament tournament)
 {
-	ptr[idx] = acct;
+	tournaments[idx] = tournament;
 }
 
-void nkwalletledgeritemset(NkWalletLedgerItem *ptr, NkU32 idx, NkWalletLedgerItem item)
+void nkusergrouplistusergroupset(NkUserGroupListUserGroup *groups, NkU32 idx, NkUserGroupListUserGroup group)
 {
-	ptr[idx] = item;
+	groups[idx] = group;
 }
 
-void nkwalletupdateresultset(NkWalletUpdateResult *ptr, NkU32 idx, NkWalletUpdateResult result)
+void nkuserset(NkUser *accts, NkU32 idx, NkUser acct)
 {
-	ptr[idx] = result;
+	accts[idx] = acct;
+}
+
+void nkwalletledgeritemset(NkWalletLedgerItem *items, NkU32 idx, NkWalletLedgerItem item)
+{
+	items[idx] = item;
+}
+
+void nkwalletupdateresultset(NkWalletUpdateResult *results, NkU32 idx, NkWalletUpdateResult result)
+{
+	results[idx] = result;
 }
 
 // Start of internal implementations
 
-void nkmapanyi(NkMapAny map, NkU32 idx, NkString **key, NkAny **val)
+void nkaccountupdateget(NkAccountUpdate *updates, NkU32 idx, NkAccountUpdate **outupdate)
+{
+	*outupdate = &updates[idx];
+}
+
+void nkmapanyget(NkMapAny map, NkU32 idx, NkString **key, NkAny **val)
 {
 	*key = &map.keys[idx];
 	*val = &map.vals[idx];
 }
 
-void nkmapi64i(NkMapI64 map, NkU32 idx, NkString **key, NkI64 **val)
+void nkmapi64get(NkMapI64 map, NkU32 idx, NkString **key, NkI64 **val)
 {
 	*key = &map.keys[idx];
 	*val = &map.vals[idx];
 }
 
-void nkmapstringi(NkMapString map, NkU32 idx, NkString **key, NkString **val)
+void nkmapstringget(NkMapString map, NkU32 idx, NkString **key, NkString **val)
 {
 	*key = &map.keys[idx];
 	*val = &map.vals[idx];
 }
 
-void nknotificationsendi(NkNotificationSend *arr, NkU32 idx, NkNotificationSend **n)
+void nknotificationsendget(NkNotificationSend *sends, NkU32 idx, NkNotificationSend **outsend)
 {
-	*n = &arr[idx];
+	*outsend = &sends[idx];
 }
 
-void nkpresencei(NkPresence *arr, NkU32 idx, NkPresence **p)
+void nkpresenceget(NkPresence *presences, NkU32 idx, NkPresence **outpresence)
 {
-	*p = &arr[idx];
+	*outpresence = &presences[idx];
 }
 
-void nkstringi(NkString *arr, NkU32 idx, NkString **s)
+void nkstoragedeleteget(NkStorageDelete *deletes, NkU32 idx, NkStorageDelete **outdelete)
 {
-	*s = &arr[idx];
+	*outdelete = &deletes[idx];
+}
+
+void nkstoragereadget(NkStorageRead *reads, NkU32 idx, NkStorageRead **outread)
+{
+	*outread = &reads[idx];
+}
+
+void nkstoragewriteget(NkStorageWrite *writes, NkU32 idx, NkStorageWrite **outwrite)
+{
+	*outwrite = &writes[idx];
+}
+
+void nkstringget(NkString *strings, NkU32 idx, NkString **outstring)
+{
+	*outstring = &strings[idx];
 }
 
 NkU8 nkvalueu8(NkValue val)
@@ -273,6 +353,32 @@ func cNkString(s string) C.NkString {
 	return ret
 }
 
+func goAccountUpdate(update C.NkAccountUpdate) *runtime.AccountUpdate {
+	ret := &runtime.AccountUpdate{}
+	ret.AvatarUrl = goString(update.avatarurl)
+	ret.DisplayName = goString(update.displayname)
+	ret.LangTag = goString(update.langtag)
+	ret.Location = goString(update.location)
+	ret.Metadata = goMapAny(update.metadata)
+	ret.Timezone = goString(update.timezone)
+	ret.UserID = goString(update.userid)
+	ret.Username = goString(update.username)
+
+	return ret
+}
+
+func goAccountUpdates(ptr *C.NkAccountUpdate, cnt C.NkU32) []*runtime.AccountUpdate {
+	goCnt := int(cnt)
+	ret := make([]*runtime.AccountUpdate, goCnt)
+	for i := 0; i < goCnt; i++ {
+		var u *C.NkAccountUpdate
+		C.nkaccountupdateget(ptr, C.NkU32(i), &u)
+		ret[i] = goAccountUpdate(*u)
+	}
+
+	return ret
+}
+
 func goEnvelope(e C.NkEnvelope) *rtapi.Envelope {
 	return pointer.Restore(e.ptr).(*rtapi.Envelope)
 }
@@ -283,7 +389,7 @@ func goMapAny(m C.NkMapAny) map[string]interface{} {
 	for i := 0; i < cnt; i++ {
 		var key *C.NkString
 		var val *C.NkAny
-		C.nkmapanyi(m, C.NkU32(i), &key, &val)
+		C.nkmapanyget(m, C.NkU32(i), &key, &val)
 		ret[goString(*key)] = goValueAny(*val)
 	}
 
@@ -296,7 +402,7 @@ func goMapI64(m C.NkMapI64) map[string]int64 {
 	for i := 0; i < cnt; i++ {
 		var key *C.NkString
 		var val *C.NkI64
-		C.nkmapi64i(m, C.NkU32(i), &key, &val)
+		C.nkmapi64get(m, C.NkU32(i), &key, &val)
 		ret[goString(*key)] = int64(*val)
 	}
 
@@ -308,7 +414,7 @@ func goMapString(m C.NkMapString) map[string]string {
 	ret := make(map[string]string, cnt)
 	for i := 0; i < cnt; i++ {
 		var key, val *C.NkString
-		C.nkmapstringi(m, C.NkU32(i), &key, &val)
+		C.nkmapstringget(m, C.NkU32(i), &key, &val)
 		ret[goString(*key)] = goString(*val)
 	}
 
@@ -320,7 +426,7 @@ func goNotificationSends(ptr *C.NkNotificationSend, cnt C.NkU32) []*runtime.Noti
 	ret := make([]*runtime.NotificationSend, goCnt)
 	for i := 0; i < goCnt; i++ {
 		var n *C.NkNotificationSend
-		C.nknotificationsendi(ptr, C.NkU32(i), &n)
+		C.nknotificationsendget(ptr, C.NkU32(i), &n)
 		ret[i] = pointer.Restore((*n).ptr).(*runtime.NotificationSend)
 	}
 
@@ -332,8 +438,76 @@ func goPresences(ptr *C.NkPresence, cnt C.NkU32) []runtime.Presence {
 	ret := make([]runtime.Presence, goCnt)
 	for i := 0; i < goCnt; i++ {
 		var p *C.NkPresence
-		C.nkpresencei(ptr, C.NkU32(i), &p)
+		C.nkpresenceget(ptr, C.NkU32(i), &p)
 		ret[i] = pointer.Restore((*p).ptr).(runtime.Presence)
+	}
+
+	return ret
+}
+
+func goStorageDelete(del C.NkStorageDelete) *runtime.StorageDelete {
+	ret := &runtime.StorageDelete{}
+	ret.Collection = goString(del.collection)
+	ret.Key = goString(del.key)
+	ret.UserID = goString(del.userid)
+	ret.Version = goString(del.version)
+
+	return ret
+}
+
+func goStorageDeletes(ptr *C.NkStorageDelete, cnt C.NkU32) []*runtime.StorageDelete {
+	goCnt := int(cnt)
+	ret := make([]*runtime.StorageDelete, goCnt)
+	for i := 0; i < goCnt; i++ {
+		var d *C.NkStorageDelete
+		C.nkstoragedeleteget(ptr, C.NkU32(i), &d)
+		ret[i] = goStorageDelete(*d)
+	}
+
+	return ret
+}
+
+func goStorageRead(read C.NkStorageRead) *runtime.StorageRead {
+	ret := &runtime.StorageRead{}
+	ret.Collection = goString(read.collection)
+	ret.Key = goString(read.key)
+	ret.UserID = goString(read.userid)
+
+	return ret
+}
+
+func goStorageReads(ptr *C.NkStorageRead, cnt C.NkU32) []*runtime.StorageRead {
+	goCnt := int(cnt)
+	ret := make([]*runtime.StorageRead, goCnt)
+	for i := 0; i < goCnt; i++ {
+		var r *C.NkStorageRead
+		C.nkstoragereadget(ptr, C.NkU32(i), &r)
+		ret[i] = goStorageRead(*r)
+	}
+
+	return ret
+}
+
+func goStorageWrite(read C.NkStorageWrite) *runtime.StorageWrite {
+	ret := &runtime.StorageWrite{}
+	ret.Collection = goString(read.collection)
+	ret.Key = goString(read.key)
+	ret.PermissionRead = int(read.permissionread)
+	ret.PermissionWrite = int(read.permissionwrite)
+	ret.UserID = goString(read.userid)
+	ret.Value = goString(read.value)
+	ret.Version = goString(read.version)
+
+	return ret
+}
+
+func goStorageWrites(ptr *C.NkStorageWrite, cnt C.NkU32) []*runtime.StorageWrite {
+	goCnt := int(cnt)
+	ret := make([]*runtime.StorageWrite, goCnt)
+	for i := 0; i < goCnt; i++ {
+		var w *C.NkStorageWrite
+		C.nkstoragewriteget(ptr, C.NkU32(i), &w)
+		ret[i] = goStorageWrite(*w)
 	}
 
 	return ret
@@ -348,7 +522,7 @@ func goStrings(ptr *C.NkString, cnt C.NkU32) []string {
 	ret := make([]string, goCnt)
 	for i := 0; i < goCnt; i++ {
 		var s *C.NkString
-		C.nkstringi(ptr, C.NkU32(i), &s)
+		C.nkstringget(ptr, C.NkU32(i), &s)
 		ret[i] = goString(*s)
 	}
 

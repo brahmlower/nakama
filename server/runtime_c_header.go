@@ -750,7 +750,6 @@ extern int cModuleTournamentList(
 	NkString cursor,
 	NkString id,
 	NkTournamentList **outtournaments,
-	NkU32 **outnumtournaments,
 	char **outerror);
 
 extern int cModuleTournamentRecordsList(
@@ -884,7 +883,7 @@ extern int cModuleGroupUsersList(
 	const NkContext *ctx,
 	NkString groupid,
 	NkU32 limit,
-	NkU32 state,
+	const NkU32 *state,
 	NkString cursor,
 	NkGroupUserListGroupUser **outusers,
 	NkU32 **outnumusers,
@@ -896,10 +895,10 @@ extern int cModuleUserGroupsList(
 	const NkContext *ctx,
 	NkString userid,
 	NkU32 limit,
-	NkU32 state,
+	const NkU32 *state,
 	NkString cursor,
-	NkUserGroupListUserGroup **outusers,
-	NkU32 **outnumusers,
+	NkUserGroupListUserGroup **outgroups,
+	NkU32 **outnumgroups,
 	char **outcursor,
 	char **outerror);
 
@@ -908,7 +907,7 @@ extern int cModuleFriendsList(
 	const NkContext *ctx,
 	NkString userid,
 	NkU32 limit,
-	NkU32 state,
+	const NkU32 *state,
 	NkString cursor,
 	NkFriend **outfriends,
 	NkU32 **outnumfriends,
@@ -3182,7 +3181,6 @@ int moduletournamentlist(
 	NkString cursor,
 	NkString id,
 	NkTournamentList **outtournaments,
-	NkU32 **outnumtournaments,
 	char **outerror)
 {
 	return cModuleTournamentList(
@@ -3196,7 +3194,6 @@ int moduletournamentlist(
 		cursor,
 		id,
 		outtournaments,
-		outnumtournaments,
 		outerror);
 }
 
@@ -3469,7 +3466,7 @@ int modulegroupuserslist(
 	const NkContext *ctx,
 	NkString groupid,
 	NkU32 limit,
-	NkU32 state,
+	const NkU32 *state,
 	NkString cursor,
 	NkGroupUserListGroupUser **outusers,
 	NkU32 **outnumusers,
@@ -3494,10 +3491,10 @@ int moduleusergroupslist(
 	const NkContext *ctx,
 	NkString userid,
 	NkU32 limit,
-	NkU32 state,
+	const NkU32 *state,
 	NkString cursor,
-	NkUserGroupListUserGroup **outusers,
-	NkU32 **outnumusers,
+	NkUserGroupListUserGroup **outgroups,
+	NkU32 **outnumgroups,
 	char **outcursor,
 	char **outerror)
 {
@@ -3508,8 +3505,8 @@ int moduleusergroupslist(
 		limit,
 		state,
 		cursor,
-		outusers,
-		outnumusers,
+		outgroups,
+		outnumgroups,
 		outcursor,
 		outerror);
 }
@@ -3519,7 +3516,7 @@ int modulefriendslist(
 	const NkContext *ctx,
 	NkString userid,
 	NkU32 limit,
-	NkU32 state,
+	const NkU32 *state,
 	NkString cursor,
 	NkFriend **outfriends,
 	NkU32 **outnumfriends,
