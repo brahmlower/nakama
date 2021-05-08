@@ -40,7 +40,7 @@ extern void cLoggerWarn(
 	const void *ptr,
 	NkString s);
 
-extern void cContextValue(
+extern int cContextValue(
 	const void *ptr,
 	NkString key,
 	char **outvalue);
@@ -1661,7 +1661,7 @@ int initmodule(
 		initializer);
 }
 
-void contextvalue(
+int contextvalue(
 	const void *ptr,
 	NkString key,
 	char **outvalue)

@@ -101,7 +101,7 @@ extern "C"
 		NkString *vals;
 	} NkMapString;
 
-	typedef void (*NkContextValueFn)(
+	typedef int (*NkContextValueFn)(
 		const void *ptr,
 		NkString key,
 		char **outvalue);

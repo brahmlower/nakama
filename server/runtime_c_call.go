@@ -20,6 +20,7 @@ import (
 	"github.com/mattn/go-pointer"
 )
 
+// RuntimeCCall is a call wrapper for C-to-Go calls which may require storing additional pointers.
 type RuntimeCCall struct {
 	ptr    unsafe.Pointer
 	refs []unsafe.Pointer
