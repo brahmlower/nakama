@@ -569,14 +569,18 @@ func cModuleUsersGetId(
 	pCtx unsafe.Pointer,
 	keys *C.NkString,
 	numKeys C.NkU32,
+	fbKeys *C.NkString,
+	fbNumKeys C.NkU32,
 	outUsers **C.NkUser,
 	outNumUsers **C.NkU32,
+	outFbUsers **C.NkUser,
+	outFbNumUsers **C.NkU32,
 	outErr **C.char) int {
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	retUsers, err := nk.UsersGetId(ctx, goStrings(keys, numKeys))
+	retUsers, err := nk.UsersGetId(ctx, goStrings(keys, numKeys), goStrings(fbKeys, fbNumKeys))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -792,12 +796,14 @@ func cModuleLinkSteam(
 	pCtx unsafe.Pointer,
 	userID C.NkString,
 	linkID C.NkString,
+	token C.NkString,
+	importFriends C.bool,
 	outErr **C.char) int {
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	err := nk.LinkSteam(ctx, goString(userID), goString(linkID))
+	err := nk.LinkSteam(ctx, goString(userID), goString(linkID), goString(token), bool(importFriends))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -1652,6 +1658,7 @@ func cModuleWalletLedgerList(
 func cModuleStorageList(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
+	callerID C.NkString,
 	userID C.NkString,
 	collection C.NkString,
 	limit C.NkU32,
@@ -1664,7 +1671,7 @@ func cModuleStorageList(
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	retObjs, retCursor, err := nk.StorageList(ctx, goString(userID), goString(collection), int(limit), goString(cursor))
+	retObjs, retCursor, err := nk.StorageList(ctx, goString(callerID), goString(userID), goString(collection), int(limit), goString(cursor))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -1936,13 +1943,19 @@ func cModuleLeaderboardRecordWrite(
 	score C.NkI64,
 	subscore C.NkI64,
 	metadata C.NkMapAny,
+	overrideOperator *C.NkU32,
 	outRecord **C.NkLeaderboardRecord,
 	outErr **C.char) int {
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	retRecord, err := nk.LeaderboardRecordWrite(ctx, goString(id), goString(ownerID), goString(userName), int64(score), int64(subscore), goMapAny(metadata))
+	var goOverrideOperator *int
+	if overrideOperator != nil {
+		*goOverrideOperator = int(*overrideOperator)
+	}
+
+	retRecord, err := nk.LeaderboardRecordWrite(ctx, goString(id), goString(ownerID), goString(userName), int64(score), int64(subscore), goMapAny(metadata), goOverrideOperator)
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -2044,6 +2057,7 @@ func cModuleTournamentCreate(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
 	id C.NkString,
+	authoritative C.bool,
 	sortOrder C.NkString,
 	operator C.NkString,
 	resetSchedule C.NkString,
@@ -2062,7 +2076,7 @@ func cModuleTournamentCreate(
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	err := nk.TournamentCreate(ctx, goString(id), goString(sortOrder), goString(operator), goString(resetSchedule), goMapAny(metadata), goString(title), goString(description), int(category), int(startTime), int(endTime), int(duration), int(maxSize), int(maxNumScore), bool(joinRequired))
+	err := nk.TournamentCreate(ctx, goString(id), bool(authoritative), goString(sortOrder), goString(operator), goString(resetSchedule), goMapAny(metadata), goString(title), goString(description), int(category), int(startTime), int(endTime), int(duration), int(maxSize), int(maxNumScore), bool(joinRequired))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -2263,13 +2277,19 @@ func cModuleTournamentRecordWrite(
 	score C.NkI64,
 	subscore C.NkI64,
 	metadata C.NkMapAny,
+	overrideOperator *C.NkU32,
 	outRecord **C.NkLeaderboardRecord,
 	outErr **C.char) int {
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	retRecord, err := nk.TournamentRecordWrite(ctx, goString(id), goString(ownerID), goString(userName), int64(score), int64(subscore), goMapAny(metadata))
+	var goOverrideOperator *int
+	if overrideOperator != nil {
+		*goOverrideOperator = int(*overrideOperator)
+	}
+
+	retRecord, err := nk.TournamentRecordWrite(ctx, goString(id), goString(ownerID), goString(userName), int64(score), int64(subscore), goMapAny(metadata), goOverrideOperator)
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -2292,6 +2312,7 @@ func cModuleTournamentRecordsHaystack(
 	id C.NkString,
 	ownerID C.NkString,
 	limit C.NkU32,
+	cursor C.NkString,
 	expiry C.NkI64,
 	outRecords **C.NkLeaderboardRecord,
 	outNumRecords **C.NkU32,
@@ -2300,19 +2321,19 @@ func cModuleTournamentRecordsHaystack(
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	retRecords, err := nk.TournamentRecordsHaystack(ctx, goString(id), goString(ownerID), int(limit), int64(expiry))
+	retRecords, err := nk.TournamentRecordsHaystack(ctx, goString(id), goString(ownerID), int(limit), goString(cursor), int64(expiry))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
 		return 1
 	}
 
-	numRecords := C.NkU32(len(retRecords))
+	numRecords := C.NkU32(len(retRecords.Records))
 	*outNumRecords = C.mallocnku32(1)
 	**outNumRecords = numRecords
 
 	*outRecords = C.mallocnkleaderboardrecord(numRecords)
-	for idx, _ := range retRecords {
+	for idx, _ := range retRecords.Records {
 		outRecord := C.NkLeaderboardRecord{}
 		// TODO!
 
@@ -2396,6 +2417,7 @@ func cModuleGroupCreate(
 func cModuleGroupUpdate(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
+	id C.NkString,
 	userID C.NkString,
 	name C.NkString,
 	creatorID C.NkString,
@@ -2410,7 +2432,7 @@ func cModuleGroupUpdate(
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	err := nk.GroupUpdate(ctx, goString(userID), goString(name), goString(creatorID), goString(langTag), goString(description), goString(avatarURL), bool(open), goMapAny(metadata), int(maxCount))
+	err := nk.GroupUpdate(ctx, goString(id), goString(userID), goString(name), goString(creatorID), goString(langTag), goString(description), goString(avatarURL), bool(open), goMapAny(metadata), int(maxCount))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -2468,6 +2490,7 @@ func cModuleGroupUserLeave(
 func cModuleGroupUsersAdd(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
+	callerID C.NkString,
 	groupID C.NkString,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
@@ -2476,7 +2499,7 @@ func cModuleGroupUsersAdd(
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	err := nk.GroupUsersAdd(ctx, goString(groupID), goStrings(userIDs, numUserIDs))
+	err := nk.GroupUsersAdd(ctx, goString(callerID), goString(groupID), goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -2490,6 +2513,7 @@ func cModuleGroupUsersAdd(
 func cModuleGroupUsersDemote(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
+	callerID C.NkString,
 	groupID C.NkString,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
@@ -2497,7 +2521,7 @@ func cModuleGroupUsersDemote(
 	call := pointer.Restore(pNk).(*RuntimeCCall)
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
-	err := nk.GroupUsersDemote(ctx, goString(groupID), goStrings(userIDs, numUserIDs))
+	err := nk.GroupUsersDemote(ctx, goString(callerID), goString(groupID), goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -2511,6 +2535,7 @@ func cModuleGroupUsersDemote(
 func cModuleGroupUsersKick(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
+	callerID C.NkString,
 	groupID C.NkString,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
@@ -2519,7 +2544,7 @@ func cModuleGroupUsersKick(
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	err := nk.GroupUsersKick(ctx, goString(groupID), goStrings(userIDs, numUserIDs))
+	err := nk.GroupUsersKick(ctx, goString(callerID), goString(groupID), goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 
@@ -2533,6 +2558,7 @@ func cModuleGroupUsersKick(
 func cModuleGroupUsersPromote(
 	pNk unsafe.Pointer,
 	pCtx unsafe.Pointer,
+	callerID C.NkString,
 	groupID C.NkString,
 	userIDs *C.NkString,
 	numUserIDs C.NkU32,
@@ -2541,7 +2567,7 @@ func cModuleGroupUsersPromote(
 	nk := pointer.Restore(call.ptr).(runtime.NakamaModule)
 	ctx := pointer.Restore(pCtx).(context.Context)
 
-	err := nk.GroupUsersPromote(ctx, goString(groupID), goStrings(userIDs, numUserIDs))
+	err := nk.GroupUsersPromote(ctx, goString(callerID), goString(groupID), goStrings(userIDs, numUserIDs))
 	if err != nil {
 		*outErr = C.CString(err.Error())
 

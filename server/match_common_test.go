@@ -52,8 +52,9 @@ func createTestMatchRegistry(t fatalable, logger *zap.Logger) (*LocalMatchRegist
 	cfg := NewConfig(logger)
 	cfg.GetMatch().LabelUpdateIntervalMs = int(time.Hour / time.Millisecond)
 	messageRouter := &testMessageRouter{}
+	metrics := NewLocalMetrics(logger, logger, nil, cfg)
 	matchRegistry := NewLocalMatchRegistry(logger, logger, cfg, &testSessionRegistry{}, &testTracker{},
-		messageRouter, &testMetrics{}, "node")
+		messageRouter, metrics, "node")
 	mp := NewMatchProvider()
 
 	mp.RegisterCreateFn("go",

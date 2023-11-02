@@ -30,6 +30,7 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type RuntimeCInitializer struct {
@@ -57,6 +58,183 @@ type RuntimeCInitializer struct {
 	matchLock *sync.RWMutex
 }
 
+var _ runtime.Initializer = (*RuntimeCInitializer)(nil)
+
+func (ri *RuntimeCInitializer) RegisterAfterDeleteAccount(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterDeleteNotifications(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.DeleteNotificationsRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterDeleteTournamentRecord(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.DeleteTournamentRecordRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterGetSubscription(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, subscription *api.ValidatedSubscription, request *api.GetSubscriptionRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterImportSteamFriends(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.ImportSteamFriendsRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterListSubscriptions(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, subscriptions *api.SubscriptionList, request *api.ListSubscriptionsRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterSessionLogout(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.SessionLogoutRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterValidatePurchaseApple(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, purchase *api.ValidatePurchaseResponse, request *api.ValidatePurchaseAppleRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterValidatePurchaseGoogle(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, purchase *api.ValidatePurchaseResponse, request *api.ValidatePurchaseGoogleRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterValidatePurchaseHuawei(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, purchase *api.ValidatePurchaseResponse, request *api.ValidatePurchaseHuaweiRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterValidateSubscriptionApple(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, subscriptionResponse *api.ValidateSubscriptionResponse, request *api.ValidateSubscriptionAppleRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterValidateSubscriptionGoogle(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, subscriptionResponse *api.ValidateSubscriptionResponse, request *api.ValidateSubscriptionGoogleRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterAfterValidateSubscriptionHuawei(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, subscriptionResponse *api.ValidateSubscriptionResponse, request *api.ValidateSubscriptionGoogleRequest) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeDeleteAccount(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeDeleteNotifications(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.DeleteNotificationsRequest) (*api.DeleteNotificationsRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeDeleteTournamentRecord(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.DeleteTournamentRecordRequest) (*api.DeleteTournamentRecordRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeGetSubscription(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.GetSubscriptionRequest) (*api.GetSubscriptionRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeImportSteamFriends(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.ImportSteamFriendsRequest) (*api.ImportSteamFriendsRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeListSubscriptions(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.ListSubscriptionsRequest) (*api.ListSubscriptionsRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeSessionLogout(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.SessionLogoutRequest) (*api.SessionLogoutRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeValidatePurchaseApple(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.ValidatePurchaseAppleRequest) (*api.ValidatePurchaseAppleRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeValidatePurchaseGoogle(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.ValidatePurchaseGoogleRequest) (*api.ValidatePurchaseGoogleRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeValidatePurchaseHuawei(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.ValidatePurchaseHuaweiRequest) (*api.ValidatePurchaseHuaweiRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeValidateSubscriptionApple(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.ValidateSubscriptionAppleRequest) (*api.ValidateSubscriptionAppleRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeValidateSubscriptionGoogle(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.ValidateSubscriptionGoogleRequest) (*api.ValidateSubscriptionGoogleRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterBeforeValidateSubscriptionHuawei(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, request *api.ValidateSubscriptionGoogleRequest) (*api.ValidateSubscriptionGoogleRequest, error)) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterMatchmakerOverride(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, matches [][]runtime.MatchmakerEntry) [][]runtime.MatchmakerEntry) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterPurchaseNotificationApple(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, purchase *api.ValidatedPurchase, providerPayload string) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterPurchaseNotificationGoogle(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, purchase *api.ValidatedPurchase, providerPayload string) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterPurchaseNotificationHuawei(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, purchase *api.ValidatedPurchase, providerPayload string) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterStorageIndex(name, collection, key string, fields []string, maxEntries int, indexOnly bool) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterStorageIndexFilter(indexName string, fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, write *runtime.StorageWrite) bool) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterSubscriptionNotificationApple(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, subscription *api.ValidatedSubscription, providerPayload string) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterSubscriptionNotificationGoogle(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, subscription *api.ValidatedSubscription, providerPayload string) error) error {
+	// TODO: Implement this
+	return nil
+}
+
+func (ri *RuntimeCInitializer) RegisterSubscriptionNotificationHuawei(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, subscription *api.ValidatedSubscription, providerPayload string) error) error {
+	// TODO: Implement this
+	return nil
+}
+
 func (ri *RuntimeCInitializer) RegisterEvent(fn func(ctx context.Context, logger runtime.Logger, evt *api.Event)) error {
 	ri.eventFunctions = append(ri.eventFunctions, fn)
 	return nil
@@ -74,7 +252,7 @@ func (ri *RuntimeCInitializer) RegisterEventSessionEnd(fn func(ctx context.Conte
 
 func (ri *RuntimeCInitializer) RegisterRpc(id string, fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error)) error {
 	id = strings.ToLower(id)
-	ri.rpc[id] = func(ctx context.Context, queryParams map[string][]string, userID, username string, vars map[string]string, expiry int64, sessionID, clientIP, clientPort, payload string) (string, error, codes.Code) {
+	ri.rpc[id] = func(ctx context.Context, headers, queryParams map[string][]string, userID, username string, vars map[string]string, expiry int64, sessionID, clientIP, clientPort, lang, payload string) (string, error, codes.Code) {
 		ctx = NewRuntimeCContext(ctx, ri.node, ri.env, RuntimeExecutionModeRPC, queryParams, expiry, userID, username, vars, sessionID, clientIP, clientPort)
 		result, fnErr := fn(ctx, ri.logger, ri.db, ri.nk, payload)
 		if fnErr != nil {
@@ -95,18 +273,18 @@ func (ri *RuntimeCInitializer) RegisterRpc(id string, fn func(ctx context.Contex
 
 func (ri *RuntimeCInitializer) RegisterBeforeRt(id string, fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, envelope *rtapi.Envelope) (*rtapi.Envelope, error)) error {
 	id = strings.ToLower(RTAPI_PREFIX + id)
-	ri.beforeRt[id] = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, sessionID, clientIP, clientPort string, envelope *rtapi.Envelope) (*rtapi.Envelope, error) {
+	ri.beforeRt[id] = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, sessionID, clientIP, clientPort string, lang string, envelope *rtapi.Envelope) (*rtapi.Envelope, error) {
 		ctx = NewRuntimeCContext(ctx, ri.node, ri.env, RuntimeExecutionModeBefore, nil, expiry, userID, username, vars, sessionID, clientIP, clientPort)
 		return fn(ctx, ri.logger, ri.db, ri.nk, envelope)
 	}
 	return nil
 }
 
-func (ri *RuntimeCInitializer) RegisterAfterRt(id string, fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, envelope *rtapi.Envelope) error) error {
+func (ri *RuntimeCInitializer) RegisterAfterRt(id string, fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, in *rtapi.Envelope, out *rtapi.Envelope) error) error {
 	id = strings.ToLower(RTAPI_PREFIX + id)
-	ri.afterRt[id] = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, sessionID, clientIP, clientPort string, envelope *rtapi.Envelope) error {
+	ri.afterRt[id] = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, sessionID, clientIP, clientPort, lang string, out, in *rtapi.Envelope) error {
 		ctx = NewRuntimeCContext(ctx, ri.node, ri.env, RuntimeExecutionModeAfter, nil, expiry, userID, username, vars, sessionID, clientIP, clientPort)
-		return fn(ctx, ri.logger, ri.db, ri.nk, envelope)
+		return fn(ctx, ri.logger, ri.db, ri.nk, in, out)
 	}
 	return nil
 }
@@ -1315,8 +1493,8 @@ func (ri *RuntimeCInitializer) RegisterAfterLinkGoogle(fn func(ctx context.Conte
 	return nil
 }
 
-func (ri *RuntimeCInitializer) RegisterBeforeLinkSteam(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, in *api.AccountSteam) (*api.AccountSteam, error)) error {
-	ri.beforeReq.beforeLinkSteamFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountSteam) (*api.AccountSteam, error, codes.Code) {
+func (ri *RuntimeCInitializer) RegisterBeforeLinkSteam(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, in *api.LinkSteamRequest) (*api.LinkSteamRequest, error)) error {
+	ri.beforeReq.beforeLinkSteamFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.LinkSteamRequest) (*api.LinkSteamRequest, error, codes.Code) {
 		ctx = NewRuntimeCContext(ctx, ri.node, ri.env, RuntimeExecutionModeBefore, nil, expiry, userID, username, vars, "", clientIP, clientPort)
 		result, fnErr := fn(ctx, ri.logger, ri.db, ri.nk, in)
 		if fnErr != nil {
@@ -1335,8 +1513,8 @@ func (ri *RuntimeCInitializer) RegisterBeforeLinkSteam(fn func(ctx context.Conte
 	return nil
 }
 
-func (ri *RuntimeCInitializer) RegisterAfterLinkSteam(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, in *api.AccountSteam) error) error {
-	ri.afterReq.afterLinkSteamFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountSteam) error {
+func (ri *RuntimeCInitializer) RegisterAfterLinkSteam(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, in *api.LinkSteamRequest) error) error {
+	ri.afterReq.afterLinkSteamFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.LinkSteamRequest) error {
 		ctx = NewRuntimeCContext(ctx, ri.node, ri.env, RuntimeExecutionModeAfter, nil, expiry, userID, username, vars, "", clientIP, clientPort)
 		return fn(ctx, ri.logger, ri.db, ri.nk, in)
 	}
@@ -1400,7 +1578,7 @@ func (ri *RuntimeCInitializer) RegisterAfterListNotifications(fn func(ctx contex
 }
 
 func (ri *RuntimeCInitializer) RegisterBeforeDeleteNotification(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, in *api.DeleteNotificationsRequest) (*api.DeleteNotificationsRequest, error)) error {
-	ri.beforeReq.beforeDeleteNotificationFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.DeleteNotificationsRequest) (*api.DeleteNotificationsRequest, error, codes.Code) {
+	ri.beforeReq.beforeDeleteNotificationsFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.DeleteNotificationsRequest) (*api.DeleteNotificationsRequest, error, codes.Code) {
 		ctx = NewRuntimeCContext(ctx, ri.node, ri.env, RuntimeExecutionModeBefore, nil, expiry, userID, username, vars, "", clientIP, clientPort)
 		result, fnErr := fn(ctx, ri.logger, ri.db, ri.nk, in)
 		if fnErr != nil {
@@ -1420,7 +1598,7 @@ func (ri *RuntimeCInitializer) RegisterBeforeDeleteNotification(fn func(ctx cont
 }
 
 func (ri *RuntimeCInitializer) RegisterAfterDeleteNotification(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, in *api.DeleteNotificationsRequest) error) error {
-	ri.afterReq.afterDeleteNotificationFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.DeleteNotificationsRequest) error {
+	ri.afterReq.afterDeleteNotificationsFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.DeleteNotificationsRequest) error {
 		ctx = NewRuntimeCContext(ctx, ri.node, ri.env, RuntimeExecutionModeAfter, nil, expiry, userID, username, vars, "", clientIP, clientPort)
 		return fn(ctx, ri.logger, ri.db, ri.nk, in)
 	}
@@ -2019,8 +2197,8 @@ func (ri *RuntimeCInitializer) RegisterTournamentReset(fn func(ctx context.Conte
 	return nil
 }
 
-func (ri *RuntimeCInitializer) RegisterLeaderboardReset(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, leaderboard runtime.Leaderboard, reset int64) error) error {
-	ri.leaderboardReset = func(ctx context.Context, leaderboard runtime.Leaderboard, reset int64) error {
+func (ri *RuntimeCInitializer) RegisterLeaderboardReset(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, leaderboard *api.Leaderboard, reset int64) error) error {
+	ri.leaderboardReset = func(ctx context.Context, leaderboard *api.Leaderboard, reset int64) error {
 		ctx = NewRuntimeCContext(ctx, ri.node, ri.env, RuntimeExecutionModeLeaderboardReset, nil, 0, "", "", nil, "", "", "")
 		return fn(ctx, ri.logger, ri.db, ri.nk, leaderboard, reset)
 	}
@@ -2075,11 +2253,11 @@ func CheckRuntimeProviderC(logger *zap.Logger, rootPath string, paths []string) 
 	return nil
 }
 
-func NewRuntimeProviderC(logger, startupLogger *zap.Logger, db *sql.DB, jsonpbMarshaler *jsonpb.Marshaler, jsonpbUnmarshaler *jsonpb.Unmarshaler, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics *Metrics, streamManager StreamManager, router MessageRouter, eventFn RuntimeEventCustomFunction, rootPath string, paths []string, matchProvider *MatchProvider) ([]string, map[string]RuntimeRpcFunction, map[string]RuntimeBeforeRtFunction, map[string]RuntimeAfterRtFunction, *RuntimeBeforeReqFunctions, *RuntimeAfterReqFunctions, RuntimeMatchmakerMatchedFunction, RuntimeTournamentEndFunction, RuntimeTournamentResetFunction, RuntimeLeaderboardResetFunction, error) {
+func NewRuntimeProviderC(logger, startupLogger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry *StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, eventFn RuntimeEventCustomFunction, rootPath string, paths []string, matchProvider *MatchProvider, storageIndex StorageIndex) ([]string, map[string]RuntimeRpcFunction, map[string]RuntimeBeforeRtFunction, map[string]RuntimeAfterRtFunction, *RuntimeBeforeReqFunctions, *RuntimeAfterReqFunctions, RuntimeMatchmakerMatchedFunction, RuntimeTournamentEndFunction, RuntimeTournamentResetFunction, RuntimeLeaderboardResetFunction, error) {
 	runtimeLogger := NewRuntimeGoLogger(logger)
 	node := config.GetName()
 	env := config.GetRuntime().Environment
-	nk := NewRuntimeCNakamaModule(logger, db, jsonpbMarshaler, config, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, matchRegistry, tracker, streamManager, router)
+	nk := NewRuntimeCNakamaModule(logger, db, protojsonMarshaler, config, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, storageIndex, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router)
 	match := make(map[string]func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule) (runtime.Match, error), 0)
 	matchLock := &sync.RWMutex{}
 	initializer := &RuntimeCInitializer{

@@ -662,7 +662,7 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		return nil, nil, err
 	}
 
-	cModules, cRPCFns, cBeforeRtFns, cAfterRtFns, cBeforeReqFns, cAfterReqFns, cMatchmakerMatchedFn, cTournamentEndFn, cTournamentResetFn, cLeaderboardResetFn, err := NewRuntimeProviderC(logger, startupLogger, db, jsonpbMarshaler, jsonpbUnmarshaler, config, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, matchRegistry, tracker, metrics, streamManager, router, allEventFunctions.eventFunction, runtimeConfig.Path, paths, matchProvider)
+	cModules, cRPCFns, cBeforeRtFns, cAfterRtFns, cBeforeReqFns, cAfterReqFns, cMatchmakerMatchedFn, cTournamentEndFn, cTournamentResetFn, cLeaderboardResetFn, err := NewRuntimeProviderC(logger, startupLogger, db, protojsonMarshaler, protojsonUnmarshaler, config, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, allEventFns.eventFunction, runtimeConfig.Path, paths, matchProvider, storageIndex)
 	if err != nil {
 		startupLogger.Error("Error initialising C runtime provider", zap.Error(err))
 		return nil, nil, err
@@ -2245,7 +2245,7 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	}
 	if jsAfterReqFns.afterImportSteamFriendsFunction != nil {
 		allAfterReqFunctions.afterImportSteamFriendsFunction = jsAfterReqFns.afterImportSteamFriendsFunction
-		startupLogger.Info("Registered C runtime After function invocation", zap.String("id", "importfacebookfriends"))
+		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "importfacebookfriends"))
 	}
 	if jsAfterReqFns.afterCreateGroupFunction != nil {
 		allAfterReqFunctions.afterCreateGroupFunction = jsAfterReqFns.afterCreateGroupFunction

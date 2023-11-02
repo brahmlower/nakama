@@ -1638,7 +1638,7 @@ func createTestMatchmaker(t fatalable, logger *zap.Logger, tickerActive bool, me
 	}
 	sessionRegistry := &testSessionRegistry{}
 	tracker := &testTracker{}
-	metrics := &testMetrics{}
+	metrics := NewLocalMetrics(logger, logger, nil, cfg)
 
 	jsonpbMarshaler := &protojson.MarshalOptions{
 		UseEnumNumbers:  true,
