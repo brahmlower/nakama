@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import {Component, OnInit, OnDestroy, Injectable, Pipe, PipeTransform} from '@angular/core';
-import {ConsoleService, StatusList} from '../console.service';
+import {ConsoleService, StatusList, StatusListStatus} from '../console.service';
 import {Observable, of, Subscription, timer} from 'rxjs';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup} from '@angular/forms';
 import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
 import {catchError, mergeMap} from 'rxjs/operators';
 
@@ -26,12 +26,13 @@ import {catchError, mergeMap} from 'rxjs/operators';
 })
 export class StatusComponent implements OnInit, OnDestroy {
   public error = '';
+  public showDelta = false;
   public statusData: StatusList;
   public rateGraphData = [];
   public latencyGraphData = [];
   public inputGraphData = [];
   public outputGraphData = [];
-  public rangeForm: FormGroup;
+  public rangeForm: UntypedFormGroup;
   public readonly ranges = {
     1: 'last 1 minute',
     10: 'last 10 minutes',
@@ -50,7 +51,7 @@ export class StatusComponent implements OnInit, OnDestroy {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly consoleService: ConsoleService,
-    private readonly formBuilder: FormBuilder,
+    private readonly formBuilder: UntypedFormBuilder,
   ) {}
 
   ngOnInit(): void {
@@ -62,7 +63,7 @@ export class StatusComponent implements OnInit, OnDestroy {
       const nodeNames = data[0];
       this.initData(nodeNames);
       this.refresh();
-      this.refreshTimer = timer(0, this.calculateRateSeconds() * 1000);
+      this.refreshTimer = timer(0, this.getPeriod() * 1000);
       this.$refreshTimer = this.refreshTimer.subscribe(_ => this.refresh());
     }, err => {
       this.error = err;
@@ -85,7 +86,7 @@ export class StatusComponent implements OnInit, OnDestroy {
     pointTs.setMilliseconds(0);
     const timestamps = [];
     for (let i = 0; i < this.samples; i++) {
-      pointTs = new Date(pointTs.getTime() - this.calculateRateSeconds() * 1000);
+      pointTs = new Date(pointTs.getTime() - this.getPeriod() * 1000);
       timestamps.push(pointTs);
     }
 
@@ -113,7 +114,7 @@ export class StatusComponent implements OnInit, OnDestroy {
     // If a node is not present in the results anymore, append a new point with 0 value.
     const currentNodes = currentData.map(d => d.name);
     const dataNodes = statusList.map(d => d.name);
-    const missingNodes = this.setDifference(currentNodes, dataNodes);
+    const missingNodes = this.diff(currentNodes, dataNodes);
     for (const node of currentData) {
       if (missingNodes.includes(node.name)) {
         updatedData.push({
@@ -155,7 +156,7 @@ export class StatusComponent implements OnInit, OnDestroy {
     return newData;
   }
 
-  private calculateRateSeconds(): number {
+  private getPeriod(): number {
     return Math.floor((this.f.rangeMinutes.value * 60) / this.samples);
   }
 
@@ -168,14 +169,15 @@ export class StatusComponent implements OnInit, OnDestroy {
     this.consoleService.getStatus('').subscribe(data => {
       this.initData(data.nodes.map(n => n.name));
       this.$refreshTimer?.unsubscribe();
-      this.refreshTimer = timer(0, this.calculateRateSeconds() * 1000);
+      this.refreshTimer = timer(0, this.getPeriod() * 1000);
       this.$refreshTimer = this.refreshTimer.subscribe(_ => this.refresh());
     }, err => {
       this.error = err;
     });
   }
 
-  private setDifference(setA, setB): string[] {
+  // Returns the diff between setA and setB
+  private diff(setA, setB): string[] {
     const difference = new Set<string>(setA);
     for (const elem of setB) {
       difference.delete(elem);
@@ -189,6 +191,34 @@ export class StatusComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.$refreshTimer.unsubscribe();
+  }
+
+  getTotalSessionCount(): number {
+    return this.statusData.nodes.reduce((acc, v) => acc + v.session_count, 0);
+  }
+
+  getMaxSessionCount(): number {
+    return Math.max(...this.statusData.nodes.map(e => e.session_count));
+  }
+
+  getMaxPresenceCount(): number {
+    return Math.max(...this.statusData.nodes.map(e => e.presence_count));
+  }
+
+  getMaxMatchCount(): number {
+    return Math.max(...this.statusData.nodes.map(e => e.match_count));
+  }
+
+  getTotalMatchCount(): number {
+    return this.statusData.nodes.reduce((acc, v) => acc + v.match_count, 0);
+  }
+
+  getMaxGoroutineCount(): number {
+    return Math.max(...this.statusData.nodes.map(e => e.goroutine_count));
+  }
+
+  getTotalGorountineCount(): number {
+    return this.statusData.nodes.reduce((acc, v) => acc + v.goroutine_count, 0);
   }
 }
 

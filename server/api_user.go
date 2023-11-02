@@ -16,7 +16,8 @@ package server
 
 import (
 	"context"
-	"github.com/gofrs/uuid"
+
+	"github.com/gofrs/uuid/v5"
 	"github.com/heroiclabs/nakama-common/api"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -47,15 +48,13 @@ func (s *ApiServer) GetUsers(ctx context.Context, in *api.GetUsersRequest) (*api
 		}
 	}
 
-	if in.GetIds() == nil && in.GetUsernames() == nil && in.GetFacebookIds() == nil {
+	if len(in.GetIds()) == 0 && len(in.GetUsernames()) == 0 && len(in.GetFacebookIds()) == 0 {
 		return &api.Users{}, nil
 	}
 
-	ids := make([]string, 0)
-	usernames := make([]string, 0)
-	facebookIDs := make([]string, 0)
-
-	if in.GetIds() != nil {
+	var ids []string
+	if len(in.GetIds()) != 0 {
+		ids = make([]string, 0, len(in.GetIds()))
 		for _, id := range in.GetIds() {
 			if _, uuidErr := uuid.FromString(id); uuidErr != nil {
 				return nil, status.Error(codes.InvalidArgument, "ID '"+id+"' is not a valid system ID.")
@@ -65,15 +64,7 @@ func (s *ApiServer) GetUsers(ctx context.Context, in *api.GetUsersRequest) (*api
 		}
 	}
 
-	if in.GetUsernames() != nil {
-		usernames = in.GetUsernames()
-	}
-
-	if in.GetFacebookIds() != nil {
-		facebookIDs = in.GetFacebookIds()
-	}
-
-	users, err := GetUsers(ctx, s.logger, s.db, s.tracker, ids, usernames, facebookIDs)
+	users, err := GetUsers(ctx, s.logger, s.db, s.statusRegistry, ids, in.GetUsernames(), in.GetFacebookIds())
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Error retrieving user accounts.")
 	}

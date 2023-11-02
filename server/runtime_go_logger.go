@@ -16,10 +16,11 @@ package server
 
 import (
 	"fmt"
-	nkruntime "github.com/heroiclabs/nakama-common/runtime"
-	"go.uber.org/zap"
 	"runtime"
 	"strings"
+
+	nkruntime "github.com/heroiclabs/nakama-common/runtime"
+	"go.uber.org/zap"
 )
 
 type RuntimeGoLogger struct {
@@ -30,7 +31,7 @@ type RuntimeGoLogger struct {
 func NewRuntimeGoLogger(logger *zap.Logger) nkruntime.Logger {
 	return &RuntimeGoLogger{
 		fields: make(map[string]interface{}),
-		logger: logger.With(zap.String("runtime", "go")),
+		logger: logger.WithOptions(zap.AddCallerSkip(1)).With(zap.String("runtime", "go")),
 	}
 }
 

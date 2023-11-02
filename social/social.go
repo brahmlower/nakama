@@ -26,8 +26,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
-	"io/ioutil"
+	"io"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -36,37 +35,46 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap"
+	"golang.org/x/oauth2"
 )
 
 // Client is responsible for making calls to different providers
 type Client struct {
 	logger *zap.Logger
 
-	client               *http.Client
+	client *http.Client
+
 	googleMutex          sync.RWMutex
 	googleCerts          []*rsa.PublicKey
 	googleCertsRefreshAt int64
-	gamecenterCaCert     *x509.Certificate
-	appleMutex           sync.RWMutex
-	appleCerts           map[string]*AppleCert
-	appleCertsRefreshAt  int64
+
+	facebookMutex          sync.RWMutex
+	facebookCerts          map[string]*JwksCert
+	facebookCertsRefreshAt int64
+
+	appleMutex          sync.RWMutex
+	appleCerts          map[string]*JwksCert
+	appleCertsRefreshAt int64
+
+	config *oauth2.Config
 }
 
-type AppleCerts struct {
-	Keys []*AppleCert `json:"keys"`
+type JwksCerts struct {
+	Keys []*JwksCert `json:"keys"`
 }
 
 // JWK certificate data for an Apple Sign In verification key.
-type AppleCert struct {
+type JwksCert struct {
+	key *rsa.PublicKey
+
 	Kty string `json:"kty"`
 	Kid string `json:"kid"`
 	Use string `json:"use"`
 	Alg string `json:"alg"`
 	N   string `json:"n"`
 	E   string `json:"e"`
-
-	key *rsa.PublicKey
 }
 
 // AppleProfile is an abbreviated version of a user authenticated through Apple Sign In.
@@ -78,9 +86,21 @@ type AppleProfile struct {
 
 // FacebookProfile is an abbreviated version of a Facebook profile.
 type FacebookProfile struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID      string              `json:"id"`
+	Name    string              `json:"name"`
+	Email   string              `json:"email"`
+	Picture FacebookPictureData `json:"picture"`
+}
+
+type FacebookPictureData struct {
+	Data FacebookPicture `json:"data"`
+}
+
+type FacebookPicture struct {
+	Height       int    `json:"height"`
+	Width        int    `json:"width"`
+	IsSilhouette bool   `json:"is_silhouette"`
+	Url          string `json:"url"`
 }
 
 type facebookPagingCursors struct {
@@ -95,12 +115,21 @@ type facebookPaging struct {
 }
 
 type facebookFriends struct {
-	Data   []FacebookProfile `json:"data"`
 	Paging facebookPaging    `json:"paging"`
+	Data   []FacebookProfile `json:"data"`
 }
 
-// GoogleProfile is an abbreviated version of a Google profile extracted from in a verified ID token.
-type GoogleProfile struct {
+// GoogleProfile is an abbreviated version of a Google profile extracted from a token.
+type GoogleProfile interface {
+	GetDisplayName() string
+	GetEmail() string
+	GetAvatarImageUrl() string
+	GetGoogleId() string
+	GetOriginalGoogleId() string
+}
+
+// JWTGoogleProfile is an abbreviated version of a Google profile extracted from a verified JWT token.
+type JWTGoogleProfile struct {
 	// Fields available in all tokens.
 	Iss string `json:"iss"`
 	Sub string `json:"sub"`
@@ -118,15 +147,67 @@ type GoogleProfile struct {
 	Locale        string `json:"locale"`
 }
 
+func (p *JWTGoogleProfile) GetDisplayName() string {
+	return p.Name
+}
+
+func (p *JWTGoogleProfile) GetEmail() string {
+	return p.Email
+}
+func (p *JWTGoogleProfile) GetAvatarImageUrl() string {
+	return p.Picture
+}
+func (p *JWTGoogleProfile) GetGoogleId() string {
+	return p.Sub
+}
+
+func (p *JWTGoogleProfile) GetOriginalGoogleId() string {
+	// Dummy implementation
+	return ""
+}
+
+// GooglePlayServiceProfile is an abbreviated version of a Google profile using an access token.
+type GooglePlayServiceProfile struct {
+	PlayerId         string `json:"playerId"`
+	DisplayName      string `json:"displayName"`
+	AvatarImageUrl   string `json:"avatarImageUrl"`
+	OriginalPlayerId string `json:"originalPlayerId"`
+}
+
+func (p *GooglePlayServiceProfile) GetDisplayName() string {
+	return p.DisplayName
+}
+
+func (p *GooglePlayServiceProfile) GetEmail() string {
+	return "" // The API doesn't expose the email.
+}
+func (p *GooglePlayServiceProfile) GetAvatarImageUrl() string {
+	return p.AvatarImageUrl
+}
+func (p *GooglePlayServiceProfile) GetGoogleId() string {
+	return p.PlayerId
+}
+func (p *GooglePlayServiceProfile) GetOriginalGoogleId() string {
+	return p.OriginalPlayerId
+}
+
 // SteamProfile is an abbreviated version of a Steam profile.
 type SteamProfile struct {
 	SteamID uint64 `json:"steamid,string"`
 }
 
+type steamFriends struct {
+	Friends []SteamProfile `json:"friends"`
+}
+
+type steamFriendsWrapper struct {
+	FriendsList steamFriends `json:"friendsList"`
+}
+
 // SteamError contains a possible error response from the Steam Web API.
 type SteamError struct {
-	ErrorCode int    `json:"errorcode"`
 	ErrorDesc string `json:"errordesc"`
+	ErrorCode int    `json:"errorcode"`
 }
 
 // Unwrapping the SteamProfile
@@ -138,52 +219,15 @@ type SteamProfileWrapper struct {
 }
 
 // NewClient creates a new Social Client
-func NewClient(logger *zap.Logger, timeout time.Duration) *Client {
-	// From https://knowledge.symantec.com/support/code-signing-support/index?page=content&actp=CROSSLINK&id=AR2170
-	// Issued to: Symantec Class 3 SHA256 Code Signing CA
-	// Issued by: VeriSign Class 3 Public Primary Certification Authority - G5
-	// Valid from: 12/9/2013 to 12/9/2023
-	// Serial Number: 3d 78 d7 f9 76 49 60 b2 61 7d f4 f0 1e ca 86 2a
-	caData := []byte(`-----BEGIN CERTIFICATE-----
-MIIFWTCCBEGgAwIBAgIQPXjX+XZJYLJhffTwHsqGKjANBgkqhkiG9w0BAQsFADCB
-yjELMAkGA1UEBhMCVVMxFzAVBgNVBAoTDlZlcmlTaWduLCBJbmMuMR8wHQYDVQQL
-ExZWZXJpU2lnbiBUcnVzdCBOZXR3b3JrMTowOAYDVQQLEzEoYykgMjAwNiBWZXJp
-U2lnbiwgSW5jLiAtIEZvciBhdXRob3JpemVkIHVzZSBvbmx5MUUwQwYDVQQDEzxW
-ZXJpU2lnbiBDbGFzcyAzIFB1YmxpYyBQcmltYXJ5IENlcnRpZmljYXRpb24gQXV0
-aG9yaXR5IC0gRzUwHhcNMTMxMjEwMDAwMDAwWhcNMjMxMjA5MjM1OTU5WjB/MQsw
-CQYDVQQGEwJVUzEdMBsGA1UEChMUU3ltYW50ZWMgQ29ycG9yYXRpb24xHzAdBgNV
-BAsTFlN5bWFudGVjIFRydXN0IE5ldHdvcmsxMDAuBgNVBAMTJ1N5bWFudGVjIENs
-YXNzIDMgU0hBMjU2IENvZGUgU2lnbmluZyBDQTCCASIwDQYJKoZIhvcNAQEBBQAD
-ggEPADCCAQoCggEBAJeDHgAWryyx0gjE12iTUWAecfbiR7TbWE0jYmq0v1obUfej
-DRh3aLvYNqsvIVDanvPnXydOC8KXyAlwk6naXA1OpA2RoLTsFM6RclQuzqPbROlS
-Gz9BPMpK5KrA6DmrU8wh0MzPf5vmwsxYaoIV7j02zxzFlwckjvF7vjEtPW7ctZlC
-n0thlV8ccO4XfduL5WGJeMdoG68ReBqYrsRVR1PZszLWoQ5GQMWXkorRU6eZW4U1
-V9Pqk2JhIArHMHckEU1ig7a6e2iCMe5lyt/51Y2yNdyMK29qclxghJzyDJRewFZS
-AEjM0/ilfd4v1xPkOKiE1Ua4E4bCG53qWjjdm9sCAwEAAaOCAYMwggF/MC8GCCsG
-AQUFBwEBBCMwITAfBggrBgEFBQcwAYYTaHR0cDovL3MyLnN5bWNiLmNvbTASBgNV
-HRMBAf8ECDAGAQH/AgEAMGwGA1UdIARlMGMwYQYLYIZIAYb4RQEHFwMwUjAmBggr
-BgEFBQcCARYaaHR0cDovL3d3dy5zeW1hdXRoLmNvbS9jcHMwKAYIKwYBBQUHAgIw
-HBoaaHR0cDovL3d3dy5zeW1hdXRoLmNvbS9ycGEwMAYDVR0fBCkwJzAloCOgIYYf
-aHR0cDovL3MxLnN5bWNiLmNvbS9wY2EzLWc1LmNybDAdBgNVHSUEFjAUBggrBgEF
-BQcDAgYIKwYBBQUHAwMwDgYDVR0PAQH/BAQDAgEGMCkGA1UdEQQiMCCkHjAcMRow
-GAYDVQQDExFTeW1hbnRlY1BLSS0xLTU2NzAdBgNVHQ4EFgQUljtT8Hkzl699g+8u
-K8zKt4YecmYwHwYDVR0jBBgwFoAUf9Nlp8Ld7LvwMAnzQzn6Aq8zMTMwDQYJKoZI
-hvcNAQELBQADggEBABOFGh5pqTf3oL2kr34dYVP+nYxeDKZ1HngXI9397BoDVTn7
-cZXHZVqnjjDSRFph23Bv2iEFwi5zuknx0ZP+XcnNXgPgiZ4/dB7X9ziLqdbPuzUv
-M1ioklbRyE07guZ5hBb8KLCxR/Mdoj7uh9mmf6RWpT+thC4p3ny8qKqjPQQB6rqT
-og5QIikXTIfkOhFf1qQliZsFay+0yQFMJ3sLrBkFIqBgFT/ayftNTI/7cmd3/SeU
-x7o1DohJ/o39KK9KEr0Ns5cF3kQMFfo2KwPcwVAB8aERXRTl4r0nS1S+K4ReD6bD
-dAUK75fDiSKxH3fzvc1D1PFMqT+1i4SvZPLQFCE=
------END CERTIFICATE-----`)
-	caBlock, _ := pem.Decode(caData)
-	caCert, _ := x509.ParseCertificate(caBlock.Bytes)
+func NewClient(logger *zap.Logger, timeout time.Duration, googleCnf *oauth2.Config) *Client {
 	return &Client{
 		logger: logger,
 
 		client: &http.Client{
 			Timeout: timeout,
 		},
-		gamecenterCaCert: caCert,
+
+		config: googleCnf,
 	}
 }
 
@@ -191,8 +235,8 @@ dAUK75fDiSKxH3fzvc1D1PFMqT+1i4SvZPLQFCE=
 func (c *Client) GetFacebookProfile(ctx context.Context, accessToken string) (*FacebookProfile, error) {
 	c.logger.Debug("Getting Facebook profile", zap.String("token", accessToken))
 
-	path := "https://graph.facebook.com/v9.0/me?access_token=" + url.QueryEscape(accessToken) +
-		"&fields=" + url.QueryEscape("name,email")
+	path := "https://graph.facebook.com/v18.0/me?access_token=" + url.QueryEscape(accessToken) +
+		"&fields=" + url.QueryEscape("id,name,email,picture")
 	var profile FacebookProfile
 	err := c.request(ctx, "facebook profile", path, nil, &profile)
 	if err != nil {
@@ -210,7 +254,7 @@ func (c *Client) GetFacebookFriends(ctx context.Context, accessToken string) ([]
 	after := ""
 	for {
 		// In FB Graph API 2.0+ this only returns friends that also use the same app.
-		path := "https://graph.facebook.com/v9.0/me/friends?access_token=" + url.QueryEscape(accessToken)
+		path := "https://graph.facebook.com/v18.0/me/friends?access_token=" + url.QueryEscape(accessToken)
 		if after != "" {
 			path += "&after=" + after
 		}
@@ -228,6 +272,20 @@ func (c *Client) GetFacebookFriends(ctx context.Context, accessToken string) ([]
 	}
 }
 
+// GetSteamFriends queries the Steam API for friends.
+func (c *Client) GetSteamFriends(ctx context.Context, publisherKey, steamId string) ([]SteamProfile, error) {
+	c.logger.Debug("Getting Steam friends", zap.String("steamId", steamId))
+
+	path := fmt.Sprintf("https://partner.steam-api.com/ISteamUser/GetFriendList/v0001/?key=%s&steamid=%s&relationship=friend", publisherKey, steamId)
+	var steamFriends steamFriendsWrapper
+	err := c.request(ctx, "steam friends", path, nil, &steamFriends)
+	if err != nil {
+		return nil, err
+	}
+
+	return steamFriends.FriendsList.Friends, nil
+}
+
 // Extract player ID and validate the Facebook Instant Game token.
 func (c *Client) ExtractFacebookInstantGameID(signedPlayerInfo string, appSecret string) (facebookInstantGameID string, err error) {
 	c.logger.Debug("Extracting Facebook Instant Game ID", zap.String("signedPlayerInfo", signedPlayerInfo))
@@ -239,16 +297,16 @@ func (c *Client) ExtractFacebookInstantGameID(signedPlayerInfo string, appSecret
 
 	signatureBase64 := parts[0]
 	payloadBase64 := parts[1]
-	payloadRaw, err := jwt.DecodeSegment(payloadBase64)
+	payloadRaw, err := jwt.DecodeSegment(payloadBase64) //nolint:staticcheck
 	if err != nil {
 		return "", err
 	}
 
 	var payload struct {
 		Algorithm      string `json:"algorithm"`
-		IssuedAt       int    `json:"issued_at"`
 		PlayerID       string `json:"player_id"`
 		RequestPayload string `json:"request_payload"` // discarded
+		IssuedAt       int    `json:"issued_at"`
 	}
 	err = json.Unmarshal(payloadRaw, &payload)
 	if err != nil {
@@ -272,8 +330,22 @@ func (c *Client) ExtractFacebookInstantGameID(signedPlayerInfo string, appSecret
 	return payload.PlayerID, nil
 }
 
+func (c *Client) exchangeGoogleAuthCode(ctx context.Context, authCode string) (*oauth2.Token, error) {
+	if c.config == nil {
+		return nil, fmt.Errorf("failed to exchange authorization code due to due misconfiguration")
+	}
+
+	token, err := c.config.Exchange(ctx, authCode)
+	if err != nil {
+		c.logger.Debug("Failed to exchange authorization code for a token.", zap.Error(err))
+		return nil, fmt.Errorf("failed to exchange authorization code for a token")
+	}
+
+	return token, nil
+}
+
 // CheckGoogleToken extracts the user's Google Profile from a given ID token.
-func (c *Client) CheckGoogleToken(ctx context.Context, idToken string) (*GoogleProfile, error) {
+func (c *Client) CheckGoogleToken(ctx context.Context, idToken string) (GoogleProfile, error) {
 	c.logger.Debug("Checking Google ID", zap.String("idToken", idToken))
 
 	c.googleMutex.RLock()
@@ -288,7 +360,7 @@ func (c *Client) CheckGoogleToken(ctx context.Context, idToken string) (*GoogleP
 				c.googleMutex.Unlock()
 				return nil, err
 			}
-			newCerts := make([]*rsa.PublicKey, 0, 3)
+			newCerts := make([]*rsa.PublicKey, 0, len(certs))
 			var newRefreshAt int64
 			for _, data := range certs {
 				currentBlock, _ := pem.Decode([]byte(data))
@@ -338,10 +410,12 @@ func (c *Client) CheckGoogleToken(ctx context.Context, idToken string) (*GoogleP
 			if s, ok := token.Method.(*jwt.SigningMethodRSA); !ok || s.Hash != crypto.SHA256 {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
+
 			claims := token.Claims.(jwt.MapClaims)
 			if !claims.VerifyIssuer("accounts.google.com", true) && !claims.VerifyIssuer("https://accounts.google.com", true) {
 				return nil, fmt.Errorf("unexpected issuer: %v", claims["iss"])
 			}
+
 			return cert, nil
 		})
 		if err == nil {
@@ -352,11 +426,32 @@ func (c *Client) CheckGoogleToken(ctx context.Context, idToken string) (*GoogleP
 
 	// All verification attempts failed.
 	if token == nil {
-		return nil, errors.New("google id token invalid")
+		// The id provided could be from the new auth flow. Let's exchange it for a token.
+		t, err := c.exchangeGoogleAuthCode(ctx, idToken)
+		if err != nil {
+			c.logger.Debug("Failed to exchange an authorization code for an access token.", zap.String("auth_token", idToken), zap.Error(err))
+			return nil, errors.New("google id token invalid")
+		}
+
+		c.logger.Debug("Exchanged an authorization code for an access token.", zap.Any("token", t), zap.Error(err))
+
+		profile := GooglePlayServiceProfile{}
+		if err := c.request(ctx, "google play services", "https://www.googleapis.com/games/v1/players/me?access_token="+url.QueryEscape(t.AccessToken), nil, &profile); err != nil {
+			c.logger.Debug("Failed to request player info.", zap.Any("token", t), zap.Error(err))
+			return nil, errors.New("failed to request player info.")
+		}
+
+		if profile.PlayerId == "" {
+			c.logger.Debug("Failed to parse playerId.", zap.Any("token", t), zap.Error(err))
+			return nil, errors.New("player_id cannot be an empty string.")
+		}
+
+		c.logger.Debug("Obtained the player profile using an access token.", zap.Any("token", t), zap.Error(err), zap.Any("player", profile))
+		return &profile, nil
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	profile := &GoogleProfile{}
+	profile := &JWTGoogleProfile{}
 	if v, ok := claims["iss"]; ok {
 		if profile.Iss, ok = v.(string); !ok {
 			return nil, errors.New("google id token iss field invalid")
@@ -386,33 +481,33 @@ func (c *Client) CheckGoogleToken(ctx context.Context, idToken string) (*GoogleP
 		return nil, errors.New("google id token aud field missing")
 	}
 	if v, ok := claims["iat"]; ok {
-		switch v.(type) {
+		switch val := v.(type) {
 		case string:
-			vi, err := strconv.Atoi(v.(string))
+			vi, err := strconv.Atoi(val)
 			if err != nil {
 				return nil, errors.New("google id token iat field invalid")
 			}
 			profile.Iat = int64(vi)
 		case float64:
-			profile.Iat = int64(v.(float64))
+			profile.Iat = int64(val)
 		case int64:
-			profile.Iat = v.(int64)
+			profile.Iat = val
 		default:
 			return nil, errors.New("google id token iat field unknown")
 		}
 	}
 	if v, ok := claims["exp"]; ok {
-		switch v.(type) {
+		switch val := v.(type) {
 		case string:
-			vi, err := strconv.Atoi(v.(string))
+			vi, err := strconv.Atoi(val)
 			if err != nil {
 				return nil, errors.New("google id token exp field invalid")
 			}
 			profile.Exp = int64(vi)
 		case float64:
-			profile.Exp = int64(v.(float64))
+			profile.Exp = int64(val)
 		case int64:
-			profile.Exp = v.(int64)
+			profile.Exp = val
 		default:
 			return nil, errors.New("google id token exp field unknown")
 		}
@@ -423,11 +518,11 @@ func (c *Client) CheckGoogleToken(ctx context.Context, idToken string) (*GoogleP
 		}
 	}
 	if v, ok := claims["email_verified"]; ok {
-		switch v.(type) {
+		switch val := v.(type) {
 		case bool:
-			profile.EmailVerified = v.(bool)
+			profile.EmailVerified = val
 		case string:
-			vb, err := strconv.ParseBool(v.(string))
+			vb, err := strconv.ParseBool(val)
 			if err != nil {
 				return nil, errors.New("google id token email_verified field invalid")
 			}
@@ -510,10 +605,6 @@ func (c *Client) CheckGameCenterID(ctx context.Context, playerID string, bundleI
 	if err != nil {
 		return false, fmt.Errorf("gamecenter check error: error parsing public block: %v", err.Error())
 	}
-	err = pubCert.CheckSignatureFrom(c.gamecenterCaCert)
-	if err != nil {
-		return false, fmt.Errorf("gamecenter check error: bad public key signature: %v", err.Error())
-	}
 	ts := make([]byte, 8)
 	binary.BigEndian.PutUint64(ts, uint64(timestamp))
 	payload := [][]byte{[]byte(playerID), []byte(bundleID), ts, slt}
@@ -530,7 +621,7 @@ func (c *Client) CheckGameCenterID(ctx context.Context, playerID string, bundleI
 func (c *Client) GetSteamProfile(ctx context.Context, publisherKey string, appID int, ticket string) (*SteamProfile, error) {
 	c.logger.Debug("Getting Steam profile", zap.String("publisherKey", publisherKey), zap.Int("appID", appID), zap.String("ticket", ticket))
 
-	path := "https://api.steampowered.com/ISteamUserAuth/AuthenticateUserTicket/v1/?format=json" +
+	path := "https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/?format=json" +
 		"&key=" + url.QueryEscape(publisherKey) + "&appid=" + strconv.Itoa(appID) + "&ticket=" + url.QueryEscape(ticket)
 	var profileWrapper SteamProfileWrapper
 	err := c.request(ctx, "steam profile", path, nil, &profileWrapper)
@@ -559,13 +650,13 @@ func (c *Client) CheckAppleToken(ctx context.Context, bundleId string, idToken s
 		c.appleMutex.RUnlock()
 		c.appleMutex.Lock()
 		if c.appleCertsRefreshAt < time.Now().UTC().Unix() {
-			var certs AppleCerts
+			var certs JwksCerts
 			err := c.request(ctx, "apple cert", "https://appleid.apple.com/auth/keys", nil, &certs)
 			if err != nil {
 				c.appleMutex.Unlock()
 				return nil, err
 			}
-			newCerts := make(map[string]*AppleCert, len(certs.Keys))
+			newCerts := make(map[string]*JwksCert, len(certs.Keys))
 			for _, cert := range certs.Keys {
 				// Check if certificate has all required fields.
 				if cert.Kty == "" || cert.Kid == "" || cert.Use == "" || cert.Alg == "" || cert.N == "" || cert.E == "" {
@@ -617,7 +708,7 @@ func (c *Client) CheckAppleToken(ctx context.Context, bundleId string, idToken s
 	c.appleMutex.RUnlock()
 
 	// Try to parse and validate the JWT token.
-	token, _ := jwt.Parse(idToken, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(idToken, func(token *jwt.Token) (interface{}, error) {
 		// Grab the token's "kid" (key id) claim and see if we have a JWK certificate that matches it.
 		kid, ok := token.Header["kid"]
 		if !ok {
@@ -645,16 +736,18 @@ func (c *Client) CheckAppleToken(ctx context.Context, bundleId string, idToken s
 		}
 
 		// Verify the audience matches the configured client ID.
-		if !claims.VerifyAudience(bundleId, true) {
+		/*if !claims.VerifyAudience(bundleId, true) {
 			return nil, fmt.Errorf("unexpected audience: %v", claims["aud"])
-		}
+		}*/
 
-		return cert, nil
+		return cert.key, nil
 	})
 
 	// Check if verification attempt has failed.
-	if token == nil {
-		return nil, errors.New("apple id token invalid")
+	if err != nil {
+		return nil, fmt.Errorf("apple id token invalid: %s", err.Error())
+	} else if token == nil {
+		return nil, fmt.Errorf("apple id token invalid")
 	}
 
 	// Extract the claims we need now that we know the token is valid.
@@ -673,17 +766,162 @@ func (c *Client) CheckAppleToken(ctx context.Context, bundleId string, idToken s
 		}
 	}
 	if v, ok := claims["email_verified"]; ok {
-		switch v.(type) {
+		switch val := v.(type) {
 		case bool:
-			profile.EmailVerified = v.(bool)
+			profile.EmailVerified = val
 		case string:
-			vb, err := strconv.ParseBool(v.(string))
+			vb, err := strconv.ParseBool(val)
 			if err != nil {
 				return nil, errors.New("apple id token email_verified field invalid")
 			}
 			profile.EmailVerified = vb
 		default:
 			return nil, errors.New("apple id token email_verified field unknown")
+		}
+	}
+
+	return profile, nil
+}
+
+func (c *Client) CheckFacebookLimitedLoginToken(ctx context.Context, appId string, idToken string) (*FacebookProfile, error) {
+	c.logger.Debug("Checking Facebook Limited Login", zap.String("idToken", idToken))
+
+	//if appId == "" {
+	//	return nil, errors.New("facebook limited login not enabled")
+	//}
+
+	c.facebookMutex.RLock()
+	if c.facebookCertsRefreshAt < time.Now().UTC().Unix() {
+		// Release the read lock and perform a certificate refresh.
+		c.facebookMutex.RUnlock()
+		c.facebookMutex.Lock()
+		if c.facebookCertsRefreshAt < time.Now().UTC().Unix() {
+			var certs JwksCerts
+			err := c.request(ctx, "facebook cert", "https://www.facebook.com/.well-known/oauth/openid/jwks/", nil, &certs)
+			if err != nil {
+				c.facebookMutex.Unlock()
+				return nil, err
+			}
+			newCerts := make(map[string]*JwksCert, len(certs.Keys))
+			for _, cert := range certs.Keys {
+				// Check if certificate has all required fields.
+				if cert.Kty == "" || cert.Kid == "" || cert.Use == "" || cert.Alg == "" || cert.N == "" || cert.E == "" {
+					// Invalid certificate, skip it.
+					continue
+				}
+
+				// Parse certificate's RSA Public Key encoded components.
+				nBytes, err := base64.RawURLEncoding.DecodeString(cert.N)
+				if err != nil {
+					// Invalid modulus, skip certificate.
+					continue
+				}
+				eBytes, err := base64.RawURLEncoding.DecodeString(cert.E)
+				if err != nil {
+					// Invalid exponent, skip certificate.
+					continue
+				}
+				if len(eBytes) < 8 {
+					// Pad the front of the exponent bytes with zeroes to ensure it's 8 bytes long.
+					eBytes = append(make([]byte, 8-len(eBytes), 8), eBytes...)
+				}
+				var e uint64
+				err = binary.Read(bytes.NewReader(eBytes), binary.BigEndian, &e)
+				if err != nil {
+					// Invalid exponent contents, skip certificate.
+					continue
+				}
+
+				cert.key = &rsa.PublicKey{
+					N: &big.Int{},
+					E: int(e),
+				}
+				cert.key.N.SetBytes(nBytes)
+
+				newCerts[cert.Kid] = cert
+			}
+			if len(newCerts) == 0 {
+				c.facebookMutex.Unlock()
+				return nil, errors.New("error finding valid facebook cert")
+			}
+			c.facebookCerts = newCerts
+			c.facebookCertsRefreshAt = time.Now().UTC().Add(60 * time.Minute).Unix()
+		}
+		c.facebookMutex.Unlock()
+		c.facebookMutex.RLock()
+	}
+	facebookCerts := c.facebookCerts
+	c.facebookMutex.RUnlock()
+
+	// Try to parse and validate the JWT token.
+	token, err := jwt.Parse(idToken, func(token *jwt.Token) (interface{}, error) {
+		// Grab the token's "kid" (key id) claim and see if we have a JWK certificate that matches it.
+		kid, ok := token.Header["kid"]
+		if !ok {
+			return nil, fmt.Errorf("missing kid claim: %v", kid)
+		}
+		kidString, ok := kid.(string)
+		if !ok {
+			return nil, fmt.Errorf("invalid kid claim: %v", kid)
+		}
+		cert, ok := facebookCerts[kidString]
+		if !ok {
+			return nil, fmt.Errorf("invalid kid claim: %v", kid)
+		}
+
+		// Check the token signing algorithm and the certificate signing algorithm match.
+		if token.Method.Alg() != cert.Alg {
+			return nil, fmt.Errorf("invalid alg: %v, expected %v", token.Method.Alg(), cert.Alg)
+		}
+
+		claims := token.Claims.(jwt.MapClaims)
+
+		// Verify the issuer.
+		switch iss, _ := claims["iss"].(string); iss {
+		case "https://www.facebook.com":
+			fallthrough
+		case "https://facebook.com":
+			break
+		default:
+			return nil, fmt.Errorf("unexpected issuer: %v", claims["iss"])
+		}
+
+		// Verify the audience matches the configured client ID.
+		//if !claims.VerifyAudience(appId, true) {
+		//	return nil, fmt.Errorf("unexpected audience: %v", claims["aud"])
+		//}
+
+		return cert.key, nil
+	})
+
+	// Check if verification attempt has failed.
+	if token == nil || err != nil {
+		return nil, errors.New("facebook limited login token invalid")
+	}
+
+	// Extract the claims we need now that we know the token is valid.
+	claims := token.Claims.(jwt.MapClaims)
+	profile := &FacebookProfile{}
+	if v, ok := claims["sub"]; ok {
+		if profile.ID, ok = v.(string); !ok {
+			return nil, errors.New("facebook limited login token sub field invalid")
+		}
+	} else {
+		return nil, errors.New("facebook limited login token sub field missing")
+	}
+	if v, ok := claims["name"]; ok {
+		if profile.Name, ok = v.(string); !ok {
+			return nil, errors.New("facebook limited login token name field invalid")
+		}
+	}
+	if v, ok := claims["email"]; ok {
+		if profile.Email, ok = v.(string); !ok {
+			return nil, errors.New("facebook limited login token email field invalid")
+		}
+	}
+	if v, ok := claims["picture"]; ok {
+		if profile.Picture.Data.Url, ok = v.(string); !ok {
+			return nil, errors.New("facebook limited login token picture field invalid")
 		}
 	}
 
@@ -718,7 +956,7 @@ func (c *Client) requestRaw(ctx context.Context, provider, path string, headers 
 		c.logger.Warn("error executing social request", zap.String("provider", provider), zap.Error(err))
 		return nil, err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
 	if err != nil {
 		c.logger.Warn("error reading social response", zap.String("provider", provider), zap.Error(err))
@@ -730,7 +968,7 @@ func (c *Client) requestRaw(ctx context.Context, provider, path string, headers 
 	case 401:
 		return nil, fmt.Errorf("%v error url %v, status code %v, body %s", provider, path, resp.StatusCode, body)
 	default:
-		c.logger.Warn("error response code from social request", zap.String("provider", provider), zap.Int("code", resp.StatusCode))
+		c.logger.Warn("error response code from social request", zap.String("provider", provider), zap.Int("code", resp.StatusCode), zap.String("body", string(body)))
 		return nil, fmt.Errorf("%v error url %v, status code %v, body %s", provider, path, resp.StatusCode, body)
 	}
 }

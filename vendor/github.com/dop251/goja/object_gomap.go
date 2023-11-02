@@ -97,24 +97,6 @@ func (o *objectGoMapSimple) defineOwnPropertyStr(name unistring.String, descr Pr
 	return false
 }
 
-/*
-func (o *objectGoMapSimple) toPrimitiveNumber() Value {
-	return o.toPrimitiveString()
-}
-
-func (o *objectGoMapSimple) toPrimitiveString() Value {
-	return stringObjectObject
-}
-
-func (o *objectGoMapSimple) toPrimitive() Value {
-	return o.toPrimitiveString()
-}
-
-func (o *objectGoMapSimple) assertCallable() (call func(FunctionCall) Value, ok bool) {
-	return nil, false
-}
-*/
-
 func (o *objectGoMapSimple) deleteStr(name unistring.String, _ bool) bool {
 	delete(o.data, name.String())
 	return true
@@ -131,14 +113,14 @@ func (i *gomapPropIter) next() (propIterItem, iterNextFunc) {
 		name := i.propNames[i.idx]
 		i.idx++
 		if _, exists := i.o.data[name]; exists {
-			return propIterItem{name: unistring.NewFromString(name), enumerable: _ENUM_TRUE}, i.next
+			return propIterItem{name: newStringValue(name), enumerable: _ENUM_TRUE}, i.next
 		}
 	}
 
 	return propIterItem{}, nil
 }
 
-func (o *objectGoMapSimple) enumerateUnfiltered() iterNextFunc {
+func (o *objectGoMapSimple) iterateStringKeys() iterNextFunc {
 	propNames := make([]string, len(o.data))
 	i := 0
 	for key := range o.data {
@@ -146,13 +128,13 @@ func (o *objectGoMapSimple) enumerateUnfiltered() iterNextFunc {
 		i++
 	}
 
-	return o.recursiveIter((&gomapPropIter{
+	return (&gomapPropIter{
 		o:         o,
 		propNames: propNames,
-	}).next)
+	}).next
 }
 
-func (o *objectGoMapSimple) ownKeys(_ bool, accum []Value) []Value {
+func (o *objectGoMapSimple) stringKeys(_ bool, accum []Value) []Value {
 	// all own keys are enumerable
 	for key := range o.data {
 		accum = append(accum, newStringValue(key))

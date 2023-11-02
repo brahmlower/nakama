@@ -6,17 +6,14 @@ const (
 	ILLEGAL
 	EOF
 	COMMENT
-	KEYWORD
 
 	STRING
-	BOOLEAN
-	NULL
 	NUMBER
-	IDENTIFIER
 
 	PLUS      // +
 	MINUS     // -
 	MULTIPLY  // *
+	EXPONENT  // **
 	SLASH     // /
 	REMAINDER // %
 
@@ -30,6 +27,7 @@ const (
 	ADD_ASSIGN       // +=
 	SUBTRACT_ASSIGN  // -=
 	MULTIPLY_ASSIGN  // *=
+	EXPONENT_ASSIGN  // **=
 	QUOTIENT_ASSIGN  // /=
 	REMAINDER_ASSIGN // %=
 
@@ -42,6 +40,7 @@ const (
 
 	LOGICAL_AND // &&
 	LOGICAL_OR  // ||
+	COALESCE    // ??
 	INCREMENT   // ++
 	DECREMENT   // --
 
@@ -71,8 +70,20 @@ const (
 	SEMICOLON         // ;
 	COLON             // :
 	QUESTION_MARK     // ?
+	QUESTION_DOT      // ?.
+	ARROW             // =>
+	ELLIPSIS          // ...
+	BACKTICK          // `
 
-	firstKeyword
+	PRIVATE_IDENTIFIER
+
+	// tokens below (and only them) are syntactically valid identifiers
+
+	IDENTIFIER
+	KEYWORD
+	BOOLEAN
+	NULL
+
 	IF
 	IN
 	OF
@@ -89,10 +100,13 @@ const (
 	VOID
 	WITH
 
+	CONST
 	WHILE
 	BREAK
 	CATCH
 	THROW
+	CLASS
+	SUPER
 
 	RETURN
 	TYPEOF
@@ -101,13 +115,22 @@ const (
 
 	DEFAULT
 	FINALLY
+	EXTENDS
 
 	FUNCTION
 	CONTINUE
 	DEBUGGER
 
 	INSTANCEOF
-	lastKeyword
+
+	ESCAPED_RESERVED_WORD
+	// Non-reserved keywords below
+
+	LET
+	STATIC
+	ASYNC
+	AWAIT
+	YIELD
 )
 
 var token2string = [...]string{
@@ -120,8 +143,10 @@ var token2string = [...]string{
 	NULL:                        "NULL",
 	NUMBER:                      "NUMBER",
 	IDENTIFIER:                  "IDENTIFIER",
+	PRIVATE_IDENTIFIER:          "PRIVATE_IDENTIFIER",
 	PLUS:                        "+",
 	MINUS:                       "-",
+	EXPONENT:                    "**",
 	MULTIPLY:                    "*",
 	SLASH:                       "/",
 	REMAINDER:                   "%",
@@ -134,6 +159,7 @@ var token2string = [...]string{
 	ADD_ASSIGN:                  "+=",
 	SUBTRACT_ASSIGN:             "-=",
 	MULTIPLY_ASSIGN:             "*=",
+	EXPONENT_ASSIGN:             "**=",
 	QUOTIENT_ASSIGN:             "/=",
 	REMAINDER_ASSIGN:            "%=",
 	AND_ASSIGN:                  "&=",
@@ -144,6 +170,7 @@ var token2string = [...]string{
 	UNSIGNED_SHIFT_RIGHT_ASSIGN: ">>>=",
 	LOGICAL_AND:                 "&&",
 	LOGICAL_OR:                  "||",
+	COALESCE:                    "??",
 	INCREMENT:                   "++",
 	DECREMENT:                   "--",
 	EQUAL:                       "==",
@@ -168,11 +195,16 @@ var token2string = [...]string{
 	SEMICOLON:                   ";",
 	COLON:                       ":",
 	QUESTION_MARK:               "?",
+	QUESTION_DOT:                "?.",
+	ARROW:                       "=>",
+	ELLIPSIS:                    "...",
+	BACKTICK:                    "`",
 	IF:                          "if",
 	IN:                          "in",
 	OF:                          "of",
 	DO:                          "do",
 	VAR:                         "var",
+	LET:                         "let",
 	FOR:                         "for",
 	NEW:                         "new",
 	TRY:                         "try",
@@ -181,16 +213,24 @@ var token2string = [...]string{
 	CASE:                        "case",
 	VOID:                        "void",
 	WITH:                        "with",
+	ASYNC:                       "async",
+	AWAIT:                       "await",
+	YIELD:                       "yield",
+	CONST:                       "const",
 	WHILE:                       "while",
 	BREAK:                       "break",
 	CATCH:                       "catch",
 	THROW:                       "throw",
+	CLASS:                       "class",
+	SUPER:                       "super",
 	RETURN:                      "return",
 	TYPEOF:                      "typeof",
 	DELETE:                      "delete",
 	SWITCH:                      "switch",
+	STATIC:                      "static",
 	DEFAULT:                     "default",
 	FINALLY:                     "finally",
+	EXTENDS:                     "extends",
 	FUNCTION:                    "function",
 	CONTINUE:                    "continue",
 	DEBUGGER:                    "debugger",
@@ -233,6 +273,9 @@ var keywordTable = map[string]_keyword{
 	},
 	"with": {
 		token: WITH,
+	},
+	"async": {
+		token: ASYNC,
 	},
 	"while": {
 		token: WHILE,
@@ -277,12 +320,10 @@ var keywordTable = map[string]_keyword{
 		token: INSTANCEOF,
 	},
 	"const": {
-		token:         KEYWORD,
-		futureKeyword: true,
+		token: CONST,
 	},
 	"class": {
-		token:         KEYWORD,
-		futureKeyword: true,
+		token: CLASS,
 	},
 	"enum": {
 		token:         KEYWORD,
@@ -293,33 +334,31 @@ var keywordTable = map[string]_keyword{
 		futureKeyword: true,
 	},
 	"extends": {
-		token:         KEYWORD,
-		futureKeyword: true,
+		token: EXTENDS,
 	},
 	"import": {
 		token:         KEYWORD,
 		futureKeyword: true,
 	},
 	"super": {
-		token:         KEYWORD,
-		futureKeyword: true,
+		token: SUPER,
 	},
-	"implements": {
-		token:         KEYWORD,
-		futureKeyword: true,
-		strict:        true,
-	},
-	"interface": {
-		token:         KEYWORD,
-		futureKeyword: true,
-		strict:        true,
-	},
+	/*
+		"implements": {
+			token:         KEYWORD,
+			futureKeyword: true,
+			strict:        true,
+		},
+		"interface": {
+			token:         KEYWORD,
+			futureKeyword: true,
+			strict:        true,
+		},*/
 	"let": {
-		token:         KEYWORD,
-		futureKeyword: true,
-		strict:        true,
+		token:  LET,
+		strict: true,
 	},
-	"package": {
+	/*"package": {
 		token:         KEYWORD,
 		futureKeyword: true,
 		strict:        true,
@@ -338,10 +377,24 @@ var keywordTable = map[string]_keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 		strict:        true,
-	},
+	},*/
 	"static": {
-		token:         KEYWORD,
-		futureKeyword: true,
-		strict:        true,
+		token:  STATIC,
+		strict: true,
+	},
+	"await": {
+		token: AWAIT,
+	},
+	"yield": {
+		token: YIELD,
+	},
+	"false": {
+		token: BOOLEAN,
+	},
+	"true": {
+		token: BOOLEAN,
+	},
+	"null": {
+		token: NULL,
 	},
 }

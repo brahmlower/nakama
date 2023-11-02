@@ -19,11 +19,11 @@ import {
   UpdateAccountRequest,
   UserRole,
   WalletLedger,
-  WalletLedgerList
+  WalletLedgerList,
 } from '../../console.service';
 import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot} from '@angular/router';
 import {AuthenticationService} from '../../authentication.service';
-import * as ace from 'ace-builds';
+import {JSONEditor, Mode, toTextContent} from 'vanilla-jsoneditor';
 import {Observable} from 'rxjs';
 
 @Component({
@@ -31,15 +31,19 @@ import {Observable} from 'rxjs';
   styleUrls: ['./wallet.component.scss']
 })
 export class WalletComponent implements OnInit, AfterViewInit {
-  @ViewChild("editor") private editor: ElementRef<HTMLElement>;
+  @ViewChild('editor') private editor: ElementRef<HTMLElement>;
 
-  private aceEditor: ace.Ace.Editor;
+  private jsonEditor: JSONEditor;
   public error = '';
   public account: ApiAccount;
   public walletLedger: Array<WalletLedger> = [];
   public walletLedgerMetadataOpen: Array<boolean> = [];
   public updating = false;
   public updated = false;
+  public nextCursor = '';
+  public prevCursor = '';
+  public readonly limit = 100;
+  public userID: string;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -49,11 +53,14 @@ export class WalletComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    this.userID = this.route.parent.snapshot.paramMap.get('id');
     this.route.data.subscribe(
       d => {
         this.walletLedger.length = 0;
         this.walletLedger.push(...d[0].items);
         this.walletLedgerMetadataOpen.length = this.walletLedger.length;
+        this.nextCursor = d[0].next_cursor;
+        this.prevCursor = d[0].prev_cursor;
       },
       err => {
         this.error = err;
@@ -68,62 +75,76 @@ export class WalletComponent implements OnInit, AfterViewInit {
       });
   }
 
-  ngAfterViewInit(): void {
-    ace.config.set('fontSize', '14px');
-    ace.config.set('printMarginColumn', 0);
-    ace.config.set('useWorker', true);
-    ace.config.set('highlightSelectedWord', true);
-    ace.config.set('fontFamily', '"Courier New", Courier, monospace');
-    this.aceEditor = ace.edit(this.editor.nativeElement);
-    this.aceEditor.setReadOnly(!this.updateAllowed());
-
-    const value = JSON.stringify(JSON.parse(this.account.wallet), null, 2)
-    this.aceEditor.session.setValue(value);
+  loadData(cursor: string): void {
+    this.consoleService.getWalletLedger(
+      '',
+      this.userID,
+      this.limit,
+      cursor,
+    ).subscribe(res => {
+      this.walletLedger = res.items;
+      this.walletLedgerMetadataOpen = [];
+      this.nextCursor = res.next_cursor;
+      this.prevCursor = res.prev_cursor;
+    }, error => {
+      this.error = error;
+    });
   }
 
-  updateWallet() {
+  ngAfterViewInit(): void {
+    this.jsonEditor = new JSONEditor({
+      target: this.editor.nativeElement,
+      props: {
+        mode: Mode.text,
+        readOnly: !this.updateAllowed(),
+        content:{text:this.account.wallet},
+      },
+    });
+  }
+
+  updateWallet(): void {
     this.error = '';
     this.updated = false;
     this.updating = true;
 
     let wallet = '';
     try {
-      wallet = JSON.stringify(JSON.parse(this.aceEditor.session.getValue()));
+      wallet = toTextContent(this.jsonEditor.get()).text;
     } catch (e) {
       this.error = e;
       this.updating = false;
-      return
+      return;
     }
 
-    const body: UpdateAccountRequest = {wallet: wallet};
+    const body: UpdateAccountRequest = {wallet};
     this.consoleService.updateAccount('', this.account.user.id, body).subscribe(d => {
       this.updated = true;
       this.updating = false;
     }, err => {
       this.error = err;
       this.updating = false;
-    })
+    });
   }
 
-  updateAllowed() {
+  updateAllowed(): boolean {
     return this.authService.sessionRole <= UserRole.USER_ROLE_MAINTAINER;
   }
 
-  deleteAllowed() {
+  deleteAllowed(): boolean {
     return this.authService.sessionRole <= UserRole.USER_ROLE_MAINTAINER;
   }
 
-  deleteLedgerItem(event, i: number, w: WalletLedger) {
+  deleteLedgerItem(event, i: number, w: WalletLedger): void {
     event.target.disabled = true;
     event.preventDefault();
     this.error = '';
     this.consoleService.deleteWalletLedger('', this.account.user.id, w.id).subscribe(() => {
       this.error = '';
-      this.walletLedger.splice(i, 1)
+      this.walletLedger.splice(i, 1);
       this.walletLedgerMetadataOpen.splice(i, 1);
     }, err => {
       this.error = err;
-    })
+    });
   }
 }
 
@@ -133,6 +154,6 @@ export class WalletLedgerResolver implements Resolve<WalletLedgerList> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<WalletLedgerList> {
     const userId = route.parent.paramMap.get('id');
-    return this.consoleService.getWalletLedger('', userId);
+    return this.consoleService.getWalletLedger('', userId, 100, '');
   }
 }

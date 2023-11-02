@@ -20,12 +20,12 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/gofrs/uuid/v5"
 	"github.com/heroiclabs/nakama-common/api"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func (s *ApiServer) ListNotifications(ctx context.Context, in *api.ListNotificationsRequest) (*api.NotificationList, error) {
@@ -95,11 +95,11 @@ func (s *ApiServer) ListNotifications(ctx context.Context, in *api.ListNotificat
 	return notificationList, nil
 }
 
-func (s *ApiServer) DeleteNotifications(ctx context.Context, in *api.DeleteNotificationsRequest) (*empty.Empty, error) {
+func (s *ApiServer) DeleteNotifications(ctx context.Context, in *api.DeleteNotificationsRequest) (*emptypb.Empty, error) {
 	userID := ctx.Value(ctxUserIDKey{}).(uuid.UUID)
 
 	// Before hook.
-	if fn := s.runtime.BeforeDeleteNotification(); fn != nil {
+	if fn := s.runtime.BeforeDeleteNotifications(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
 			result, err, code := fn(ctx, s.logger, ctx.Value(ctxUserIDKey{}).(uuid.UUID).String(), ctx.Value(ctxUsernameKey{}).(string), ctx.Value(ctxVarsKey{}).(map[string]string), ctx.Value(ctxExpiryKey{}).(int64), clientIP, clientPort, in)
 			if err != nil {
@@ -122,7 +122,7 @@ func (s *ApiServer) DeleteNotifications(ctx context.Context, in *api.DeleteNotif
 	}
 
 	if len(in.GetIds()) == 0 {
-		return &empty.Empty{}, nil
+		return &emptypb.Empty{}, nil
 	}
 
 	if err := NotificationDelete(ctx, s.logger, s.db, userID, in.GetIds()); err != nil {
@@ -130,7 +130,7 @@ func (s *ApiServer) DeleteNotifications(ctx context.Context, in *api.DeleteNotif
 	}
 
 	// After hook.
-	if fn := s.runtime.AfterDeleteNotification(); fn != nil {
+	if fn := s.runtime.AfterDeleteNotifications(); fn != nil {
 		afterFn := func(clientIP, clientPort string) error {
 			return fn(ctx, s.logger, ctx.Value(ctxUserIDKey{}).(uuid.UUID).String(), ctx.Value(ctxUsernameKey{}).(string), ctx.Value(ctxVarsKey{}).(map[string]string), ctx.Value(ctxExpiryKey{}).(int64), clientIP, clientPort, in)
 		}
@@ -139,5 +139,5 @@ func (s *ApiServer) DeleteNotifications(ctx context.Context, in *api.DeleteNotif
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }

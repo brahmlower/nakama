@@ -15,23 +15,21 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-
-	"net"
-
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/jsonpb"
+	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
 	"github.com/heroiclabs/nakama-common/rtapi"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 var ErrSessionQueueFull = errors.New("session outgoing queue full")
@@ -48,21 +46,23 @@ type sessionWS struct {
 	expiry     int64
 	clientIP   string
 	clientPort string
+	lang       string
 
 	ctx         context.Context
 	ctxCancelFn context.CancelFunc
 
-	jsonpbMarshaler    *jsonpb.Marshaler
-	jsonpbUnmarshaler  *jsonpb.Unmarshaler
-	wsMessageType      int
-	pingPeriodDuration time.Duration
-	pongWaitDuration   time.Duration
-	writeWaitDuration  time.Duration
+	protojsonMarshaler   *protojson.MarshalOptions
+	protojsonUnmarshaler *protojson.UnmarshalOptions
+	wsMessageType        int
+	pingPeriodDuration   time.Duration
+	pongWaitDuration     time.Duration
+	writeWaitDuration    time.Duration
 
 	sessionRegistry SessionRegistry
+	statusRegistry  *StatusRegistry
 	matchmaker      Matchmaker
 	tracker         Tracker
-	metrics         *Metrics
+	metrics         Metrics
 	pipeline        *Pipeline
 	runtime         *Runtime
 
@@ -74,7 +74,7 @@ type sessionWS struct {
 	outgoingCh             chan []byte
 }
 
-func NewSessionWS(logger *zap.Logger, config Config, format SessionFormat, sessionID, userID uuid.UUID, username string, vars map[string]string, expiry int64, clientIP string, clientPort string, jsonpbMarshaler *jsonpb.Marshaler, jsonpbUnmarshaler *jsonpb.Unmarshaler, conn *websocket.Conn, sessionRegistry SessionRegistry, matchmaker Matchmaker, tracker Tracker, metrics *Metrics, pipeline *Pipeline, runtime *Runtime) Session {
+func NewSessionWS(logger *zap.Logger, config Config, format SessionFormat, sessionID, userID uuid.UUID, username string, vars map[string]string, expiry int64, clientIP, clientPort, lang string, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, conn *websocket.Conn, sessionRegistry SessionRegistry, statusRegistry *StatusRegistry, matchmaker Matchmaker, tracker Tracker, metrics Metrics, pipeline *Pipeline, runtime *Runtime) Session {
 	sessionLogger := logger.With(zap.String("uid", userID.String()), zap.String("sid", sessionID.String()))
 
 	sessionLogger.Info("New WebSocket session connected", zap.Uint8("format", uint8(format)))
@@ -97,18 +97,20 @@ func NewSessionWS(logger *zap.Logger, config Config, format SessionFormat, sessi
 		expiry:     expiry,
 		clientIP:   clientIP,
 		clientPort: clientPort,
+		lang:       lang,
 
 		ctx:         ctx,
 		ctxCancelFn: ctxCancelFn,
 
-		jsonpbMarshaler:    jsonpbMarshaler,
-		jsonpbUnmarshaler:  jsonpbUnmarshaler,
-		wsMessageType:      wsMessageType,
-		pingPeriodDuration: time.Duration(config.GetSocket().PingPeriodMs) * time.Millisecond,
-		pongWaitDuration:   time.Duration(config.GetSocket().PongWaitMs) * time.Millisecond,
-		writeWaitDuration:  time.Duration(config.GetSocket().WriteWaitMs) * time.Millisecond,
+		protojsonMarshaler:   protojsonMarshaler,
+		protojsonUnmarshaler: protojsonUnmarshaler,
+		wsMessageType:        wsMessageType,
+		pingPeriodDuration:   time.Duration(config.GetSocket().PingPeriodMs) * time.Millisecond,
+		pongWaitDuration:     time.Duration(config.GetSocket().PongWaitMs) * time.Millisecond,
+		writeWaitDuration:    time.Duration(config.GetSocket().WriteWaitMs) * time.Millisecond,
 
 		sessionRegistry: sessionRegistry,
+		statusRegistry:  statusRegistry,
 		matchmaker:      matchmaker,
 		tracker:         tracker,
 		metrics:         metrics,
@@ -144,6 +146,10 @@ func (s *sessionWS) ClientPort() string {
 	return s.clientPort
 }
 
+func (s *sessionWS) Lang() string {
+	return s.lang
+}
+
 func (s *sessionWS) Context() context.Context {
 	return s.ctx
 }
@@ -167,13 +173,13 @@ func (s *sessionWS) Expiry() int64 {
 func (s *sessionWS) Consume() {
 	// Fire an event for session start.
 	if fn := s.runtime.EventSessionStart(); fn != nil {
-		fn(s.userID.String(), s.username.Load(), s.vars, s.expiry, s.id.String(), s.clientIP, s.clientPort, time.Now().UTC().Unix())
+		fn(s.userID.String(), s.username.Load(), s.vars, s.expiry, s.id.String(), s.clientIP, s.clientPort, s.lang, time.Now().UTC().Unix())
 	}
 
 	s.conn.SetReadLimit(s.config.GetSocket().MaxMessageSizeBytes)
 	if err := s.conn.SetReadDeadline(time.Now().Add(s.pongWaitDuration)); err != nil {
 		s.logger.Warn("Failed to set initial read deadline", zap.Error(err))
-		s.Close("failed to set initial read deadline")
+		s.Close("failed to set initial read deadline", runtime.PresenceReasonDisconnect)
 		return
 	}
 	s.conn.SetPongHandler(func(string) error {
@@ -226,7 +232,7 @@ IncomingLoop:
 		case SessionFormatJson:
 			fallthrough
 		default:
-			err = s.jsonpbUnmarshaler.Unmarshal(bytes.NewReader(data), request)
+			err = s.protojsonUnmarshaler.Unmarshal(data, request)
 		}
 		if err != nil {
 			// If the payload is malformed the client is incompatible or misbehaving, either way disconnect it now.
@@ -258,15 +264,15 @@ IncomingLoop:
 		s.metrics.Message(int64(len(data)), true)
 	}
 
-	s.Close(reason)
+	s.Close(reason, runtime.PresenceReasonDisconnect)
 }
 
 func (s *sessionWS) maybeResetPingTimer() bool {
 	// If there's already a reset in progress there's no need to wait.
-	if !s.pingTimerCAS.CAS(1, 0) {
+	if !s.pingTimerCAS.CompareAndSwap(1, 0) {
 		return true
 	}
-	defer s.pingTimerCAS.CAS(0, 1)
+	defer s.pingTimerCAS.CompareAndSwap(0, 1)
 
 	s.Lock()
 	if s.stopped {
@@ -285,7 +291,7 @@ func (s *sessionWS) maybeResetPingTimer() bool {
 	s.Unlock()
 	if err != nil {
 		s.logger.Warn("Failed to set read deadline", zap.Error(err))
-		s.Close("failed to set read deadline")
+		s.Close("failed to set read deadline", runtime.PresenceReasonDisconnect)
 		return false
 	}
 	return true
@@ -335,7 +341,7 @@ OutgoingLoop:
 		}
 	}
 
-	s.Close(reason)
+	s.Close(reason, runtime.PresenceReasonDisconnect)
 }
 
 func (s *sessionWS) pingNow() (string, bool) {
@@ -372,9 +378,8 @@ func (s *sessionWS) Send(envelope *rtapi.Envelope, reliable bool) error {
 	case SessionFormatJson:
 		fallthrough
 	default:
-		var buf bytes.Buffer
-		if err = s.jsonpbMarshaler.Marshal(&buf, envelope); err == nil {
-			payload = buf.Bytes()
+		if buf, err := s.protojsonMarshaler.Marshal(envelope); err == nil {
+			payload = buf
 		}
 	}
 	if err != nil {
@@ -412,12 +417,12 @@ func (s *sessionWS) SendBytes(payload []byte, reliable bool) error {
 		// to start dropping messages, which might cause unexpected behaviour.
 		s.Unlock()
 		s.logger.Warn("Could not write message, session outgoing queue full")
-		s.Close(ErrSessionQueueFull.Error())
+		s.Close(ErrSessionQueueFull.Error(), runtime.PresenceReasonDisconnect)
 		return ErrSessionQueueFull
 	}
 }
 
-func (s *sessionWS) Close(reason string) {
+func (s *sessionWS) Close(msg string, reason runtime.PresenceReason, envelopes ...*rtapi.Envelope) {
 	s.Lock()
 	if s.stopped {
 		s.Unlock()
@@ -440,9 +445,13 @@ func (s *sessionWS) Close(reason string) {
 	if s.logger.Core().Enabled(zap.DebugLevel) {
 		s.logger.Info("Cleaned up closed connection matchmaker")
 	}
-	s.tracker.UntrackAll(s.id)
+	s.tracker.UntrackAll(s.id, reason)
 	if s.logger.Core().Enabled(zap.DebugLevel) {
 		s.logger.Info("Cleaned up closed connection tracker")
+	}
+	s.statusRegistry.UnfollowAll(s.id)
+	if s.logger.Core().Enabled(zap.DebugLevel) {
+		s.logger.Info("Cleaned up closed connection status registry")
 	}
 	s.sessionRegistry.Remove(s.id)
 	if s.logger.Core().Enabled(zap.DebugLevel) {
@@ -452,6 +461,48 @@ func (s *sessionWS) Close(reason string) {
 	// Clean up internals.
 	s.pingTimer.Stop()
 	close(s.outgoingCh)
+
+	// Send final messages, if any are specified.
+	for _, envelope := range envelopes {
+		var payload []byte
+		var err error
+		switch s.format {
+		case SessionFormatProtobuf:
+			payload, err = proto.Marshal(envelope)
+		case SessionFormatJson:
+			fallthrough
+		default:
+			if buf, err := s.protojsonMarshaler.Marshal(envelope); err == nil {
+				payload = buf
+			}
+		}
+		if err != nil {
+			s.logger.Warn("Could not marshal envelope", zap.Error(err))
+			continue
+		}
+
+		if s.logger.Core().Enabled(zap.DebugLevel) {
+			switch envelope.Message.(type) {
+			case *rtapi.Envelope_Error:
+				s.logger.Debug("Sending error message", zap.Binary("payload", payload))
+			default:
+				s.logger.Debug(fmt.Sprintf("Sending %T message", envelope.Message), zap.Any("envelope", envelope))
+			}
+		}
+
+		s.Lock()
+		if err := s.conn.SetWriteDeadline(time.Now().Add(s.writeWaitDuration)); err != nil {
+			s.Unlock()
+			s.logger.Warn("Failed to set write deadline", zap.Error(err))
+			continue
+		}
+		if err := s.conn.WriteMessage(s.wsMessageType, payload); err != nil {
+			s.Unlock()
+			s.logger.Warn("Could not write message", zap.Error(err))
+			continue
+		}
+		s.Unlock()
+	}
 
 	// Send close message.
 	if err := s.conn.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(s.writeWaitDuration)); err != nil {
@@ -467,6 +518,6 @@ func (s *sessionWS) Close(reason string) {
 
 	// Fire an event for session end.
 	if fn := s.runtime.EventSessionEnd(); fn != nil {
-		fn(s.userID.String(), s.username.Load(), s.vars, s.expiry, s.id.String(), s.clientIP, s.clientPort, time.Now().UTC().Unix(), reason)
+		fn(s.userID.String(), s.username.Load(), s.vars, s.expiry, s.id.String(), s.clientIP, s.clientPort, s.lang, time.Now().UTC().Unix(), msg)
 	}
 }

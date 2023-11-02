@@ -2,16 +2,21 @@ package goja
 
 import (
 	"fmt"
+	"sync"
 )
 
-func (r *Runtime) builtin_Object(args []Value, proto *Object) *Object {
+func (r *Runtime) builtin_Object(args []Value, newTarget *Object) *Object {
+	if newTarget != nil && newTarget != r.getObject() {
+		proto := r.getPrototypeFromCtor(newTarget, nil, r.global.ObjectPrototype)
+		return r.newBaseObject(proto, classObject).val
+	}
 	if len(args) > 0 {
 		arg := args[0]
 		if arg != _undefined && arg != _null {
 			return arg.ToObject(r)
 		}
 	}
-	return r.newBaseObject(proto, classObject).val
+	return r.NewObject()
 }
 
 func (r *Runtime) object_getPrototypeOf(call FunctionCall) Value {
@@ -74,15 +79,36 @@ func (r *Runtime) object_getOwnPropertyDescriptor(call FunctionCall) Value {
 	return r.valuePropToDescriptorObject(o.getOwnProp(propName))
 }
 
+func (r *Runtime) object_getOwnPropertyDescriptors(call FunctionCall) Value {
+	o := call.Argument(0).ToObject(r)
+	result := r.newBaseObject(r.global.ObjectPrototype, classObject).val
+	for item, next := o.self.iterateKeys()(); next != nil; item, next = next() {
+		var prop Value
+		if item.value == nil {
+			prop = o.getOwnProp(item.name)
+			if prop == nil {
+				continue
+			}
+		} else {
+			prop = item.value
+		}
+		descriptor := r.valuePropToDescriptorObject(prop)
+		if descriptor != _undefined {
+			createDataPropertyOrThrow(result, item.name, descriptor)
+		}
+	}
+	return result
+}
+
 func (r *Runtime) object_getOwnPropertyNames(call FunctionCall) Value {
 	obj := call.Argument(0).ToObject(r)
 
-	return r.newArrayValues(obj.self.ownKeys(true, nil))
+	return r.newArrayValues(obj.self.stringKeys(true, nil))
 }
 
 func (r *Runtime) object_getOwnPropertySymbols(call FunctionCall) Value {
 	obj := call.Argument(0).ToObject(r)
-	return r.newArrayValues(obj.self.ownSymbols(true, nil))
+	return r.newArrayValues(obj.self.symbols(true, nil))
 }
 
 func (r *Runtime) toValueProp(v Value) *valueProperty {
@@ -119,7 +145,7 @@ func (r *Runtime) toValueProp(v Value) *valueProperty {
 	}
 
 	if setter != nil && setter != _undefined {
-		o := r.toObject(v)
+		o := r.toObject(setter)
 		if _, ok := o.self.assertCallable(); !ok {
 			r.typeErrorResult(true, "setter must be a function")
 		}
@@ -183,12 +209,11 @@ func (r *Runtime) _defineProperties(o *Object, p Value) {
 		prop PropertyDescriptor
 	}
 	props := p.ToObject(r)
-	names := props.self.ownPropertyKeys(false, nil)
-	list := make([]propItem, 0, len(names))
-	for _, itemName := range names {
+	var list []propItem
+	for item, next := iterateEnumerableProperties(props)(); next != nil; item, next = next() {
 		list = append(list, propItem{
-			name: itemName,
-			prop: r.toPropertyDescriptor(props.get(itemName, nil)),
+			name: item.name,
+			prop: r.toPropertyDescriptor(item.value),
 		})
 	}
 	for _, prop := range list {
@@ -235,24 +260,19 @@ func (r *Runtime) object_seal(call FunctionCall) Value {
 	// ES6
 	arg := call.Argument(0)
 	if obj, ok := arg.(*Object); ok {
+		obj.self.preventExtensions(true)
 		descr := PropertyDescriptor{
-			Writable:     FLAG_TRUE,
-			Enumerable:   FLAG_TRUE,
 			Configurable: FLAG_FALSE,
 		}
-		for _, key := range obj.self.ownPropertyKeys(true, nil) {
-			v := obj.getOwnProp(key)
-			if prop, ok := v.(*valueProperty); ok {
-				if !prop.configurable {
-					continue
-				}
+
+		for item, next := obj.self.iterateKeys()(); next != nil; item, next = next() {
+			if prop, ok := item.value.(*valueProperty); ok {
 				prop.configurable = false
 			} else {
-				descr.Value = v
-				obj.defineOwnProperty(key, descr, true)
+				obj.defineOwnProperty(item.name, descr, true)
 			}
 		}
-		obj.self.preventExtensions(false)
+
 		return obj
 	}
 	return arg
@@ -261,24 +281,27 @@ func (r *Runtime) object_seal(call FunctionCall) Value {
 func (r *Runtime) object_freeze(call FunctionCall) Value {
 	arg := call.Argument(0)
 	if obj, ok := arg.(*Object); ok {
-		descr := PropertyDescriptor{
-			Writable:     FLAG_FALSE,
-			Enumerable:   FLAG_TRUE,
-			Configurable: FLAG_FALSE,
-		}
-		for _, key := range obj.self.ownPropertyKeys(true, nil) {
-			v := obj.getOwnProp(key)
-			if prop, ok := v.(*valueProperty); ok {
+		obj.self.preventExtensions(true)
+
+		for item, next := obj.self.iterateKeys()(); next != nil; item, next = next() {
+			if prop, ok := item.value.(*valueProperty); ok {
 				prop.configurable = false
-				if prop.value != nil {
+				if !prop.accessor {
 					prop.writable = false
 				}
 			} else {
-				descr.Value = v
-				obj.defineOwnProperty(key, descr, true)
+				prop := obj.getOwnProp(item.name)
+				descr := PropertyDescriptor{
+					Configurable: FLAG_FALSE,
+				}
+				if prop, ok := prop.(*valueProperty); ok && prop.accessor {
+					// no-op
+				} else {
+					descr.Writable = FLAG_FALSE
+				}
+				obj.defineOwnProperty(item.name, descr, true)
 			}
 		}
-		obj.self.preventExtensions(false)
 		return obj
 	} else {
 		// ES6 behavior
@@ -289,12 +312,8 @@ func (r *Runtime) object_freeze(call FunctionCall) Value {
 func (r *Runtime) object_preventExtensions(call FunctionCall) (ret Value) {
 	arg := call.Argument(0)
 	if obj, ok := arg.(*Object); ok {
-		obj.self.preventExtensions(false)
-		return obj
+		obj.self.preventExtensions(true)
 	}
-	// ES6
-	//r.typeErrorResult(true, "Object.preventExtensions called on non-object")
-	//panic("Unreachable")
 	return arg
 }
 
@@ -303,8 +322,16 @@ func (r *Runtime) object_isSealed(call FunctionCall) Value {
 		if obj.self.isExtensible() {
 			return valueFalse
 		}
-		for _, key := range obj.self.ownPropertyKeys(true, nil) {
-			prop := obj.getOwnProp(key)
+		for item, next := obj.self.iterateKeys()(); next != nil; item, next = next() {
+			var prop Value
+			if item.value == nil {
+				prop = obj.getOwnProp(item.name)
+				if prop == nil {
+					continue
+				}
+			} else {
+				prop = item.value
+			}
 			if prop, ok := prop.(*valueProperty); ok {
 				if prop.configurable {
 					return valueFalse
@@ -322,8 +349,16 @@ func (r *Runtime) object_isFrozen(call FunctionCall) Value {
 		if obj.self.isExtensible() {
 			return valueFalse
 		}
-		for _, key := range obj.self.ownPropertyKeys(true, nil) {
-			prop := obj.getOwnProp(key)
+		for item, next := obj.self.iterateKeys()(); next != nil; item, next = next() {
+			var prop Value
+			if item.value == nil {
+				prop = obj.getOwnProp(item.name)
+				if prop == nil {
+					continue
+				}
+			} else {
+				prop = item.value
+			}
 			if prop, ok := prop.(*valueProperty); ok {
 				if prop.configurable || prop.value != nil && prop.writable {
 					return valueFalse
@@ -352,7 +387,31 @@ func (r *Runtime) object_isExtensible(call FunctionCall) Value {
 func (r *Runtime) object_keys(call FunctionCall) Value {
 	obj := call.Argument(0).ToObject(r)
 
-	return r.newArrayValues(obj.self.ownKeys(false, nil))
+	return r.newArrayValues(obj.self.stringKeys(false, nil))
+}
+
+func (r *Runtime) object_entries(call FunctionCall) Value {
+	obj := call.Argument(0).ToObject(r)
+
+	var values []Value
+
+	for item, next := iterateEnumerableStringProperties(obj)(); next != nil; item, next = next() {
+		values = append(values, r.newArrayValues([]Value{item.name, item.value}))
+	}
+
+	return r.newArrayValues(values)
+}
+
+func (r *Runtime) object_values(call FunctionCall) Value {
+	obj := call.Argument(0).ToObject(r)
+
+	var values []Value
+
+	for item, next := iterateEnumerableStringProperties(obj)(); next != nil; item, next = next() {
+		values = append(values, item.value)
+	}
+
+	return r.newArrayValues(values)
 }
 
 func (r *Runtime) objectproto_hasOwnProperty(call FunctionCall) Value {
@@ -404,6 +463,11 @@ func (r *Runtime) objectproto_toString(call FunctionCall) Value {
 		return stringObjectUndefined
 	default:
 		obj := o.ToObject(r)
+		if o, ok := obj.self.(*objectGoReflect); ok {
+			if toString := o.toString; toString != nil {
+				return toString()
+			}
+		}
 		var clsName string
 		if isArray(obj) {
 			clsName = classArray
@@ -411,7 +475,7 @@ func (r *Runtime) objectproto_toString(call FunctionCall) Value {
 			clsName = obj.self.className()
 		}
 		if tag := obj.self.getSym(SymToStringTag, nil); tag != nil {
-			if str, ok := tag.(valueString); ok {
+			if str, ok := tag.(String); ok {
 				clsName = str.String()
 			}
 		}
@@ -432,14 +496,23 @@ func (r *Runtime) objectproto_getProto(call FunctionCall) Value {
 	return _null
 }
 
-func (r *Runtime) objectproto_setProto(call FunctionCall) Value {
-	o := call.This
+func (r *Runtime) setObjectProto(o, arg Value) {
 	r.checkObjectCoercible(o)
-	proto := r.toProto(call.Argument(0))
+	var proto *Object
+	if arg != _null {
+		if obj, ok := arg.(*Object); ok {
+			proto = obj
+		} else {
+			return
+		}
+	}
 	if o, ok := o.(*Object); ok {
 		o.self.setProto(proto, true)
 	}
+}
 
+func (r *Runtime) objectproto_setProto(call FunctionCall) Value {
+	r.setObjectProto(call.This, call.Argument(0))
 	return _undefined
 }
 
@@ -453,18 +526,8 @@ func (r *Runtime) object_assign(call FunctionCall) Value {
 		for _, arg := range call.Arguments[1:] {
 			if arg != _undefined && arg != _null {
 				source := arg.ToObject(r)
-				for _, key := range source.self.ownPropertyKeys(true, nil) {
-					p := source.getOwnProp(key)
-					if p == nil {
-						continue
-					}
-					if v, ok := p.(*valueProperty); ok {
-						if !v.enumerable {
-							continue
-						}
-						p = v.get(source)
-					}
-					to.setOwn(key, p, true)
+				for item, next := iterateEnumerableProperties(source)(); next != nil; item, next = next() {
+					to.setOwn(item.name, item.value, true)
 				}
 			}
 		}
@@ -499,39 +562,150 @@ func (r *Runtime) object_setPrototypeOf(call FunctionCall) Value {
 	return o
 }
 
-func (r *Runtime) initObject() {
-	o := r.global.ObjectPrototype.self
-	o._putProp("toString", r.newNativeFunc(r.objectproto_toString, nil, "toString", nil, 0), true, false, true)
-	o._putProp("toLocaleString", r.newNativeFunc(r.objectproto_toLocaleString, nil, "toLocaleString", nil, 0), true, false, true)
-	o._putProp("valueOf", r.newNativeFunc(r.objectproto_valueOf, nil, "valueOf", nil, 0), true, false, true)
-	o._putProp("hasOwnProperty", r.newNativeFunc(r.objectproto_hasOwnProperty, nil, "hasOwnProperty", nil, 1), true, false, true)
-	o._putProp("isPrototypeOf", r.newNativeFunc(r.objectproto_isPrototypeOf, nil, "isPrototypeOf", nil, 1), true, false, true)
-	o._putProp("propertyIsEnumerable", r.newNativeFunc(r.objectproto_propertyIsEnumerable, nil, "propertyIsEnumerable", nil, 1), true, false, true)
-	o.defineOwnPropertyStr(__proto__, PropertyDescriptor{
-		Getter:       r.newNativeFunc(r.objectproto_getProto, nil, "get __proto__", nil, 0),
-		Setter:       r.newNativeFunc(r.objectproto_setProto, nil, "set __proto__", nil, 1),
-		Configurable: FLAG_TRUE,
-	}, true)
+func (r *Runtime) object_fromEntries(call FunctionCall) Value {
+	o := call.Argument(0)
+	r.checkObjectCoercible(o)
 
-	r.global.Object = r.newNativeFuncConstruct(r.builtin_Object, classObject, r.global.ObjectPrototype, 1)
-	o = r.global.Object.self
-	o._putProp("assign", r.newNativeFunc(r.object_assign, nil, "assign", nil, 2), true, false, true)
-	o._putProp("defineProperty", r.newNativeFunc(r.object_defineProperty, nil, "defineProperty", nil, 3), true, false, true)
-	o._putProp("defineProperties", r.newNativeFunc(r.object_defineProperties, nil, "defineProperties", nil, 2), true, false, true)
-	o._putProp("getOwnPropertyDescriptor", r.newNativeFunc(r.object_getOwnPropertyDescriptor, nil, "getOwnPropertyDescriptor", nil, 2), true, false, true)
-	o._putProp("getPrototypeOf", r.newNativeFunc(r.object_getPrototypeOf, nil, "getPrototypeOf", nil, 1), true, false, true)
-	o._putProp("is", r.newNativeFunc(r.object_is, nil, "is", nil, 2), true, false, true)
-	o._putProp("getOwnPropertyNames", r.newNativeFunc(r.object_getOwnPropertyNames, nil, "getOwnPropertyNames", nil, 1), true, false, true)
-	o._putProp("getOwnPropertySymbols", r.newNativeFunc(r.object_getOwnPropertySymbols, nil, "getOwnPropertySymbols", nil, 1), true, false, true)
-	o._putProp("create", r.newNativeFunc(r.object_create, nil, "create", nil, 2), true, false, true)
-	o._putProp("seal", r.newNativeFunc(r.object_seal, nil, "seal", nil, 1), true, false, true)
-	o._putProp("freeze", r.newNativeFunc(r.object_freeze, nil, "freeze", nil, 1), true, false, true)
-	o._putProp("preventExtensions", r.newNativeFunc(r.object_preventExtensions, nil, "preventExtensions", nil, 1), true, false, true)
-	o._putProp("isSealed", r.newNativeFunc(r.object_isSealed, nil, "isSealed", nil, 1), true, false, true)
-	o._putProp("isFrozen", r.newNativeFunc(r.object_isFrozen, nil, "isFrozen", nil, 1), true, false, true)
-	o._putProp("isExtensible", r.newNativeFunc(r.object_isExtensible, nil, "isExtensible", nil, 1), true, false, true)
-	o._putProp("keys", r.newNativeFunc(r.object_keys, nil, "keys", nil, 1), true, false, true)
-	o._putProp("setPrototypeOf", r.newNativeFunc(r.object_setPrototypeOf, nil, "setPrototypeOf", nil, 2), true, false, true)
+	result := r.newBaseObject(r.global.ObjectPrototype, classObject).val
 
-	r.addToGlobal("Object", r.global.Object)
+	iter := r.getIterator(o, nil)
+	iter.iterate(func(nextValue Value) {
+		i0 := valueInt(0)
+		i1 := valueInt(1)
+
+		itemObj := r.toObject(nextValue)
+		k := itemObj.self.getIdx(i0, nil)
+		v := itemObj.self.getIdx(i1, nil)
+		key := toPropertyKey(k)
+
+		createDataPropertyOrThrow(result, key, v)
+	})
+
+	return result
+}
+
+func (r *Runtime) object_hasOwn(call FunctionCall) Value {
+	o := call.Argument(0)
+	obj := o.ToObject(r)
+	p := toPropertyKey(call.Argument(1))
+
+	if obj.hasOwnProperty(p) {
+		return valueTrue
+	} else {
+		return valueFalse
+	}
+}
+
+func createObjectTemplate() *objectTemplate {
+	t := newObjectTemplate()
+	t.protoFactory = func(r *Runtime) *Object {
+		return r.getFunctionPrototype()
+	}
+
+	t.putStr("length", func(r *Runtime) Value { return valueProp(intToValue(1), false, false, true) })
+	t.putStr("name", func(r *Runtime) Value { return valueProp(asciiString("Object"), false, false, true) })
+
+	t.putStr("prototype", func(r *Runtime) Value { return valueProp(r.global.ObjectPrototype, false, false, false) })
+
+	t.putStr("assign", func(r *Runtime) Value { return r.methodProp(r.object_assign, "assign", 2) })
+	t.putStr("defineProperty", func(r *Runtime) Value { return r.methodProp(r.object_defineProperty, "defineProperty", 3) })
+	t.putStr("defineProperties", func(r *Runtime) Value { return r.methodProp(r.object_defineProperties, "defineProperties", 2) })
+	t.putStr("entries", func(r *Runtime) Value { return r.methodProp(r.object_entries, "entries", 1) })
+	t.putStr("getOwnPropertyDescriptor", func(r *Runtime) Value {
+		return r.methodProp(r.object_getOwnPropertyDescriptor, "getOwnPropertyDescriptor", 2)
+	})
+	t.putStr("getOwnPropertyDescriptors", func(r *Runtime) Value {
+		return r.methodProp(r.object_getOwnPropertyDescriptors, "getOwnPropertyDescriptors", 1)
+	})
+	t.putStr("getPrototypeOf", func(r *Runtime) Value { return r.methodProp(r.object_getPrototypeOf, "getPrototypeOf", 1) })
+	t.putStr("is", func(r *Runtime) Value { return r.methodProp(r.object_is, "is", 2) })
+	t.putStr("getOwnPropertyNames", func(r *Runtime) Value { return r.methodProp(r.object_getOwnPropertyNames, "getOwnPropertyNames", 1) })
+	t.putStr("getOwnPropertySymbols", func(r *Runtime) Value {
+		return r.methodProp(r.object_getOwnPropertySymbols, "getOwnPropertySymbols", 1)
+	})
+	t.putStr("create", func(r *Runtime) Value { return r.methodProp(r.object_create, "create", 2) })
+	t.putStr("seal", func(r *Runtime) Value { return r.methodProp(r.object_seal, "seal", 1) })
+	t.putStr("freeze", func(r *Runtime) Value { return r.methodProp(r.object_freeze, "freeze", 1) })
+	t.putStr("preventExtensions", func(r *Runtime) Value { return r.methodProp(r.object_preventExtensions, "preventExtensions", 1) })
+	t.putStr("isSealed", func(r *Runtime) Value { return r.methodProp(r.object_isSealed, "isSealed", 1) })
+	t.putStr("isFrozen", func(r *Runtime) Value { return r.methodProp(r.object_isFrozen, "isFrozen", 1) })
+	t.putStr("isExtensible", func(r *Runtime) Value { return r.methodProp(r.object_isExtensible, "isExtensible", 1) })
+	t.putStr("keys", func(r *Runtime) Value { return r.methodProp(r.object_keys, "keys", 1) })
+	t.putStr("setPrototypeOf", func(r *Runtime) Value { return r.methodProp(r.object_setPrototypeOf, "setPrototypeOf", 2) })
+	t.putStr("values", func(r *Runtime) Value { return r.methodProp(r.object_values, "values", 1) })
+	t.putStr("fromEntries", func(r *Runtime) Value { return r.methodProp(r.object_fromEntries, "fromEntries", 1) })
+	t.putStr("hasOwn", func(r *Runtime) Value { return r.methodProp(r.object_hasOwn, "hasOwn", 2) })
+
+	return t
+}
+
+var _objectTemplate *objectTemplate
+var objectTemplateOnce sync.Once
+
+func getObjectTemplate() *objectTemplate {
+	objectTemplateOnce.Do(func() {
+		_objectTemplate = createObjectTemplate()
+	})
+	return _objectTemplate
+}
+
+func (r *Runtime) getObject() *Object {
+	ret := r.global.Object
+	if ret == nil {
+		ret = &Object{runtime: r}
+		r.global.Object = ret
+		r.newTemplatedFuncObject(getObjectTemplate(), ret, func(call FunctionCall) Value {
+			return r.builtin_Object(call.Arguments, nil)
+		}, r.builtin_Object)
+	}
+	return ret
+}
+
+/*
+func (r *Runtime) getObjectPrototype() *Object {
+	ret := r.global.ObjectPrototype
+	if ret == nil {
+		ret = &Object{runtime: r}
+		r.global.ObjectPrototype = ret
+		r.newTemplatedObject(getObjectProtoTemplate(), ret)
+	}
+	return ret
+}
+*/
+
+var objectProtoTemplate *objectTemplate
+var objectProtoTemplateOnce sync.Once
+
+func getObjectProtoTemplate() *objectTemplate {
+	objectProtoTemplateOnce.Do(func() {
+		objectProtoTemplate = createObjectProtoTemplate()
+	})
+	return objectProtoTemplate
+}
+
+func createObjectProtoTemplate() *objectTemplate {
+	t := newObjectTemplate()
+
+	// null prototype
+
+	t.putStr("constructor", func(r *Runtime) Value { return valueProp(r.getObject(), true, false, true) })
+
+	t.putStr("toString", func(r *Runtime) Value { return r.methodProp(r.objectproto_toString, "toString", 0) })
+	t.putStr("toLocaleString", func(r *Runtime) Value { return r.methodProp(r.objectproto_toLocaleString, "toLocaleString", 0) })
+	t.putStr("valueOf", func(r *Runtime) Value { return r.methodProp(r.objectproto_valueOf, "valueOf", 0) })
+	t.putStr("hasOwnProperty", func(r *Runtime) Value { return r.methodProp(r.objectproto_hasOwnProperty, "hasOwnProperty", 1) })
+	t.putStr("isPrototypeOf", func(r *Runtime) Value { return r.methodProp(r.objectproto_isPrototypeOf, "isPrototypeOf", 1) })
+	t.putStr("propertyIsEnumerable", func(r *Runtime) Value {
+		return r.methodProp(r.objectproto_propertyIsEnumerable, "propertyIsEnumerable", 1)
+	})
+	t.putStr(__proto__, func(r *Runtime) Value {
+		return &valueProperty{
+			accessor:     true,
+			getterFunc:   r.newNativeFunc(r.objectproto_getProto, "get __proto__", 0),
+			setterFunc:   r.newNativeFunc(r.objectproto_setProto, "set __proto__", 1),
+			configurable: true,
+		}
+	})
+
+	return t
 }

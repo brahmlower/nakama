@@ -22,17 +22,18 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"strconv"
+	"strings"
 	"sync/atomic"
 
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/gofrs/uuid/v5"
 	"github.com/heroiclabs/nakama-common/api"
 	"github.com/heroiclabs/nakama/v3/console"
-	"github.com/jackc/pgx/pgtype"
+	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type consoleStorageCursor struct {
@@ -44,16 +45,16 @@ type consoleStorageCursor struct {
 
 var collectionSetCache = &atomic.Value{}
 
-func (s *ConsoleServer) DeleteStorage(ctx context.Context, in *empty.Empty) (*empty.Empty, error) {
+func (s *ConsoleServer) DeleteStorage(ctx context.Context, in *emptypb.Empty) (*emptypb.Empty, error) {
 	_, err := s.db.ExecContext(ctx, "TRUNCATE TABLE storage")
 	if err != nil {
 		s.logger.Error("Failed to truncate Storage table.", zap.Error(err))
 		return nil, status.Error(codes.Internal, "An error occurred while deleting storage objects.")
 	}
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *ConsoleServer) DeleteStorageObject(ctx context.Context, in *console.DeleteStorageObjectRequest) (*empty.Empty, error) {
+func (s *ConsoleServer) DeleteStorageObject(ctx context.Context, in *console.DeleteStorageObjectRequest) (*emptypb.Empty, error) {
 	if in.Collection == "" {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid collection.")
 	}
@@ -65,7 +66,7 @@ func (s *ConsoleServer) DeleteStorageObject(ctx context.Context, in *console.Del
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
 	}
 
-	code, err := StorageDeleteObjects(ctx, s.logger, s.db, true, StorageOpDeletes{
+	code, err := StorageDeleteObjects(ctx, s.logger, s.db, s.storageIndex, true, StorageOpDeletes{
 		&StorageOpDelete{
 			OwnerID: in.UserId,
 			ObjectID: &api.DeleteStorageObjectId{
@@ -86,7 +87,7 @@ func (s *ConsoleServer) DeleteStorageObject(ctx context.Context, in *console.Del
 		return nil, err
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *ConsoleServer) GetStorage(ctx context.Context, in *api.ReadStorageObjectId) (*api.StorageObject, error) {
@@ -115,7 +116,7 @@ func (s *ConsoleServer) GetStorage(ctx context.Context, in *api.ReadStorageObjec
 	return objects.Objects[0], nil
 }
 
-func (s *ConsoleServer) ListStorageCollections(ctx context.Context, in *empty.Empty) (*console.StorageCollectionsList, error) {
+func (s *ConsoleServer) ListStorageCollections(ctx context.Context, in *emptypb.Empty) (*console.StorageCollectionsList, error) {
 	collectionSetCache := collectionSetCache.Load()
 	if collectionSetCache == nil {
 		return &console.StorageCollectionsList{
@@ -157,7 +158,7 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 			return nil, status.Error(codes.InvalidArgument, "Cursor not allowed when filter only contains user ID.")
 		}
 		// Pagination not allowed when filtering by collection, key, and user ID all at once. Don't process the cursor further.
-		if in.Collection != "" && in.Key != "" && userID != nil {
+		if in.Collection != "" && in.Key != "" && userID != nil && !isPrefixSearch(in.Key) {
 			return nil, status.Error(codes.InvalidArgument, "Cursor not allowed when filter only contains collection, key, and user ID.")
 		}
 
@@ -176,7 +177,7 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 		if in.Collection != "" && in.Collection != cursor.Collection {
 			return nil, status.Error(codes.InvalidArgument, "Requires a matching cursor and collection filter property.")
 		}
-		if in.Key != "" && in.Key != cursor.Key {
+		if in.Key != "" && (!isPrefixSearch(in.Key) && in.Key != cursor.Key) {
 			return nil, status.Error(codes.InvalidArgument, "Requires a matching cursor and key filter property.")
 		}
 		if in.UserId != "" && in.UserId != cursor.UserID.String() {
@@ -193,8 +194,10 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 	// - user_id
 	// - collection
 	// - collection + key
+	// - collection + key% (prefix search)
 	// - collection + user_id
 	// - collection + key + user_id
+	// - collection + key% + user_id
 	switch {
 	case in.Collection == "" && in.Key == "" && userID == nil:
 		// No filter. Querying and paginating on primary key (collection, read, key, user_id).
@@ -220,6 +223,16 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 		}
 		params = append(params, limit+1)
 		query += " ORDER BY read ASC, key ASC, user_id ASC LIMIT $" + strconv.Itoa(len(params))
+	case in.Collection != "" && in.Key != "" && userID == nil && isPrefixSearch(in.Key):
+		// Collection and key%. Querying and paginating on unique index (collection, key, user_id).
+		params = []interface{}{in.Collection, in.Key}
+		query = "SELECT collection, key, user_id, value, version, read, write, create_time, update_time FROM storage WHERE collection = $1 AND key LIKE $2"
+		if cursor != nil {
+			params = append(params, cursor.Key, cursor.UserID)
+			query += " AND (collection, key, user_id) > ($1, $3, $4)"
+		}
+		params = append(params, limit+1)
+		query += " ORDER BY collection ASC, key ASC, user_id ASC LIMIT $" + strconv.Itoa(len(params))
 	case in.Collection != "" && in.Key != "" && userID == nil:
 		// Collection and key. Querying and paginating on unique index (collection, key, user_id).
 		params = []interface{}{in.Collection, in.Key}
@@ -240,6 +253,16 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 		}
 		params = append(params, limit+1)
 		query += " ORDER BY read ASC, key ASC LIMIT $" + strconv.Itoa(len(params))
+	case in.Collection != "" && in.Key != "" && userID != nil && isPrefixSearch(in.Key):
+		// Collection, key%, user ID. Querying and paginating on unique index (collection, key, user_id).
+		params = []interface{}{in.Collection, in.Key, *userID}
+		query = "SELECT collection, key, user_id, value, version, read, write, create_time, update_time FROM storage WHERE collection = $1 AND key LIKE $2 AND user_id = $3"
+		if cursor != nil {
+			params = append(params, cursor.Key)
+			query += " AND (collection, key, user_id) > ($1, $4, $3)"
+		}
+		params = append(params, limit+1)
+		query += " ORDER BY collection ASC, key ASC, user_id ASC LIMIT $" + strconv.Itoa(len(params))
 	case in.Collection != "" && in.Key != "" && userID != nil:
 		// Filtering by collection, key, user ID returns 0 or 1 results, no pagination or limit. Querying on unique index (collection, key, user_id).
 		limit = 0
@@ -257,9 +280,21 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 
 	objects := make([]*api.StorageObject, 0, defaultLimit)
 	var nextCursor *consoleStorageCursor
+	var previousObj *api.StorageObject
 
 	for rows.Next() {
-		o := &api.StorageObject{CreateTime: &timestamp.Timestamp{}, UpdateTime: &timestamp.Timestamp{}}
+		// Check limit before processing for the use case where (last page == limit) => null cursor.
+		if limit > 0 && len(objects) >= limit {
+			nextCursor = &consoleStorageCursor{
+				Key:        previousObj.Key,
+				UserID:     uuid.FromStringOrNil(previousObj.UserId),
+				Collection: previousObj.Collection,
+				Read:       previousObj.PermissionRead,
+			}
+			break
+		}
+
+		o := &api.StorageObject{CreateTime: &timestamppb.Timestamp{}, UpdateTime: &timestamppb.Timestamp{}}
 		var createTime pgtype.Timestamptz
 		var updateTime pgtype.Timestamptz
 
@@ -273,15 +308,7 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 		o.UpdateTime.Seconds = updateTime.Time.Unix()
 
 		objects = append(objects, o)
-		if limit > 0 && len(objects) >= limit {
-			nextCursor = &consoleStorageCursor{
-				Key:        o.Key,
-				UserID:     uuid.FromStringOrNil(o.UserId),
-				Collection: o.Collection,
-				Read:       o.PermissionRead,
-			}
-			break
-		}
+		previousObj = o
 	}
 	_ = rows.Close()
 
@@ -330,7 +357,7 @@ func (s *ConsoleServer) WriteStorageObject(ctx context.Context, in *console.Writ
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid JSON object value.")
 	}
 
-	acks, code, err := StorageWriteObjects(ctx, s.logger, s.db, true, StorageOpWrites{
+	acks, code, err := StorageWriteObjects(ctx, s.logger, s.db, s.metrics, s.storageIndex, true, StorageOpWrites{
 		&StorageOpWrite{
 			OwnerID: in.UserId,
 			Object: &api.WriteStorageObject{
@@ -372,25 +399,26 @@ func countDatabase(ctx context.Context, logger *zap.Logger, db *sql.DB, tableNam
 			return 0
 		}
 	}
-	if count.Valid && count.Int64 != 0 {
+	// It may return -1 if there are no statistics collected (PG14)
+	if count.Valid && count.Int64 > 0 {
 		// Use this count result.
 		return int32(count.Int64)
 	}
 
 	// If the first fast count failed, returned NULL, or returned 0 try a fast count on partitioned table metadata.
-	if err := db.QueryRowContext(ctx, "SELECT sum(reltuples::BIGINT) FROM pg_class WHERE relname ilike $1", tableName+"%_pkey").Scan(&count); err != nil {
+	if err := db.QueryRowContext(ctx, "SELECT sum(reltuples)::BIGINT FROM pg_class WHERE relname ILIKE $1", tableName+"%_pkey").Scan(&count); err != nil {
 		logger.Warn("Error counting storage objects.", zap.Error(err))
 		if err == context.Canceled {
 			// If the context was cancelled do not attempt any further counts.
 			return 0
 		}
 	}
-	if count.Valid && count.Int64 != 0 {
+	if count.Valid && count.Int64 > 0 {
 		// Use this count result.
 		return int32(count.Int64)
 	}
 
-	// If both fast counts failed, returned NULL, or returned 0 try a full count.
+	// If both fast counts failed, returned NULL, returned 0 or -1 try a full count.
 	// NOTE: PostgreSQL parses the expression count(*) as a special case taking no
 	// arguments, while count(1) takes an argument and PostgreSQL has to check that
 	// 1 is indeed still not NULL for every row.
@@ -398,4 +426,8 @@ func countDatabase(ctx context.Context, logger *zap.Logger, db *sql.DB, tableNam
 		logger.Warn("Error counting storage objects.", zap.Error(err))
 	}
 	return int32(count.Int64)
+}
+
+func isPrefixSearch(key string) bool {
+	return strings.HasSuffix(key, "%") && strings.Count(key, "%") == 1
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import {Component, Injectable, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute, ActivatedRouteSnapshot, CanActivate, CanActivateChild, Resolve, Router, RouterStateSnapshot} from '@angular/router';
+import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
 import {Config, ConfigParams, ConsoleService} from '../console.service';
 import {Observable} from 'rxjs';
 import {safeDump} from 'js-yaml';
@@ -22,7 +22,7 @@ import {FileSystemFileEntry, NgxFileDropEntry} from 'ngx-file-drop';
 import {HttpClient} from '@angular/common/http';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {delay} from 'rxjs/operators';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 
 @Component({
   templateUrl: './config.component.html',
@@ -40,7 +40,7 @@ export class ConfigComponent implements OnInit, OnDestroy {
   public uploadSuccess = false;
   public deleteSuccess = false;
   public deleting = false;
-  public confirmDeleteForm: FormGroup;
+  public confirmDeleteForm: UntypedFormGroup;
 
   private apiConfig: ConfigParams;
 
@@ -50,7 +50,7 @@ export class ConfigComponent implements OnInit, OnDestroy {
     private readonly httpClient: HttpClient,
     private readonly modalService: NgbModal,
     private readonly consoleService: ConsoleService,
-    private readonly formBuilder: FormBuilder,
+    private readonly formBuilder: UntypedFormBuilder,
   ) {
     this.apiConfig = config;
   }
@@ -80,7 +80,7 @@ export class ConfigComponent implements OnInit, OnDestroy {
 
   private traverseConfig(prefix: string, config: any, flattened: any[]): void {
     for (const key in config) {
-      if (key == 'env') {
+      if (key === 'env') {
         // we'll separate out runtime environments into its own config handling
         continue;
       }
@@ -155,7 +155,7 @@ export class ConfigComponent implements OnInit, OnDestroy {
   public deleteData(): void {
     this.deleteError = '';
     this.deleting = true;
-    this.consoleService.deleteAccounts('').pipe(delay(2000)).subscribe(
+    this.consoleService.deleteAllData('').pipe(delay(2000)).subscribe(
       () => {
         this.deleting = false;
         this.deleteError = '';
@@ -170,7 +170,10 @@ export class ConfigComponent implements OnInit, OnDestroy {
   public openDeleteDataModal(modal): void {
     this.modalService.open(modal, {centered: true}).result.then(() => {
       this.deleteData();
-    }, () => {});
+      this.confirmDeleteForm.controls.delete.setValue( '');
+    }, () => {
+      this.confirmDeleteForm.controls.delete.setValue( '');
+    });
   }
 
   get f(): any {

@@ -43,12 +43,12 @@ To setup your own project to build modules for the game server you can follow th
 
     ```bash
     go mod init "plugin_code"
-    go get -u "github.com/heroiclabs/nakama-common@v1.4.0"
+    go get -u "github.com/heroiclabs/nakama-common@v1.23.0"
     ```
 
-   ⚠️ __NOTE__: If you're working on Nakama's master branch drop the `@v1.4.0` from the above snippet.
+   ⚠️ __NOTE__: If you're working on Nakama's master branch drop the `@v1.23.0` from the above snippet.
 
-   ⚠️ __NOTE__: The official Nakama v2.11.+ expects nakama-common v1.4.0 in order to run. If you use v1.2.0, older, or drop the version reference, you might get a `plugin was built with a different version of package` error while starting up the nakama server.
+   ⚠️ __NOTE__: The official Nakama v3.12.+ expects nakama-common v1.23.0 in order to run. If you use v1.22.0, older, or drop the version reference, you might get a `plugin was built with a different version of package` error while starting up the Nakama server.
 
 4. Develop your plugin code (you can use the [minimal example](#minimal-example) as a starting point) and save it within your plugin project directory with the `.go` extension.
 
@@ -82,12 +82,12 @@ For Windows development and environments where you want to use our official Dock
 
     ```bash
     cd "$HOME/plugin_code" # Your project folder. See instructions above.
-    docker run --rm -w "/builder" -v "${PWD}:/builder" heroiclabs/nakama-pluginbuilder:2.11.1 build -buildmode=plugin -trimpath -o ./modules/plugin_code.so
+    docker run --rm -w "/builder" -v "${PWD}:/builder" heroiclabs/nakama-pluginbuilder:3.12.0 build -buildmode=plugin -trimpath -o ./modules/plugin_code.so
     ```
 
    In the command above we bind-mount your current folder into the container and use the Go toolchain inside it to run the build. The output artifacts are written back into your host filesystem.
 
-2. Use our official Docker Compose [file](https://heroiclabs.com/docs/install-docker-quickstart/#using-docker-compose) to run all containers together and load in your custom module.
+2. Use our official Docker Compose [file](https://heroiclabs.com/docs/nakama/getting-started/install/docker/#running-nakama) to run all containers together and load in your custom module.
 
     __NOTE:__ You should copy the `.so` files generated in step 1. to the `/modules` folder of your Nakama source files and then run the command below from the Nakama root directory.
 

@@ -14,7 +14,7 @@
 
 import {Component, Injectable, OnInit} from '@angular/core';
 import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot} from '@angular/router';
-import {ApiStorageObject, ConsoleService, Leaderboard, LeaderboardList, UserRole} from '../console.service';
+import {ConsoleService, Leaderboard, LeaderboardList, UserRole} from '../console.service';
 import {Observable} from 'rxjs';
 import {AuthenticationService} from '../authentication.service';
 
@@ -25,6 +25,9 @@ import {AuthenticationService} from '../authentication.service';
 export class LeaderboardsComponent implements OnInit {
   public error = '';
   public leaderboards: Array<Leaderboard> = [];
+
+  public nextCursor: string = "";
+  public leaderboardsCount: number = 0;
   public orderString = {
     0: 'Ascending',
     1: 'Descending',
@@ -44,33 +47,67 @@ export class LeaderboardsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.data.subscribe(d => {
-      this.leaderboards.length = 0;
-      this.leaderboards.push(...d[0].leaderboards);
-    }, err => {
-      this.error = err;
-    });
+    const qp = this.route.snapshot.queryParamMap;
+    this.nextCursor = qp.get('cursor');
+
+    if (this.nextCursor && this.nextCursor !== '') {
+      this.search(1);
+    } else {
+      this.search(0);
+    }
   }
 
-  deleteAllowed() {
+  deleteAllowed(): boolean {
     // only admin and developers are allowed.
     return this.authService.sessionRole <= UserRole.USER_ROLE_DEVELOPER;
   }
 
-  deleteLeaderboard(event, i: number, l: Leaderboard) {
+  deleteLeaderboard(event, i: number, l: Leaderboard): void {
     event.target.disabled = true;
     event.preventDefault();
     this.error = '';
     this.consoleService.deleteLeaderboard('', l.id).subscribe(() => {
       this.error = '';
       this.leaderboards.splice(i, 1);
+      this.leaderboardsCount--;
     }, err => {
       this.error = err;
-    })
+    });
   }
 
-  viewLeaderboardEntries(l: Leaderboard) {
+  viewLeaderboardEntries(l: Leaderboard): void {
     this.router.navigate(['/leaderboards', l.id], {relativeTo: this.route});
+  }
+
+  search(state: number): void {
+    let cursor = '';
+    switch (state) {
+      case 0:
+        cursor = '';
+        break;
+      case 1:
+        cursor = this.nextCursor;
+        break;
+    }
+
+    this.consoleService.listLeaderboards('', cursor).subscribe(d => {
+      this.error = '';
+
+      this.leaderboards.length = 0;
+      this.leaderboards.push(...d.leaderboards);
+      this.leaderboardsCount = d.total;
+      this.nextCursor = d.cursor;
+
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {
+          cursor
+        },
+        queryParamsHandling: 'merge',
+      });
+    }, err => {
+      this.error = err;
+    });
   }
 }
 

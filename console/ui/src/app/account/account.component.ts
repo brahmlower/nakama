@@ -33,12 +33,15 @@ export class AccountComponent implements OnInit {
     {label: 'Friends', path: 'friends'},
     {label: 'Groups', path: 'groups'},
     {label: 'Wallet', path: 'wallet'},
+    {label: 'Purchases', path: 'purchases'},
+    {label: 'Subscriptions', path: 'subscriptions'},
   ];
 
-  constructor(private readonly route: ActivatedRoute,
+  constructor(
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly consoleService: ConsoleService,
-    private readonly authService: AuthenticationService
+    private readonly authService: AuthenticationService,
   ) {}
 
   ngOnInit(): void {
@@ -51,7 +54,7 @@ export class AccountComponent implements OnInit {
       });
   }
 
-  deleteAccount(event, recorded: boolean) {
+  deleteAccount(event, recorded: boolean): void {
     event.target.disabled = true;
     this.error = '';
     this.consoleService.deleteAccount('', this.account.user.id, recorded).subscribe(() => {
@@ -59,10 +62,10 @@ export class AccountComponent implements OnInit {
       this.router.navigate(['/accounts']);
     }, err => {
       this.error = err;
-    })
+    });
   }
 
-  banUnbanAccount(event) {
+  banUnbanAccount(event): void {
     event.target.disabled = true;
     this.error = '';
     if (this.account.disable_time) {
@@ -73,7 +76,7 @@ export class AccountComponent implements OnInit {
       }, err => {
         this.error = err;
         event.target.disabled = false;
-      })
+      });
     } else {
       this.consoleService.banAccount('', this.account.user.id).subscribe(() => {
         this.error = '';
@@ -82,45 +85,45 @@ export class AccountComponent implements OnInit {
       }, err => {
         this.error = err;
         event.target.disabled = false;
-      })
+      });
     }
   }
 
-  exportAccount(event) {
+  exportAccount(event): void {
     event.target.disabled = true;
     this.error = '';
     this.consoleService.exportAccount('', this.account.user.id).subscribe(accountExport => {
       this.error = '';
-      const fileName = this.account.user.id + "-export.json"
+      const fileName = this.account.user.id + '-export.json';
       const json = JSON.stringify(accountExport, null, 2);
       const bytes = new TextEncoder().encode(json);
-      let blob = new Blob([bytes], {type: "application/json;charset=utf-8"});
+      const blob = new Blob([bytes], {type: 'application/json;charset=utf-8'});
       saveAs(blob, fileName);
       event.target.disabled = false;
     }, err => {
       event.target.disabled = false;
       this.error = err;
-    })
+    });
   }
 
-  updateAllowed() {
+  updateAllowed(): boolean {
     // only admin and developers are allowed.
     return this.authService.sessionRole <= UserRole.USER_ROLE_MAINTAINER;
   }
 
-  exportAllowed() {
-    // only admin and developers are allowed.
-    return this.authService.sessionRole <= UserRole.USER_ROLE_DEVELOPER;
-  }
-
-  banAllowed() {
+  exportAllowed(): boolean {
     // only admin and developers are allowed.
     return this.authService.sessionRole <= UserRole.USER_ROLE_MAINTAINER;
   }
 
-  deleteAllowed() {
+  banAllowed(): boolean {
     // only admin and developers are allowed.
-    return this.authService.sessionRole <= UserRole.USER_ROLE_DEVELOPER;
+    return this.authService.sessionRole <= UserRole.USER_ROLE_MAINTAINER;
+  }
+
+  deleteAllowed(): boolean {
+    // only admin and developers are allowed.
+    return this.authService.sessionRole <= UserRole.USER_ROLE_MAINTAINER;
   }
 }
 
@@ -129,7 +132,7 @@ export class AccountResolver implements Resolve<ApiAccount> {
   constructor(private readonly consoleService: ConsoleService) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<ApiAccount> {
-    const userId = route.paramMap.get("id");
-    return this.consoleService.getAccount('', userId)
+    const userId = route.paramMap.get('id');
+    return this.consoleService.getAccount('', userId);
   }
 }

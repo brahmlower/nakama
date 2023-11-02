@@ -15,7 +15,7 @@
 import {Component, Injectable, OnInit} from '@angular/core';
 import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
 import {AddUserRequest, ConsoleService, UserList, UserListUser, UserRole} from '../console.service';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {mergeMap} from 'rxjs/operators';
 import {Observable} from 'rxjs';
 
@@ -28,16 +28,16 @@ export class UsersComponent implements OnInit {
   public error = '';
   public userCreateError = '';
   public users: Array<UserListUser> = [];
-  public createUserForm: FormGroup;
-  public adminRole = UserRole.USER_ROLE_ADMIN
-  public developerRole = UserRole.USER_ROLE_DEVELOPER
-  public maintainerRole = UserRole.USER_ROLE_MAINTAINER
+  public createUserForm: UntypedFormGroup;
+  public adminRole = UserRole.USER_ROLE_ADMIN;
+  public developerRole = UserRole.USER_ROLE_DEVELOPER;
+  public maintainerRole = UserRole.USER_ROLE_MAINTAINER;
   public readonlyRole = UserRole.USER_ROLE_READONLY;
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly consoleService: ConsoleService,
-    private readonly formBuilder: FormBuilder,
+    private readonly formBuilder: UntypedFormBuilder,
   ) {}
 
   ngOnInit(): void {
@@ -46,6 +46,7 @@ export class UsersComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.compose([Validators.required, Validators.minLength(8)])],
       role: [+this.readonlyRole, Validators.required],
+      newsletter: [false],
     });
 
     this.route.data.subscribe(data => {
@@ -58,24 +59,24 @@ export class UsersComponent implements OnInit {
   }
 
   public deleteUser(username: string): void {
-    this.error = "";
+    this.error = '';
 
-    this.consoleService.deleteUser("", username).pipe(mergeMap(() => {
+    this.consoleService.deleteUser('', username).pipe(mergeMap(() => {
       return this.consoleService.listUsers('');
     })).subscribe(userList => {
-      this.error = "";
+      this.error = '';
       this.users.length = 0;
       this.users.push(...userList.users);
     }, error => {
       this.error = error;
-    })
+    });
   }
 
   public addUser(): void {
-    this.userCreateError = "";
+    this.userCreateError = '';
     this.createUserForm.disable();
 
-    let role: UserRole = UserRole.USER_ROLE_READONLY
+    let role: UserRole = UserRole.USER_ROLE_READONLY;
 
     switch (this.f.role.value) {
       case 1:
@@ -96,13 +97,14 @@ export class UsersComponent implements OnInit {
       username: this.f.username.value,
       email: this.f.email.value,
       password: this.f.password.value,
-      role: role,
-    }
+      role,
+      newsletter_subscription: this.f.newsletter.value,
+    };
 
-    this.consoleService.addUser("", req).pipe(mergeMap(() => {
+    this.consoleService.addUser('', req).pipe(mergeMap(() => {
         return this.consoleService.listUsers('');
     })).subscribe(userList => {
-        this.userCreateError = "";
+        this.userCreateError = '';
         this.createUserForm.reset({role: +role});
         this.createUserForm.enable();
         this.users.length = 0;
@@ -110,10 +112,10 @@ export class UsersComponent implements OnInit {
     }, error => {
       this.userCreateError = error;
       this.createUserForm.enable();
-    })
+    });
   }
 
-  get f() {
+  get f(): any {
     return this.createUserForm.controls;
   }
 }

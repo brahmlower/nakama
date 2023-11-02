@@ -15,10 +15,14 @@
 package server
 
 import (
-	"github.com/gofrs/uuid"
-	"go.uber.org/atomic"
 	"sync"
+
+	"github.com/gofrs/uuid/v5"
+	"github.com/heroiclabs/nakama-common/runtime"
+	"go.uber.org/atomic"
 )
+
+var _ runtime.Presence = &MatchPresence{}
 
 // Represents routing and identify information for a single match participant.
 type MatchPresence struct {
@@ -26,6 +30,7 @@ type MatchPresence struct {
 	UserID    uuid.UUID
 	SessionID uuid.UUID
 	Username  string
+	Reason    runtime.PresenceReason
 }
 
 func (p *MatchPresence) GetUserId() string {
@@ -48,6 +53,9 @@ func (p *MatchPresence) GetUsername() string {
 }
 func (p *MatchPresence) GetStatus() string {
 	return ""
+}
+func (p *MatchPresence) GetReason() runtime.PresenceReason {
+	return p.Reason
 }
 
 // Used to monitor when match presences begin and complete their match join process.
@@ -87,7 +95,7 @@ func (m *MatchJoinMarkerList) Mark(sessionID uuid.UUID) {
 }
 
 func (m *MatchJoinMarkerList) ClearExpired(tick int64) []*MatchPresence {
-	presences := make([]*MatchPresence, 0)
+	presences := make([]*MatchPresence, 0, 1)
 	m.Lock()
 	for sessionID, joinMarker := range m.joinMarkers {
 		if joinMarker.expiryTick <= tick {
@@ -102,9 +110,11 @@ func (m *MatchJoinMarkerList) ClearExpired(tick int64) []*MatchPresence {
 // Maintains the match presences for routing and validation purposes.
 type MatchPresenceList struct {
 	sync.RWMutex
-	size        *atomic.Int32
-	presences   []*MatchPresenceListItem
-	presenceMap map[uuid.UUID]string
+	size            *atomic.Int32
+	presences       []*MatchPresenceListItem
+	presenceMap     map[uuid.UUID]string
+	presencesRead   *atomic.Value
+	presenceIDsRead *atomic.Value
 }
 
 type MatchPresenceListItem struct {
@@ -113,11 +123,16 @@ type MatchPresenceListItem struct {
 }
 
 func NewMatchPresenceList() *MatchPresenceList {
-	return &MatchPresenceList{
-		size:        atomic.NewInt32(0),
-		presences:   make([]*MatchPresenceListItem, 0, 10),
-		presenceMap: make(map[uuid.UUID]string, 10),
+	m := &MatchPresenceList{
+		size:            atomic.NewInt32(0),
+		presences:       make([]*MatchPresenceListItem, 0, 10),
+		presenceMap:     make(map[uuid.UUID]string, 10),
+		presencesRead:   &atomic.Value{},
+		presenceIDsRead: &atomic.Value{},
 	}
+	m.presencesRead.Store(make([]*MatchPresence, 0))
+	m.presenceIDsRead.Store(make([]*PresenceID, 0))
+	return m
 }
 
 func (m *MatchPresenceList) Join(joins []*MatchPresence) []*MatchPresence {
@@ -136,8 +151,19 @@ func (m *MatchPresenceList) Join(joins []*MatchPresence) []*MatchPresence {
 			processed = append(processed, join)
 		}
 	}
+	l := len(processed)
+	if l != 0 {
+		presencesRead := make([]*MatchPresence, 0, len(m.presences))
+		presenceIDsRead := make([]*PresenceID, 0, len(m.presences))
+		for _, presence := range m.presences {
+			presencesRead = append(presencesRead, presence.Presence)
+			presenceIDsRead = append(presenceIDsRead, presence.PresenceID)
+		}
+		m.presencesRead.Store(presencesRead)
+		m.presenceIDsRead.Store(presenceIDsRead)
+	}
 	m.Unlock()
-	if l := len(processed); l != 0 {
+	if l != 0 {
 		m.size.Add(int32(l))
 	}
 	return processed
@@ -150,7 +176,9 @@ func (m *MatchPresenceList) Leave(leaves []*MatchPresence) []*MatchPresence {
 		if _, ok := m.presenceMap[leave.SessionID]; ok {
 			for i, presence := range m.presences {
 				if presence.PresenceID.SessionID == leave.SessionID && presence.PresenceID.Node == leave.Node {
-					m.presences = append(m.presences[:i], m.presences[i+1:]...)
+					m.presences[i] = m.presences[len(m.presences)-1]
+					m.presences[len(m.presences)-1] = nil
+					m.presences = m.presences[:len(m.presences)-1]
 					break
 				}
 			}
@@ -158,8 +186,19 @@ func (m *MatchPresenceList) Leave(leaves []*MatchPresence) []*MatchPresence {
 			processed = append(processed, leave)
 		}
 	}
+	l := len(processed)
+	if l != 0 {
+		presencesRead := make([]*MatchPresence, 0, len(m.presences))
+		presenceIDsRead := make([]*PresenceID, 0, len(m.presences))
+		for _, presence := range m.presences {
+			presencesRead = append(presencesRead, presence.Presence)
+			presenceIDsRead = append(presenceIDsRead, presence.PresenceID)
+		}
+		m.presencesRead.Store(presencesRead)
+		m.presenceIDsRead.Store(presenceIDsRead)
+	}
 	m.Unlock()
-	if l := len(processed); l != 0 {
+	if l != 0 {
 		m.size.Sub(int32(l))
 	}
 	return processed
@@ -175,24 +214,26 @@ func (m *MatchPresenceList) Contains(presence *PresenceID) bool {
 	return found
 }
 
-func (m *MatchPresenceList) ListPresenceIDs() []*PresenceID {
+func (m *MatchPresenceList) FilterPresenceIDs(ids []*PresenceID) []*PresenceID {
 	m.RLock()
-	list := make([]*PresenceID, 0, len(m.presences))
-	for _, presence := range m.presences {
-		list = append(list, presence.PresenceID)
+	for i := 0; i < len(ids); i++ {
+		if node, ok := m.presenceMap[ids[i].SessionID]; !ok || node != ids[i].Node {
+			ids[i] = ids[len(ids)-1]
+			ids[len(ids)-1] = nil
+			ids = ids[:len(ids)-1]
+			i--
+		}
 	}
 	m.RUnlock()
-	return list
+	return ids
 }
 
 func (m *MatchPresenceList) ListPresences() []*MatchPresence {
-	m.RLock()
-	list := make([]*MatchPresence, 0, len(m.presences))
-	for _, presence := range m.presences {
-		list = append(list, presence.Presence)
-	}
-	m.RUnlock()
-	return list
+	return m.presencesRead.Load().([]*MatchPresence)
+}
+
+func (m *MatchPresenceList) ListPresenceIDs() []*PresenceID {
+	return m.presenceIDsRead.Load().([]*PresenceID)
 }
 
 func (m *MatchPresenceList) Size() int {

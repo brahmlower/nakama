@@ -9,6 +9,11 @@
       "email": "hello@heroiclabs.com"
     }
   },
+  "tags": [
+    {
+      "name": "Nakama"
+    }
+  ],
   "host": "127.0.0.1:7350",
   "schemes": [
     "http"
@@ -28,6 +33,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -65,6 +71,28 @@
           "Nakama"
         ]
       },
+      "delete": {
+        "summary": "Delete the current user's account.",
+        "operationId": "Nakama_DeleteAccount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Nakama"
+        ]
+      },
       "put": {
         "summary": "Update fields in the current user's account.",
         "operationId": "Nakama_UpdateAccount",
@@ -72,6 +100,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -85,6 +114,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Update a user's account details.",
             "in": "body",
             "required": true,
             "schema": {
@@ -117,7 +147,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The Apple account details.",
             "in": "body",
             "required": true,
@@ -170,7 +200,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The custom account details.",
             "in": "body",
             "required": true,
@@ -223,7 +253,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The device account details.",
             "in": "body",
             "required": true,
@@ -276,7 +306,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The email account details.",
             "in": "body",
             "required": true,
@@ -329,7 +359,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The Facebook account details.",
             "in": "body",
             "required": true,
@@ -389,7 +419,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The Facebook Instant Game account details.",
             "in": "body",
             "required": true,
@@ -442,7 +472,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The Game Center account details.",
             "in": "body",
             "required": true,
@@ -495,7 +525,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The Google account details.",
             "in": "body",
             "required": true,
@@ -548,7 +578,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The Steam account details.",
             "in": "body",
             "required": true,
@@ -569,6 +599,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "sync",
+            "description": "Import Steam friends for the user.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -589,6 +626,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -602,6 +640,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a Apple Sign In token to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -622,6 +661,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -635,6 +675,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a custom ID to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -655,6 +696,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -668,6 +710,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a device to the server. Used with authenticate/link/unlink and user.",
             "in": "body",
             "required": true,
             "schema": {
@@ -688,6 +731,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -701,6 +745,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send an email with password to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -721,6 +766,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -733,7 +779,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The Facebook account details.",
             "in": "body",
             "required": true,
@@ -762,6 +808,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -775,6 +822,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a Facebook Instant Game token to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -795,6 +843,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -808,6 +857,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send Apple's Game Center account credentials to the server. Used with authenticate/link/unlink.\n\nhttps://developer.apple.com/documentation/gamekit/gklocalplayer/1515407-generateidentityverificationsign",
             "in": "body",
             "required": true,
             "schema": {
@@ -828,6 +878,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -841,6 +892,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a Google token to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -861,6 +913,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -874,10 +927,11 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Link Steam to the current user's account.",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apiAccountSteam"
+              "$ref": "#/definitions/apiLinkSteamRequest"
             }
           }
         ],
@@ -907,6 +961,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Authenticate against the server with a refresh token.",
             "in": "body",
             "required": true,
             "schema": {
@@ -932,6 +987,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -945,6 +1001,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a Apple Sign In token to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -965,6 +1022,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -978,6 +1036,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a custom ID to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -998,6 +1057,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1011,6 +1071,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a device to the server. Used with authenticate/link/unlink and user.",
             "in": "body",
             "required": true,
             "schema": {
@@ -1031,6 +1092,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1044,6 +1106,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send an email with password to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -1064,6 +1127,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1077,6 +1141,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a Facebook token to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -1097,6 +1162,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1110,6 +1176,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a Facebook Instant Game token to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -1130,6 +1197,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1143,6 +1211,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send Apple's Game Center account credentials to the server. Used with authenticate/link/unlink.\n\nhttps://developer.apple.com/documentation/gamekit/gklocalplayer/1515407-generateidentityverificationsign",
             "in": "body",
             "required": true,
             "schema": {
@@ -1163,6 +1232,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1176,6 +1246,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a Google token to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -1196,6 +1267,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1209,6 +1281,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Send a Steam token to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -1283,6 +1356,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1296,6 +1370,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Represents an event to be passed through the server to registered event handlers.",
             "in": "body",
             "required": true,
             "schema": {
@@ -1362,6 +1437,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1407,6 +1483,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1417,6 +1494,30 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "ids",
+            "description": "The account id of a user.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "usernames",
+            "description": "The account username of a user.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
         "tags": [
           "Nakama"
         ]
@@ -1430,6 +1531,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1440,6 +1542,30 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "ids",
+            "description": "The account id of a user.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "usernames",
+            "description": "The account username of a user.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
         "tags": [
           "Nakama"
         ]
@@ -1453,6 +1579,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1465,12 +1592,54 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "account",
             "description": "The Facebook account details.",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/apiAccountFacebook"
+            }
+          },
+          {
+            "name": "reset",
+            "description": "Reset the current user's friends list.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      }
+    },
+    "/v2/friend/steam": {
+      "post": {
+        "summary": "Import Steam friends and add them to a user's account.",
+        "operationId": "Nakama_ImportSteamFriends",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "account",
+            "description": "The Facebook account details.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiAccountSteam"
             }
           },
           {
@@ -1526,6 +1695,28 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "langTag",
+            "description": "Language tag filter",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "members",
+            "description": "Number of group members",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "open",
+            "description": "Optional Open/Closed filter.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -1552,6 +1743,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Create a group with the current user as owner.",
             "in": "body",
             "required": true,
             "schema": {
@@ -1572,6 +1764,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1602,6 +1795,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1625,7 +1819,30 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apiUpdateGroupRequest"
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description string."
+                },
+                "langTag": {
+                  "type": "string",
+                  "description": "Lang tag."
+                },
+                "avatarUrl": {
+                  "type": "string",
+                  "description": "Avatar URL."
+                },
+                "open": {
+                  "type": "boolean",
+                  "description": "Open is true if anyone should be allowed to join, or false if joins must be approved by a group admin."
+                }
+              },
+              "description": "Update fields in a given group."
             }
           }
         ],
@@ -1642,6 +1859,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1659,6 +1877,17 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "userIds",
+            "description": "The users to add.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1674,6 +1903,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1691,6 +1921,17 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "userIds",
+            "description": "The users to ban.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1706,6 +1947,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1723,6 +1965,17 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "userIds",
+            "description": "The users to demote.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1738,6 +1991,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1770,6 +2024,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1787,6 +2042,17 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "userIds",
+            "description": "The users to kick.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1802,6 +2068,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1834,6 +2101,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -1851,6 +2119,17 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "userIds",
+            "description": "The users to promote.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1905,6 +2184,237 @@
             "description": "An optional next page cursor.",
             "in": "query",
             "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      }
+    },
+    "/v2/iap/purchase/apple": {
+      "post": {
+        "summary": "Validate Apple IAP Receipt",
+        "operationId": "Nakama_ValidatePurchaseApple",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiValidatePurchaseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiValidatePurchaseAppleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      }
+    },
+    "/v2/iap/purchase/google": {
+      "post": {
+        "summary": "Validate Google IAP Receipt",
+        "operationId": "Nakama_ValidatePurchaseGoogle",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiValidatePurchaseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiValidatePurchaseGoogleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      }
+    },
+    "/v2/iap/purchase/huawei": {
+      "post": {
+        "summary": "Validate Huawei IAP Receipt",
+        "operationId": "Nakama_ValidatePurchaseHuawei",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiValidatePurchaseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiValidatePurchaseHuaweiRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      }
+    },
+    "/v2/iap/subscription": {
+      "post": {
+        "summary": "List user's subscriptions.",
+        "operationId": "Nakama_ListSubscriptions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiSubscriptionList"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "List user subscriptions.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiListSubscriptionsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      }
+    },
+    "/v2/iap/subscription/apple": {
+      "post": {
+        "summary": "Validate Apple Subscription Receipt",
+        "operationId": "Nakama_ValidateSubscriptionApple",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiValidateSubscriptionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiValidateSubscriptionAppleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      }
+    },
+    "/v2/iap/subscription/google": {
+      "post": {
+        "summary": "Validate Google Subscription Receipt",
+        "operationId": "Nakama_ValidateSubscriptionGoogle",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiValidateSubscriptionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiValidateSubscriptionGoogleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      }
+    },
+    "/v2/iap/subscription/{productId}": {
+      "get": {
+        "summary": "Get subscription by product id.",
+        "operationId": "Nakama_GetSubscription",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiValidatedSubscription"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "productId",
+            "description": "Product id of the subscription",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -1985,6 +2495,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -2034,7 +2545,7 @@
             "type": "string"
           },
           {
-            "name": "body",
+            "name": "record",
             "description": "Record input.",
             "in": "body",
             "required": true,
@@ -2096,6 +2607,13 @@
             "required": false,
             "type": "string",
             "format": "int64"
+          },
+          {
+            "name": "cursor",
+            "description": "A next or previous page cursor.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2202,7 +2720,7 @@
           },
           {
             "name": "cacheableCursor",
-            "description": "A cursor to page through notifications. May be cached by clients to get from point in time forwards.",
+            "description": "A cursor to page through notifications. May be cached by clients to get from point in time forwards.\n\nvalue from NotificationList.cacheable_cursor.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2219,6 +2737,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -2324,7 +2843,7 @@
             "type": "string"
           },
           {
-            "name": "body",
+            "name": "payload",
             "description": "The payload of the function which must be a JSON object.",
             "in": "body",
             "required": true,
@@ -2351,6 +2870,41 @@
         ]
       }
     },
+    "/v2/session/logout": {
+      "post": {
+        "summary": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
+        "operationId": "Nakama_SessionLogout",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiSessionLogoutRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      }
+    },
     "/v2/storage": {
       "post": {
         "summary": "Get storage objects.",
@@ -2372,6 +2926,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Batch get storage objects.",
             "in": "body",
             "required": true,
             "schema": {
@@ -2403,6 +2958,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Write objects to the storage engine.",
             "in": "body",
             "required": true,
             "schema": {
@@ -2423,6 +2979,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -2436,6 +2993,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Batch delete storage objects.",
             "in": "body",
             "required": true,
             "schema": {
@@ -2491,7 +3049,7 @@
           },
           {
             "name": "cursor",
-            "description": "The cursor to page through results from.",
+            "description": "The cursor to page through results from.\n\nvalue from StorageObjectList.cursor.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2545,7 +3103,7 @@
           },
           {
             "name": "cursor",
-            "description": "The cursor to page through results from.",
+            "description": "The cursor to page through results from.\n\nvalue from StorageObjectList.cursor.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2693,6 +3251,76 @@
           "Nakama"
         ]
       },
+      "delete": {
+        "summary": "Delete a tournament record.",
+        "operationId": "Nakama_DeleteTournamentRecord",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tournamentId",
+            "description": "The tournament ID to delete from.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      },
+      "post": {
+        "summary": "Write a record to a tournament.",
+        "operationId": "Nakama_WriteTournamentRecord2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiLeaderboardRecord"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tournamentId",
+            "description": "The tournament ID to write the record for.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "record",
+            "description": "Record input.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/WriteTournamentRecordRequestTournamentRecordWrite"
+            }
+          }
+        ],
+        "tags": [
+          "Nakama"
+        ]
+      },
       "put": {
         "summary": "Write a record to a tournament.",
         "operationId": "Nakama_WriteTournamentRecord",
@@ -2719,7 +3347,7 @@
             "type": "string"
           },
           {
-            "name": "body",
+            "name": "record",
             "description": "Record input.",
             "in": "body",
             "required": true,
@@ -2741,6 +3369,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
+              "type": "object",
               "properties": {}
             }
           },
@@ -2813,6 +3442,13 @@
             "required": false,
             "type": "string",
             "format": "int64"
+          },
+          {
+            "name": "cursor",
+            "description": "A next or previous page cursor.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2981,6 +3617,10 @@
         "metadata": {
           "type": "string",
           "description": "Optional record metadata."
+        },
+        "operator": {
+          "$ref": "#/definitions/apiOperator",
+          "description": "Operator override."
         }
       },
       "description": "Record values to write."
@@ -3001,6 +3641,10 @@
         "metadata": {
           "type": "string",
           "description": "A JSON object of additional properties (optional)."
+        },
+        "operator": {
+          "$ref": "#/definitions/apiOperator",
+          "description": "Operator override."
         }
       },
       "description": "Record values to write."
@@ -3023,6 +3667,7 @@
         "devices": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiAccountDevice"
           },
           "description": "The devices which belong to the user's account."
@@ -3034,12 +3679,12 @@
         "verifyTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the user's email was verified."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user's email was verified."
         },
         "disableTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the user's account was disabled/banned."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user's account was disabled/banned."
         }
       },
       "description": "A user with additional account details. Always the current user."
@@ -3104,7 +3749,7 @@
         },
         "password": {
           "type": "string",
-          "description": "A password for the user account."
+          "description": "A password for the user account.\n\nIgnored with unlink operations."
         },
         "vars": {
           "type": "object",
@@ -3186,7 +3831,7 @@
           "description": "Extra information that will be bundled in the session token."
         }
       },
-      "description": "Send Apple's Game Center account credentials to the server. Used with authenticate/link/unlink."
+      "description": "Send Apple's Game Center account credentials to the server. Used with authenticate/link/unlink.\n\nhttps://developer.apple.com/documentation/gamekit/gklocalplayer/1515407-generateidentityverificationsign"
     },
     "apiAccountGoogle": {
       "type": "object",
@@ -3253,12 +3898,12 @@
         "createTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the message was created."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the message was created."
         },
         "updateTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the message was last updated."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the message was last updated."
         },
         "persistent": {
           "type": "boolean",
@@ -3289,6 +3934,7 @@
         "messages": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiChannelMessage"
           },
           "description": "A list of messages."
@@ -3363,6 +4009,7 @@
         "objectIds": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiDeleteStorageObjectId"
           },
           "description": "Batch of storage objects."
@@ -3406,7 +4053,7 @@
         "state": {
           "type": "integer",
           "format": "int32",
-          "description": "The friend status."
+          "description": "The friend status.\n\none of \"Friend.State\"."
         },
         "updateTime": {
           "type": "string",
@@ -3422,6 +4069,7 @@
         "friends": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiFriend"
           },
           "description": "The Friend objects."
@@ -3481,12 +4129,12 @@
         "createTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the group was created."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the group was created."
         },
         "updateTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the group was last updated."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the group was last updated."
         }
       },
       "description": "A group in the server."
@@ -3497,6 +4145,7 @@
         "groups": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiGroup"
           },
           "description": "One or more groups."
@@ -3514,6 +4163,7 @@
         "groupUsers": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/GroupUserListGroupUser"
           },
           "description": "User-role pairs for a group."
@@ -3562,17 +4212,17 @@
         "createTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the leaderboard record was created."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the leaderboard record was created."
         },
         "updateTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the leaderboard record was updated."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the leaderboard record was updated."
         },
         "expiryTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the leaderboard record expires."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the leaderboard record expires."
         },
         "rank": {
           "type": "string",
@@ -3593,6 +4243,7 @@
         "records": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiLeaderboardRecord"
           },
           "description": "A list of leaderboard records."
@@ -3600,6 +4251,7 @@
         "ownerRecords": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiLeaderboardRecord"
           },
           "description": "A batched set of leaderboard records belonging to specified owners."
@@ -3611,9 +4263,43 @@
         "prevCursor": {
           "type": "string",
           "description": "The cursor to send when retrieving the previous page, if any."
+        },
+        "rankCount": {
+          "type": "string",
+          "format": "int64",
+          "description": "The total number of ranks available."
         }
       },
       "description": "A set of leaderboard records, may be part of a leaderboard records page or a batch of individual records."
+    },
+    "apiLinkSteamRequest": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/apiAccountSteam",
+          "description": "The Facebook account details."
+        },
+        "sync": {
+          "type": "boolean",
+          "description": "Import Steam friends for the user."
+        }
+      },
+      "description": "Link Steam to the current user's account."
+    },
+    "apiListSubscriptionsRequest": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Max number of results per page"
+        },
+        "cursor": {
+          "type": "string",
+          "title": "Cursor to retrieve a page of records from"
+        }
+      },
+      "description": "List user subscriptions."
     },
     "apiMatch": {
       "type": "object",
@@ -3653,6 +4339,7 @@
         "matches": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiMatch"
           },
           "description": "A number of matches corresponding to a list operation."
@@ -3687,7 +4374,7 @@
         "createTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the notification was created."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the notification was created."
         },
         "persistent": {
           "type": "boolean",
@@ -3702,6 +4389,7 @@
         "notifications": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiNotification"
           },
           "description": "Collection of notifications."
@@ -3712,6 +4400,18 @@
         }
       },
       "description": "A collection of zero or more notifications."
+    },
+    "apiOperator": {
+      "type": "string",
+      "enum": [
+        "NO_OVERRIDE",
+        "BEST",
+        "SET",
+        "INCREMENT",
+        "DECREMENT"
+      ],
+      "default": "NO_OVERRIDE",
+      "description": "Operator that can be used to override the one set in the leaderboard.\n\n - NO_OVERRIDE: Do not override the leaderboard operator.\n - BEST: Override the leaderboard operator with BEST.\n - SET: Override the leaderboard operator with SET.\n - INCREMENT: Override the leaderboard operator with INCREMENT.\n - DECREMENT: Override the leaderboard operator with DECREMENT."
     },
     "apiReadStorageObjectId": {
       "type": "object",
@@ -3737,6 +4437,7 @@
         "objectIds": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiReadStorageObjectId"
           },
           "description": "Batch of storage objects."
@@ -3779,6 +4480,20 @@
         }
       },
       "description": "A user's session used to authenticate messages."
+    },
+    "apiSessionLogoutRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "Session token to log out."
+        },
+        "refreshToken": {
+          "type": "string",
+          "description": "Refresh token to invalidate."
+        }
+      },
+      "description": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user."
     },
     "apiSessionRefreshRequest": {
       "type": "object",
@@ -3833,12 +4548,12 @@
         "createTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the object was created."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the object was created."
         },
         "updateTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the object was last updated."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the object was last updated."
         }
       },
       "description": "An object within the storage engine."
@@ -3861,6 +4576,16 @@
         "userId": {
           "type": "string",
           "description": "The owner of the object."
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the object was created."
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the object was last updated."
         }
       },
       "description": "A storage acknowledgement."
@@ -3871,6 +4596,7 @@
         "acks": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiStorageObjectAck"
           },
           "description": "Batch of storage write acknowledgements."
@@ -3884,6 +4610,7 @@
         "objects": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiStorageObject"
           },
           "description": "The list of storage objects."
@@ -3901,12 +4628,57 @@
         "objects": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiStorageObject"
           },
           "description": "The batch of storage objects."
         }
       },
       "description": "Batch of storage objects."
+    },
+    "apiStoreEnvironment": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "SANDBOX",
+        "PRODUCTION"
+      ],
+      "default": "UNKNOWN",
+      "description": "- UNKNOWN: Unknown environment.\n - SANDBOX: Sandbox/test environment.\n - PRODUCTION: Production environment.",
+      "title": "Environment where a purchase/subscription took place,"
+    },
+    "apiStoreProvider": {
+      "type": "string",
+      "enum": [
+        "APPLE_APP_STORE",
+        "GOOGLE_PLAY_STORE",
+        "HUAWEI_APP_GALLERY"
+      ],
+      "default": "APPLE_APP_STORE",
+      "description": "- APPLE_APP_STORE: Apple App Store\n - GOOGLE_PLAY_STORE: Google Play Store\n - HUAWEI_APP_GALLERY: Huawei App Gallery",
+      "title": "Validation Provider,"
+    },
+    "apiSubscriptionList": {
+      "type": "object",
+      "properties": {
+        "validatedSubscriptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiValidatedSubscription"
+          },
+          "description": "Stored validated subscriptions."
+        },
+        "cursor": {
+          "type": "string",
+          "description": "The cursor to send when retrieving the next page, if any."
+        },
+        "prevCursor": {
+          "type": "string",
+          "description": "The cursor to send when retrieving the previous page, if any."
+        }
+      },
+      "description": "A list of validated subscriptions stored by Nakama."
     },
     "apiTournament": {
       "type": "object",
@@ -3931,7 +4703,7 @@
         "sortOrder": {
           "type": "integer",
           "format": "int64",
-          "description": "ASC or DESC sort mode of scores in the tournament."
+          "description": "ASC (0) or DESC (1) sort mode of scores in the tournament."
         },
         "size": {
           "type": "integer",
@@ -3969,17 +4741,17 @@
         "createTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the tournament was created."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the tournament was created."
         },
         "startTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the tournament will start."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the tournament will start."
         },
         "endTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the tournament will be stopped."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the tournament will be stopped."
         },
         "duration": {
           "type": "integer",
@@ -3990,6 +4762,19 @@
           "type": "integer",
           "format": "int64",
           "description": "The UNIX time when the tournament start being active. A computed value."
+        },
+        "prevReset": {
+          "type": "integer",
+          "format": "int64",
+          "description": "The UNIX time when the tournament was last reset. A computed value."
+        },
+        "operator": {
+          "$ref": "#/definitions/apiOperator",
+          "description": "Operator."
+        },
+        "authoritative": {
+          "type": "boolean",
+          "description": "Whether the leaderboard was created authoritatively or not."
         }
       },
       "description": "A tournament on the server."
@@ -4000,6 +4785,7 @@
         "tournaments": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiTournament"
           },
           "description": "The list of tournaments returned."
@@ -4017,6 +4803,7 @@
         "records": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiLeaderboardRecord"
           },
           "description": "A list of tournament records."
@@ -4024,6 +4811,7 @@
         "ownerRecords": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiLeaderboardRecord"
           },
           "description": "A batched set of tournament records belonging to specified owners."
@@ -4035,6 +4823,11 @@
         "prevCursor": {
           "type": "string",
           "description": "The cursor to send when retrieving the previous page (optional)."
+        },
+        "rankCount": {
+          "type": "string",
+          "format": "int64",
+          "description": "The total number of ranks available."
         }
       },
       "description": "A set of tournament records which may be part of a tournament records page or a batch of individual records."
@@ -4068,36 +4861,6 @@
         }
       },
       "description": "Update a user's account details."
-    },
-    "apiUpdateGroupRequest": {
-      "type": "object",
-      "properties": {
-        "groupId": {
-          "type": "string",
-          "description": "The ID of the group to update."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name."
-        },
-        "description": {
-          "type": "string",
-          "description": "Description string."
-        },
-        "langTag": {
-          "type": "string",
-          "description": "Lang tag."
-        },
-        "avatarUrl": {
-          "type": "string",
-          "description": "Avatar URL."
-        },
-        "open": {
-          "type": "boolean",
-          "description": "Open is true if anyone should be allowed to join, or false if joins must be approved by a group admin."
-        }
-      },
-      "description": "Update fields in a given group."
     },
     "apiUser": {
       "type": "object",
@@ -4162,12 +4925,12 @@
         "createTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the user was created."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user was created."
         },
         "updateTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The UNIX time when the user was last updated."
+          "description": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user was last updated."
         },
         "facebookInstantGameId": {
           "type": "string",
@@ -4186,6 +4949,7 @@
         "userGroups": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/UserGroupListUserGroup"
           },
           "description": "Group-role pairs for a user."
@@ -4203,12 +4967,226 @@
         "users": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiUser"
           },
           "description": "The User objects."
         }
       },
       "description": "A collection of zero or more users."
+    },
+    "apiValidatePurchaseAppleRequest": {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "type": "string",
+          "description": "Base64 encoded Apple receipt data payload."
+        },
+        "persist": {
+          "type": "boolean",
+          "title": "Persist the purchase"
+        }
+      },
+      "title": "Apple IAP Purchases validation request"
+    },
+    "apiValidatePurchaseGoogleRequest": {
+      "type": "object",
+      "properties": {
+        "purchase": {
+          "type": "string",
+          "description": "JSON encoded Google purchase payload."
+        },
+        "persist": {
+          "type": "boolean",
+          "title": "Persist the purchase"
+        }
+      },
+      "title": "Google IAP Purchase validation request"
+    },
+    "apiValidatePurchaseHuaweiRequest": {
+      "type": "object",
+      "properties": {
+        "purchase": {
+          "type": "string",
+          "description": "JSON encoded Huawei InAppPurchaseData."
+        },
+        "signature": {
+          "type": "string",
+          "description": "InAppPurchaseData signature."
+        },
+        "persist": {
+          "type": "boolean",
+          "title": "Persist the purchase"
+        }
+      },
+      "title": "Huawei IAP Purchase validation request"
+    },
+    "apiValidatePurchaseResponse": {
+      "type": "object",
+      "properties": {
+        "validatedPurchases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiValidatedPurchase"
+          },
+          "description": "Newly seen validated purchases."
+        }
+      },
+      "description": "Validate IAP response."
+    },
+    "apiValidateSubscriptionAppleRequest": {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "type": "string",
+          "description": "Base64 encoded Apple receipt data payload."
+        },
+        "persist": {
+          "type": "boolean",
+          "description": "Persist the subscription."
+        }
+      },
+      "title": "Apple Subscription validation request"
+    },
+    "apiValidateSubscriptionGoogleRequest": {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "type": "string",
+          "description": "JSON encoded Google purchase payload."
+        },
+        "persist": {
+          "type": "boolean",
+          "description": "Persist the subscription."
+        }
+      },
+      "title": "Google Subscription validation request"
+    },
+    "apiValidateSubscriptionResponse": {
+      "type": "object",
+      "properties": {
+        "validatedSubscription": {
+          "$ref": "#/definitions/apiValidatedSubscription"
+        }
+      },
+      "description": "Validate Subscription response."
+    },
+    "apiValidatedPurchase": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Purchase User ID."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Purchase Product ID."
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "Purchase Transaction ID."
+        },
+        "store": {
+          "$ref": "#/definitions/apiStoreProvider",
+          "title": "Store identifier"
+        },
+        "purchaseTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the purchase was done."
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the receipt validation was stored in DB."
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the receipt validation was updated in DB."
+        },
+        "refundTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Timestamp when the purchase was refunded. Set to UNIX"
+        },
+        "providerResponse": {
+          "type": "string",
+          "description": "Raw provider validation response."
+        },
+        "environment": {
+          "$ref": "#/definitions/apiStoreEnvironment",
+          "description": "Whether the purchase was done in production or sandbox environment."
+        },
+        "seenBefore": {
+          "type": "boolean",
+          "description": "Whether the purchase had already been validated by Nakama before."
+        }
+      },
+      "description": "Validated Purchase stored by Nakama."
+    },
+    "apiValidatedSubscription": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Subscription User ID."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Purchase Product ID."
+        },
+        "originalTransactionId": {
+          "type": "string",
+          "description": "Purchase Original transaction ID (we only keep track of the original subscription, not subsequent renewals)."
+        },
+        "store": {
+          "$ref": "#/definitions/apiStoreProvider",
+          "title": "Store identifier"
+        },
+        "purchaseTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UNIX Timestamp when the purchase was done."
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UNIX Timestamp when the receipt validation was stored in DB."
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UNIX Timestamp when the receipt validation was updated in DB."
+        },
+        "environment": {
+          "$ref": "#/definitions/apiStoreEnvironment",
+          "description": "Whether the purchase was done in production or sandbox environment."
+        },
+        "expiryTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Subscription expiration time. The subscription can still be auto-renewed to extend the expiration time further."
+        },
+        "refundTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Subscription refund time. If this time is set, the subscription was refunded."
+        },
+        "providerResponse": {
+          "type": "string",
+          "description": "Raw provider validation response body."
+        },
+        "providerNotification": {
+          "type": "string",
+          "description": "Raw provider notification body."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Whether the subscription is currently active or not."
+        }
+      }
     },
     "apiWriteStorageObject": {
       "type": "object",
@@ -4227,7 +5205,7 @@
         },
         "version": {
           "type": "string",
-          "description": "The version hash of the object to check. Possible values are: [\"\", \"*\", \"#hash#\"]."
+          "description": "The version hash of the object to check. Possible values are: [\"\", \"*\", \"#hash#\"].\n\nif-match and if-none-match"
         },
         "permissionRead": {
           "type": "integer",
@@ -4248,6 +5226,7 @@
         "objects": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/apiWriteStorageObject"
           },
           "description": "The objects to store on the server."
@@ -4258,14 +5237,11 @@
     "protobufAny": {
       "type": "object",
       "properties": {
-        "typeUrl": {
+        "@type": {
           "type": "string"
-        },
-        "value": {
-          "type": "string",
-          "format": "byte"
         }
-      }
+      },
+      "additionalProperties": {}
     },
     "rpcStatus": {
       "type": "object",
@@ -4280,6 +5256,7 @@
         "details": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }

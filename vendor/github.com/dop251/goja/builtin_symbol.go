@@ -7,6 +7,7 @@ var (
 	SymIsConcatSpreadable = newSymbol(asciiString("Symbol.isConcatSpreadable"))
 	SymIterator           = newSymbol(asciiString("Symbol.iterator"))
 	SymMatch              = newSymbol(asciiString("Symbol.match"))
+	SymMatchAll           = newSymbol(asciiString("Symbol.matchAll"))
 	SymReplace            = newSymbol(asciiString("Symbol.replace"))
 	SymSearch             = newSymbol(asciiString("Symbol.search"))
 	SymSpecies            = newSymbol(asciiString("Symbol.species"))
@@ -17,11 +18,9 @@ var (
 )
 
 func (r *Runtime) builtin_symbol(call FunctionCall) Value {
-	var desc valueString
+	var desc String
 	if arg := call.Argument(0); !IsUndefined(arg) {
 		desc = arg.toString()
-	} else {
-		desc = stringEmpty
 	}
 	return newSymbol(desc)
 }
@@ -88,6 +87,20 @@ func (r *Runtime) symbol_keyfor(call FunctionCall) Value {
 	return _undefined
 }
 
+func (r *Runtime) thisSymbolValue(v Value) *Symbol {
+	if sym, ok := v.(*Symbol); ok {
+		return sym
+	}
+	if obj, ok := v.(*Object); ok {
+		if pVal, ok := obj.self.(*primitiveValueObject); ok {
+			if sym, ok := pVal.pValue.(*Symbol); ok {
+				return sym
+			}
+		}
+	}
+	panic(r.NewTypeError("Value is not a Symbol"))
+}
+
 func (r *Runtime) createSymbolProto(val *Object) objectImpl {
 	o := &baseObject{
 		class:      classObject,
@@ -97,26 +110,36 @@ func (r *Runtime) createSymbolProto(val *Object) objectImpl {
 	}
 	o.init()
 
-	o._putProp("constructor", r.global.Symbol, true, false, true)
-	o._putProp("toString", r.newNativeFunc(r.symbolproto_tostring, nil, "toString", nil, 0), true, false, true)
-	o._putProp("valueOf", r.newNativeFunc(r.symbolproto_valueOf, nil, "valueOf", nil, 0), true, false, true)
-	o._putSym(SymToPrimitive, valueProp(r.newNativeFunc(r.symbolproto_valueOf, nil, "[Symbol.toPrimitive]", nil, 1), false, false, true))
+	o._putProp("constructor", r.getSymbol(), true, false, true)
+	o.setOwnStr("description", &valueProperty{
+		configurable: true,
+		getterFunc: r.newNativeFunc(func(call FunctionCall) Value {
+			return r.thisSymbolValue(call.This).desc
+		}, "get description", 0),
+		accessor: true,
+	}, false)
+	o._putProp("toString", r.newNativeFunc(r.symbolproto_tostring, "toString", 0), true, false, true)
+	o._putProp("valueOf", r.newNativeFunc(r.symbolproto_valueOf, "valueOf", 0), true, false, true)
+	o._putSym(SymToPrimitive, valueProp(r.newNativeFunc(r.symbolproto_valueOf, "[Symbol.toPrimitive]", 1), false, false, true))
 	o._putSym(SymToStringTag, valueProp(newStringValue("Symbol"), false, false, true))
 
 	return o
 }
 
 func (r *Runtime) createSymbol(val *Object) objectImpl {
-	o := r.newNativeFuncObj(val, r.builtin_symbol, nil, "Symbol", r.global.SymbolPrototype, 0)
+	o := r.newNativeFuncAndConstruct(val, r.builtin_symbol, func(args []Value, newTarget *Object) *Object {
+		panic(r.NewTypeError("Symbol is not a constructor"))
+	}, r.getSymbolPrototype(), "Symbol", _positiveZero)
 
-	o._putProp("for", r.newNativeFunc(r.symbol_for, nil, "for", nil, 1), true, false, true)
-	o._putProp("keyFor", r.newNativeFunc(r.symbol_keyfor, nil, "keyFor", nil, 1), true, false, true)
+	o._putProp("for", r.newNativeFunc(r.symbol_for, "for", 1), true, false, true)
+	o._putProp("keyFor", r.newNativeFunc(r.symbol_keyfor, "keyFor", 1), true, false, true)
 
 	for _, s := range []*Symbol{
 		SymHasInstance,
 		SymIsConcatSpreadable,
 		SymIterator,
 		SymMatch,
+		SymMatchAll,
 		SymReplace,
 		SymSearch,
 		SymSpecies,
@@ -133,10 +156,22 @@ func (r *Runtime) createSymbol(val *Object) objectImpl {
 	return o
 }
 
-func (r *Runtime) initSymbol() {
-	r.global.SymbolPrototype = r.newLazyObject(r.createSymbolProto)
+func (r *Runtime) getSymbolPrototype() *Object {
+	ret := r.global.SymbolPrototype
+	if ret == nil {
+		ret = &Object{runtime: r}
+		r.global.SymbolPrototype = ret
+		ret.self = r.createSymbolProto(ret)
+	}
+	return ret
+}
 
-	r.global.Symbol = r.newLazyObject(r.createSymbol)
-	r.addToGlobal("Symbol", r.global.Symbol)
-
+func (r *Runtime) getSymbol() *Object {
+	ret := r.global.Symbol
+	if ret == nil {
+		ret = &Object{runtime: r}
+		r.global.Symbol = ret
+		ret.self = r.createSymbol(ret)
+	}
+	return ret
 }

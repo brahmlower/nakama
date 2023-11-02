@@ -19,30 +19,31 @@ import (
 	"context"
 	"encoding/gob"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/analysis/analyzer/keyword"
-	"github.com/blevesearch/bleve/search/query"
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/blugelabs/bluge"
+	"github.com/blugelabs/bluge/index"
+	"github.com/gofrs/uuid/v5"
 	"github.com/heroiclabs/nakama-common/api"
 	"github.com/heroiclabs/nakama-common/rtapi"
 	"github.com/heroiclabs/nakama-common/runtime"
-	"github.com/pkg/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func init() {
 	// Ensure gob can deal with typical types that might be used in match parameters.
 	gob.Register(map[string]interface{}(nil))
 	gob.Register([]interface{}(nil))
+	gob.Register([]runtime.Presence(nil))
+	gob.Register(&Presence{})
 	gob.Register([]runtime.MatchmakerEntry(nil))
-	gob.Register(MatchmakerEntry{})
+	gob.Register(&MatchmakerEntry{})
 	gob.Register([]*api.User(nil))
 	gob.Register([]*api.Account(nil))
 	gob.Register([]*api.Friend(nil))
@@ -54,13 +55,6 @@ var (
 	MatchFilterRelayed = map[uint8]*uint8{StreamModeMatchRelayed: MatchFilterPtr}
 
 	MatchLabelMaxBytes = 2048
-
-	ErrCannotEncodeParams    = errors.New("error creating match: cannot encode params")
-	ErrMatchIdInvalid        = errors.New("match id invalid")
-	ErrMatchNotFound         = errors.New("match not found")
-	ErrMatchStateFailed      = errors.New("match did not return state")
-	ErrMatchLabelTooLong     = errors.New("match label too long, must be 0-2048 bytes")
-	ErrDeferredBroadcastFull = errors.New("too many deferred message broadcasts per tick")
 )
 
 type MatchIndexEntry struct {
@@ -69,12 +63,18 @@ type MatchIndexEntry struct {
 	LabelString string                 `json:"label_string"`
 	TickRate    int                    `json:"tick_rate"`
 	HandlerName string                 `json:"handler_name"`
+	CreateTime  int64                  `json:"create_time"`
 }
 
-type MatchJoinResult struct {
+type MatchJoinAttemptResult struct {
 	Allow  bool
 	Reason string
 	Label  string
+}
+
+type MatchSignalResult struct {
+	Success bool
+	Result  string
 }
 
 type MatchGetStateResult struct {
@@ -85,20 +85,20 @@ type MatchGetStateResult struct {
 }
 
 type MatchRegistry interface {
-	// Create and start a new match, given a Lua module name or registered Go match function.
-	CreateMatch(ctx context.Context, logger *zap.Logger, createFn RuntimeMatchCreateFunction, module string, params map[string]interface{}) (string, error)
+	// Create and start a new match, given a Lua module name or registered Go or JS match function.
+	CreateMatch(ctx context.Context, createFn RuntimeMatchCreateFunction, module string, params map[string]interface{}) (string, error)
 	// Register and initialise a match that's ready to run.
 	NewMatch(logger *zap.Logger, id uuid.UUID, core RuntimeMatchCore, stopped *atomic.Bool, params map[string]interface{}) (*MatchHandler, error)
 	// Return a match by ID.
-	GetMatch(ctx context.Context, id string) (*api.Match, error)
+	GetMatch(ctx context.Context, id string) (*api.Match, string, error)
 	// Remove a tracked match and ensure all its presences are cleaned up.
 	// Does not ensure the match process itself is no longer running, that must be handled separately.
 	RemoveMatch(id uuid.UUID, stream PresenceStream)
 	// Update the label entry for a given match.
-	UpdateMatchLabel(id uuid.UUID, tickRate int, handlerName, label string) error
+	UpdateMatchLabel(id uuid.UUID, tickRate int, handlerName, label string, createTime int64) error
 	// List (and optionally filter) currently running matches.
 	// This can list across both authoritative and relayed matches.
-	ListMatches(ctx context.Context, limit int, authoritative *wrappers.BoolValue, label *wrappers.StringValue, minSize *wrappers.Int32Value, maxSize *wrappers.Int32Value, query *wrappers.StringValue) ([]*api.Match, error)
+	ListMatches(ctx context.Context, limit int, authoritative *wrapperspb.BoolValue, label *wrapperspb.StringValue, minSize *wrapperspb.Int32Value, maxSize *wrapperspb.Int32Value, query *wrapperspb.StringValue, node *wrapperspb.StringValue) ([]*api.Match, []string, error)
 	// Stop the match registry and close all matches it's tracking.
 	Stop(graceSeconds int) chan struct{}
 	// Returns the total number of currently active authoritative matches.
@@ -117,6 +117,8 @@ type MatchRegistry interface {
 	// Pass a data payload (usually from a user) to the appropriate match handler.
 	// Assumes that the data sender has already been validated as a match participant before this call.
 	SendData(id uuid.UUID, node string, userID, sessionID uuid.UUID, username, fromNode string, opCode int64, data []byte, reliable bool, receiveTime int64)
+	// Signal a match and wait for a response from its arbitrary signal handler function.
+	Signal(ctx context.Context, id, data string) (string, error)
 	// Get a snapshot of the match state in a string representation.
 	GetState(ctx context.Context, id uuid.UUID, node string) ([]*rtapi.UserPresence, int64, string, error)
 }
@@ -127,27 +129,33 @@ type LocalMatchRegistry struct {
 	sessionRegistry SessionRegistry
 	tracker         Tracker
 	router          MessageRouter
-	metrics         *Metrics
+	metrics         Metrics
 	node            string
 
-	matches    *sync.Map
-	matchCount *atomic.Int64
-	index      bleve.Index
+	ctx         context.Context
+	ctxCancelFn context.CancelFunc
+
+	matches     *MapOf[uuid.UUID, *MatchHandler]
+	matchCount  *atomic.Int64
+	indexWriter *bluge.Writer
+
+	pendingUpdatesMutex *sync.Mutex
+	pendingUpdates      map[string]*MatchIndexEntry
 
 	stopped   *atomic.Bool
 	stoppedCh chan struct{}
 }
 
-func NewLocalMatchRegistry(logger, startupLogger *zap.Logger, config Config, sessionRegistry SessionRegistry, tracker Tracker, router MessageRouter, metrics *Metrics, node string) MatchRegistry {
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultAnalyzer = keyword.Name
-
-	index, err := bleve.NewMemOnly(mapping)
+func NewLocalMatchRegistry(logger, startupLogger *zap.Logger, config Config, sessionRegistry SessionRegistry, tracker Tracker, router MessageRouter, metrics Metrics, node string) MatchRegistry {
+	cfg := BlugeInMemoryConfig()
+	indexWriter, err := bluge.OpenWriter(cfg)
 	if err != nil {
 		startupLogger.Fatal("Failed to create match registry index", zap.Error(err))
 	}
 
-	return &LocalMatchRegistry{
+	ctx, ctxCancelFn := context.WithCancel(context.Background())
+
+	r := &LocalMatchRegistry{
 		logger:          logger,
 		config:          config,
 		sessionRegistry: sessionRegistry,
@@ -156,22 +164,76 @@ func NewLocalMatchRegistry(logger, startupLogger *zap.Logger, config Config, ses
 		metrics:         metrics,
 		node:            node,
 
-		matches:    &sync.Map{},
-		matchCount: atomic.NewInt64(0),
-		index:      index,
+		ctx:         ctx,
+		ctxCancelFn: ctxCancelFn,
+
+		matches:     &MapOf[uuid.UUID, *MatchHandler]{},
+		matchCount:  atomic.NewInt64(0),
+		indexWriter: indexWriter,
+
+		pendingUpdatesMutex: &sync.Mutex{},
+		pendingUpdates:      make(map[string]*MatchIndexEntry, 10),
 
 		stopped:   atomic.NewBool(false),
 		stoppedCh: make(chan struct{}, 2),
 	}
+
+	go func() {
+		ticker := time.NewTicker(time.Duration(config.GetMatch().LabelUpdateIntervalMs) * time.Millisecond)
+		batch := bluge.NewBatch()
+		for {
+			select {
+			case <-ctx.Done():
+				ticker.Stop()
+				return
+			case <-ticker.C:
+				r.processLabelUpdates(batch)
+			}
+		}
+	}()
+
+	return r
 }
 
-func (r *LocalMatchRegistry) CreateMatch(ctx context.Context, logger *zap.Logger, createFn RuntimeMatchCreateFunction, module string, params map[string]interface{}) (string, error) {
-	if err := gob.NewEncoder(&bytes.Buffer{}).Encode(params); err != nil {
-		return "", ErrCannotEncodeParams
+func (r *LocalMatchRegistry) processLabelUpdates(batch *index.Batch) {
+	r.pendingUpdatesMutex.Lock()
+	if len(r.pendingUpdates) == 0 {
+		r.pendingUpdatesMutex.Unlock()
+		return
+	}
+	pendingUpdates := r.pendingUpdates
+	r.pendingUpdates = make(map[string]*MatchIndexEntry, len(pendingUpdates)+10)
+	r.pendingUpdatesMutex.Unlock()
+
+	for id, op := range pendingUpdates {
+		if op == nil {
+			batch.Delete(bluge.Identifier(id))
+			continue
+		}
+		doc, err := MapMatchIndexEntry(id, op)
+		if err != nil {
+			r.logger.Error("error mapping match index entry to doc: %v", zap.Error(err))
+		}
+		batch.Update(bluge.Identifier(id), doc)
+	}
+
+	if err := r.indexWriter.Batch(batch); err != nil {
+		r.logger.Error("error processing match label updates", zap.Error(err))
+	}
+	batch.Reset()
+}
+
+func (r *LocalMatchRegistry) CreateMatch(ctx context.Context, createFn RuntimeMatchCreateFunction, module string, params map[string]interface{}) (string, error) {
+	buf := &bytes.Buffer{}
+	if err := gob.NewEncoder(buf).Encode(params); err != nil {
+		return "", runtime.ErrCannotEncodeParams
+	}
+	if err := gob.NewDecoder(buf).Decode(&params); err != nil {
+		return "", runtime.ErrCannotDecodeParams
 	}
 
 	id := uuid.Must(uuid.NewV4())
-	matchLogger := logger.With(zap.String("mid", id.String()))
+	matchLogger := r.logger.With(zap.String("mid", id.String()))
 	stopped := atomic.NewBool(false)
 
 	core, err := createFn(ctx, matchLogger, id, r.node, stopped, module)
@@ -209,49 +271,48 @@ func (r *LocalMatchRegistry) NewMatch(logger *zap.Logger, id uuid.UUID, core Run
 	return match, nil
 }
 
-func (r *LocalMatchRegistry) GetMatch(ctx context.Context, id string) (*api.Match, error) {
+func (r *LocalMatchRegistry) GetMatch(ctx context.Context, id string) (*api.Match, string, error) {
 	// Validate the match ID.
 	idComponents := strings.SplitN(id, ".", 2)
 	if len(idComponents) != 2 {
-		return nil, ErrMatchIdInvalid
+		return nil, "", runtime.ErrMatchIdInvalid
 	}
 	matchID, err := uuid.FromString(idComponents[0])
 	if err != nil {
-		return nil, ErrMatchIdInvalid
+		return nil, "", runtime.ErrMatchIdInvalid
 	}
 
 	// Relayed match.
 	if idComponents[1] == "" {
 		size := r.tracker.CountByStream(PresenceStream{Mode: StreamModeMatchRelayed, Subject: matchID})
 		if size == 0 {
-			return nil, nil
+			return nil, "", nil
 		}
 
 		return &api.Match{
 			MatchId: id,
 			Size:    int32(size),
-		}, nil
+		}, "", nil
 	}
 
 	// Authoritative match.
 	if idComponents[1] != r.node {
-		return nil, nil
+		return nil, "", nil
 	}
 
 	mh, ok := r.matches.Load(matchID)
 	if !ok {
-		return nil, nil
+		return nil, "", nil
 	}
-	handler := mh.(*MatchHandler)
 
 	return &api.Match{
-		MatchId:       handler.IDStr,
+		MatchId:       mh.IDStr,
 		Authoritative: true,
-		Label:         &wrappers.StringValue{Value: handler.Label()},
-		Size:          int32(handler.PresenceList.Size()),
-		TickRate:      int32(handler.Rate),
-		HandlerName:   handler.Core.HandlerName(),
-	}, nil
+		Label:         &wrapperspb.StringValue{Value: mh.Label()},
+		Size:          int32(mh.PresenceList.Size()),
+		TickRate:      int32(mh.Rate),
+		HandlerName:   mh.Core.HandlerName(),
+	}, r.node, nil
 }
 
 func (r *LocalMatchRegistry) RemoveMatch(id uuid.UUID, stream PresenceStream) {
@@ -260,13 +321,16 @@ func (r *LocalMatchRegistry) RemoveMatch(id uuid.UUID, stream PresenceStream) {
 	r.metrics.GaugeAuthoritativeMatches(float64(matchesRemaining))
 
 	r.tracker.UntrackByStream(stream)
-	if err := r.index.Delete(fmt.Sprintf("%v.%v", id.String(), r.node)); err != nil {
-		r.logger.Warn("Error removing match list index", zap.String("id", fmt.Sprintf("%v.%v", id.String(), r.node)), zap.Error(err))
-	}
+
+	idStr := fmt.Sprintf("%v.%v", id.String(), r.node)
+	r.pendingUpdatesMutex.Lock()
+	r.pendingUpdates[idStr] = nil
+	r.pendingUpdatesMutex.Unlock()
 
 	// If there are no more matches in this registry and a shutdown was initiated then signal
 	// that the process is complete.
 	if matchesRemaining == 0 && r.stopped.Load() {
+		r.ctxCancelFn()
 		select {
 		case r.stoppedCh <- struct{}{}:
 		default:
@@ -275,33 +339,53 @@ func (r *LocalMatchRegistry) RemoveMatch(id uuid.UUID, stream PresenceStream) {
 	}
 }
 
-func (r *LocalMatchRegistry) UpdateMatchLabel(id uuid.UUID, tickRate int, handlerName, label string) error {
+func (r *LocalMatchRegistry) UpdateMatchLabel(id uuid.UUID, tickRate int, handlerName, label string, createTime int64) error {
 	if len(label) > MatchLabelMaxBytes {
-		return ErrMatchLabelTooLong
+		return runtime.ErrMatchLabelTooLong
 	}
 	var labelJSON map[string]interface{}
 	// Doesn't matter if this is not JSON.
 	_ = json.Unmarshal([]byte(label), &labelJSON)
-	return r.index.Index(fmt.Sprintf("%v.%v", id.String(), r.node), &MatchIndexEntry{
+
+	idStr := fmt.Sprintf("%v.%v", id.String(), r.node)
+	entry := &MatchIndexEntry{
 		Node:        r.node,
 		Label:       labelJSON,
 		TickRate:    tickRate,
 		HandlerName: handlerName,
 		LabelString: label,
-	})
-}
-
-func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authoritative *wrappers.BoolValue, label *wrappers.StringValue, minSize *wrappers.Int32Value, maxSize *wrappers.Int32Value, queryString *wrappers.StringValue) ([]*api.Match, error) {
-	if limit == 0 {
-		return make([]*api.Match, 0), nil
+		CreateTime:  createTime,
 	}
 
+	r.pendingUpdatesMutex.Lock()
+	r.pendingUpdates[idStr] = entry
+	r.pendingUpdatesMutex.Unlock()
+
+	return nil
+}
+
+func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authoritative *wrapperspb.BoolValue, label *wrapperspb.StringValue, minSize *wrapperspb.Int32Value, maxSize *wrapperspb.Int32Value, queryString *wrapperspb.StringValue, node *wrapperspb.StringValue) ([]*api.Match, []string, error) {
+	if limit == 0 {
+		return make([]*api.Match, 0), make([]string, 0), nil
+	}
+
+	indexReader, err := r.indexWriter.Reader()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error accessing index reader: %v", err.Error())
+	}
+	defer func() {
+		err = indexReader.Close()
+		if err != nil {
+			r.logger.Error("error closing index reader", zap.Error(err))
+		}
+	}()
+
 	var allowRelayed bool
-	var labelResults *bleve.SearchResult
+	var labelResults *BlugeResult
 	if queryString != nil {
 		if authoritative != nil && !authoritative.Value {
 			// A filter on query is requested but authoritative matches are not allowed.
-			return make([]*api.Match, 0), nil
+			return make([]*api.Match, 0), make([]string, 0), nil
 		}
 
 		// If there are filters other than query, we don't know which matches will work so get more than the limit.
@@ -310,27 +394,50 @@ func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authori
 			count = int(r.matchCount.Load())
 		}
 		if count == 0 {
-			return make([]*api.Match, 0), nil
+			return make([]*api.Match, 0), make([]string, 0), nil
 		}
 
 		// Apply the query filter to the set of known match labels.
-		var q query.Query
+		var q bluge.Query
 		if queryString := queryString.Value; queryString == "" {
-			q = bleve.NewMatchAllQuery()
+			q = bluge.NewMatchAllQuery()
 		} else {
-			q = bleve.NewQueryStringQuery(queryString)
+			parsed, err := ParseQueryString(queryString)
+			if err != nil {
+				return nil, nil, fmt.Errorf("error parsing query string: %v", err.Error())
+			}
+			q = parsed
 		}
-		searchReq := bleve.NewSearchRequestOptions(q, count, 0, false)
-		searchReq.Fields = []string{"label_string", "tick_rate", "handler_name"}
-		var err error
-		labelResults, err = r.index.SearchInContext(ctx, searchReq)
+		if node != nil {
+			multiQuery := bluge.NewBooleanQuery()
+			multiQuery.AddMust(q)
+			nodeQuery := bluge.NewTermQuery(node.Value)
+			nodeQuery.SetField("node")
+			multiQuery.AddMust(nodeQuery)
+			q = multiQuery
+		}
+
+		searchReq := bluge.NewTopNSearch(count, q)
+		searchReq.SortBy([]string{"-_score", "-create_time"})
+
+		labelResultsItr, err := indexReader.Search(ctx, searchReq)
 		if err != nil {
-			return nil, fmt.Errorf("error listing matches by query: %v", err.Error())
+			return nil, nil, fmt.Errorf("error listing matches by query: %v", err.Error())
+		}
+		labelResults, err = IterateBlugeMatches(labelResultsItr,
+			map[string]struct{}{
+				"label_string": {},
+				"tick_rate":    {},
+				"handler_name": {},
+				"node":         {},
+			}, r.logger)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error iterating bluge matches: %v", err.Error())
 		}
 	} else if label != nil {
 		if authoritative != nil && !authoritative.Value {
 			// A filter on label is requested but authoritative matches are not allowed.
-			return make([]*api.Match, 0), nil
+			return make([]*api.Match, 0), make([]string, 0), nil
 		}
 
 		// If there are filters other than label, we don't know which matches will work so get more than the limit.
@@ -339,18 +446,29 @@ func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authori
 			count = int(r.matchCount.Load())
 		}
 		if count == 0 {
-			return make([]*api.Match, 0), nil
+			return make([]*api.Match, 0), make([]string, 0), nil
 		}
 
 		// Apply the label filter to the set of known match labels.
-		indexQuery := bleve.NewMatchQuery(label.Value)
+		indexQuery := bluge.NewTermQuery(label.Value)
 		indexQuery.SetField("label_string")
-		searchReq := bleve.NewSearchRequestOptions(indexQuery, count, 0, false)
-		searchReq.Fields = []string{"label_string", "tick_rate", "handler_name"}
-		var err error
-		labelResults, err = r.index.SearchInContext(ctx, searchReq)
+		//indexQuery.SetAnalyzer(BlugeKeywordAnalyzer)
+		searchReq := bluge.NewTopNSearch(count, indexQuery)
+		searchReq.SortBy([]string{"-create_time"})
+
+		labelResultsItr, err := indexReader.Search(ctx, searchReq)
 		if err != nil {
-			return nil, fmt.Errorf("error listing matches by label: %v", err.Error())
+			return nil, nil, fmt.Errorf("error listing matches by label: %v", err.Error())
+		}
+		labelResults, err = IterateBlugeMatches(labelResultsItr,
+			map[string]struct{}{
+				"label_string": {},
+				"tick_rate":    {},
+				"handler_name": {},
+				"node":         {},
+			}, r.logger)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error iterating bluge matches: %v", err.Error())
 		}
 	} else if authoritative == nil || authoritative.Value {
 		// Not using label/query filter but we still need access to the indexed labels to return them
@@ -360,16 +478,34 @@ func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authori
 			count = int(r.matchCount.Load())
 		}
 		if count == 0 && authoritative != nil && authoritative.Value {
-			return make([]*api.Match, 0), nil
+			return make([]*api.Match, 0), make([]string, 0), nil
 		}
 
-		indexQuery := bleve.NewMatchAllQuery()
-		searchReq := bleve.NewSearchRequestOptions(indexQuery, count, 0, false)
-		searchReq.Fields = []string{"label_string", "tick_rate", "handler_name"}
-		var err error
-		labelResults, err = r.index.SearchInContext(ctx, searchReq)
+		var q bluge.Query = bluge.NewMatchAllQuery()
+		if node != nil {
+			multiQuery := bluge.NewBooleanQuery()
+			multiQuery.AddMust(q)
+			nodeQuery := bluge.NewTermQuery(node.Value)
+			nodeQuery.SetField("node")
+			multiQuery.AddMust(nodeQuery)
+			q = multiQuery
+		}
+		searchReq := bluge.NewTopNSearch(count, q)
+		searchReq.SortBy([]string{"-create_time"})
+
+		labelResultsItr, err := indexReader.Search(ctx, searchReq)
 		if err != nil {
-			return nil, fmt.Errorf("error listing matches by label: %v", err.Error())
+			return nil, nil, fmt.Errorf("error listing matches by label: %v", err.Error())
+		}
+		labelResults, err = IterateBlugeMatches(labelResultsItr,
+			map[string]struct{}{
+				"label_string": {},
+				"tick_rate":    {},
+				"handler_name": {},
+				"node":         {},
+			}, r.logger)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error iterating bluge matches: %v", err.Error())
 		}
 
 		if authoritative == nil {
@@ -381,13 +517,14 @@ func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authori
 		allowRelayed = true
 	}
 
-	if labelResults != nil && labelResults.Hits.Len() == 0 && authoritative != nil && !authoritative.Value {
+	if labelResults != nil && len(labelResults.Hits) == 0 && authoritative != nil && !authoritative.Value {
 		// No results based on label/query, no point in further filtering by size.
-		return make([]*api.Match, 0), nil
+		return make([]*api.Match, 0), make([]string, 0), nil
 	}
 
 	// Results.
 	results := make([]*api.Match, 0, limit)
+	nodes := make([]string, 0, limit)
 
 	// Use any eligible authoritative matches first.
 	if labelResults != nil {
@@ -399,7 +536,7 @@ func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authori
 			if !ok {
 				continue
 			}
-			size := int32(mh.(*MatchHandler).PresenceList.Size())
+			size := int32(mh.PresenceList.Size())
 
 			if minSize != nil && minSize.Value > size {
 				// Not eligible based on minimum size.
@@ -436,7 +573,7 @@ func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authori
 			var handlerName string
 			if hn, ok := hit.Fields["handler_name"]; ok {
 				if handlerName, ok = hn.(string); !ok {
-					r.logger.Warn("Field not an int in match registry label cache: handler_name")
+					r.logger.Warn("Field not a string in match registry label cache: handler_name")
 					continue
 				}
 			} else {
@@ -444,23 +581,35 @@ func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authori
 				continue
 			}
 
+			var node string
+			if hn, ok := hit.Fields["node"]; ok {
+				if node, ok = hn.(string); !ok {
+					r.logger.Warn("Field not a string in match registry label cache: node")
+					continue
+				}
+			} else {
+				r.logger.Warn("Field not found in match registry label cache: node")
+				continue
+			}
+
 			results = append(results, &api.Match{
 				MatchId:       hit.ID,
 				Authoritative: true,
-				Label:         &wrappers.StringValue{Value: labelString},
+				Label:         &wrapperspb.StringValue{Value: labelString},
 				Size:          size,
 				TickRate:      int32(tickRate),
 				HandlerName:   handlerName,
 			})
+			nodes = append(nodes, node)
 			if len(results) == limit {
-				return results, nil
+				return results, nodes, nil
 			}
 		}
 	}
 
 	// If relayed matches are not allowed still return any available results.
 	if !allowRelayed {
-		return results, nil
+		return results, nodes, nil
 	}
 
 	matches := r.tracker.CountByStreamModeFilter(MatchFilterRelayed)
@@ -488,11 +637,11 @@ func (r *LocalMatchRegistry) ListMatches(ctx context.Context, limit int, authori
 			Size:          size,
 		})
 		if len(results) == limit {
-			return results, nil
+			return results, nodes, nil
 		}
 	}
 
-	return results, nil
+	return results, nodes, nil
 }
 
 func (r *LocalMatchRegistry) Stop(graceSeconds int) chan struct{} {
@@ -501,8 +650,11 @@ func (r *LocalMatchRegistry) Stop(graceSeconds int) chan struct{} {
 
 	// Graceful shutdown not allowed/required, or grace period has expired.
 	if graceSeconds == 0 {
-		r.matches.Range(func(id, mh interface{}) bool {
-			mh.(*MatchHandler).Stop()
+		// If grace period is 0 stop match label processing immediately.
+		r.ctxCancelFn()
+
+		r.matches.Range(func(id uuid.UUID, mh *MatchHandler) bool {
+			mh.Stop()
 			return true
 		})
 		// Termination was triggered and there are no active matches.
@@ -515,15 +667,16 @@ func (r *LocalMatchRegistry) Stop(graceSeconds int) chan struct{} {
 	}
 
 	var anyRunning bool
-	r.matches.Range(func(id, mh interface{}) bool {
+	r.matches.Range(func(id uuid.UUID, mh *MatchHandler) bool {
 		anyRunning = true
 		// Don't care if the call queue is full, match is supposed to end anyway.
-		mh.(*MatchHandler).QueueTerminate(graceSeconds)
+		mh.QueueTerminate(graceSeconds)
 		return true
 	})
 
 	if !anyRunning {
 		// Termination was triggered and there are no active matches.
+		r.ctxCancelFn()
 		select {
 		case r.stoppedCh <- struct{}{}:
 		default:
@@ -544,24 +697,23 @@ func (r *LocalMatchRegistry) JoinAttempt(ctx context.Context, id uuid.UUID, node
 		return false, false, false, "", "", nil
 	}
 
-	m, ok := r.matches.Load(id)
+	mh, ok := r.matches.Load(id)
 	if !ok {
 		return false, false, false, "", "", nil
 	}
-	mh := m.(*MatchHandler)
 
 	if mh.PresenceList.Contains(&PresenceID{Node: fromNode, SessionID: sessionID}) {
 		// The user is already part of this match.
 		return true, true, false, "", mh.Label(), mh.PresenceList.ListPresences()
 	}
 
-	resultCh := make(chan *MatchJoinResult, 1)
+	resultCh := make(chan *MatchJoinAttemptResult, 1)
 	if !mh.QueueJoinAttempt(ctx, resultCh, userID, sessionID, username, sessionExpiry, vars, clientIP, clientPort, fromNode, metadata) {
-		// The match call queue was full, so will be closed and therefore can't be joined.
+		// The match join attempt queue was full, match will not close but it can't be joined right now.
 		return true, false, false, "Match is not currently accepting join requests", "", nil
 	}
 
-	// Set up a limit to how long the call will wait, default is 10 seconds.
+	// Set up a limit to how long the join attempt will wait, default is 10 seconds.
 	timer := time.NewTimer(time.Second * 10)
 	select {
 	case <-timer.C:
@@ -582,7 +734,7 @@ func (r *LocalMatchRegistry) Join(id uuid.UUID, presences []*MatchPresence) {
 	}
 
 	// Doesn't matter if the call queue was full here. If the match is being closed then joins don't matter anyway.
-	mh.(*MatchHandler).QueueJoin(presences, true)
+	mh.QueueJoin(presences, true)
 }
 
 func (r *LocalMatchRegistry) Leave(id uuid.UUID, presences []*MatchPresence) {
@@ -592,7 +744,7 @@ func (r *LocalMatchRegistry) Leave(id uuid.UUID, presences []*MatchPresence) {
 	}
 
 	// Doesn't matter if the call queue was full here. If the match is being closed then leaves don't matter anyway.
-	mh.(*MatchHandler).QueueLeave(presences)
+	mh.QueueLeave(presences)
 }
 
 func (r *LocalMatchRegistry) Kick(stream PresenceStream, presences []*MatchPresence) {
@@ -614,7 +766,7 @@ func (r *LocalMatchRegistry) SendData(id uuid.UUID, node string, userID, session
 		return
 	}
 
-	mh.(*MatchHandler).QueueData(&MatchDataMessage{
+	mh.QueueData(&MatchDataMessage{
 		UserID:      userID,
 		SessionID:   sessionID,
 		Username:    username,
@@ -626,16 +778,69 @@ func (r *LocalMatchRegistry) SendData(id uuid.UUID, node string, userID, session
 	})
 }
 
+func (r *LocalMatchRegistry) Signal(ctx context.Context, id, data string) (string, error) {
+	// Validate the match ID.
+	idComponents := strings.SplitN(id, ".", 2)
+	if len(idComponents) != 2 {
+		return "", runtime.ErrMatchIdInvalid
+	}
+	matchID, err := uuid.FromString(idComponents[0])
+	if err != nil {
+		return "", runtime.ErrMatchIdInvalid
+	}
+
+	// Relayed match.
+	if idComponents[1] == "" {
+		return "", runtime.ErrMatchNotFound
+	}
+
+	// Authoritative match.
+	if idComponents[1] != r.node {
+		return "", runtime.ErrMatchNotFound
+	}
+
+	mh, ok := r.matches.Load(matchID)
+	if !ok {
+		return "", runtime.ErrMatchNotFound
+	}
+
+	resultCh := make(chan *MatchSignalResult, 1)
+	if !mh.QueueSignal(ctx, resultCh, data) {
+		// The match signal queue was full.
+		return "", runtime.ErrMatchBusy
+	}
+
+	// Set up a limit to how long the signal will wait, default is 10 seconds.
+	timer := time.NewTimer(time.Second * 10)
+	select {
+	case <-ctx.Done():
+		// Doesn't matter if the timer has fired concurrently, we're failing anyway.
+		timer.Stop()
+		// The caller has timed out, return a placeholder unsuccessful response.
+		return "", runtime.ErrMatchBusy
+	case <-timer.C:
+		// The signal has timed out, match is assumed to be too busy to respond to this signal.
+		return "", runtime.ErrMatchBusy
+	case r := <-resultCh:
+		// Doesn't matter if the timer has fired concurrently, we're in the desired case anyway.
+		timer.Stop()
+		// The signal has returned a result.
+		if !r.Success {
+			return "", runtime.ErrMatchBusy
+		}
+		return r.Result, nil
+	}
+}
+
 func (r *LocalMatchRegistry) GetState(ctx context.Context, id uuid.UUID, node string) ([]*rtapi.UserPresence, int64, string, error) {
 	if node != r.node {
 		return nil, 0, "", nil
 	}
 
-	m, ok := r.matches.Load(id)
+	mh, ok := r.matches.Load(id)
 	if !ok {
-		return nil, 0, "", ErrMatchNotFound
+		return nil, 0, "", runtime.ErrMatchNotFound
 	}
-	mh := m.(*MatchHandler)
 
 	resultCh := make(chan *MatchGetStateResult, 1)
 	if !mh.QueueGetState(ctx, resultCh) {
@@ -648,7 +853,7 @@ func (r *LocalMatchRegistry) GetState(ctx context.Context, id uuid.UUID, node st
 	select {
 	case <-timer.C:
 		// The state snapshot request has timed out.
-		return nil, 0, "", ErrMatchStateFailed
+		return nil, 0, "", runtime.ErrMatchStateFailed
 	case r := <-resultCh:
 		// The join attempt has returned a result.
 		// Doesn't matter if the timer has fired concurrently, we're in the desired case anyway.
@@ -668,4 +873,20 @@ func (r *LocalMatchRegistry) GetState(ctx context.Context, id uuid.UUID, node st
 		}
 		return presences, r.Tick, r.State, nil
 	}
+}
+
+func MapMatchIndexEntry(id string, in *MatchIndexEntry) (*bluge.Document, error) {
+	rv := bluge.NewDocument(id)
+
+	rv.AddField(bluge.NewKeywordField("node", in.Node).StoreValue())
+	rv.AddField(bluge.NewKeywordField("label_string", in.LabelString).StoreValue())
+	rv.AddField(bluge.NewNumericField("tick_rate", float64(in.TickRate)).StoreValue())
+	rv.AddField(bluge.NewKeywordField("handler_name", in.HandlerName).StoreValue())
+	rv.AddField(bluge.NewNumericField("create_time", float64(in.CreateTime)).StoreValue())
+
+	if in.Label != nil {
+		BlugeWalkDocument(in.Label, []string{"label"}, rv)
+	}
+
+	return rv, nil
 }

@@ -13,10 +13,11 @@
 // limitations under the License.
 
 import {Component, Injectable, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {ActivatedRoute, ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot} from '@angular/router';
 import {AuthenticationService} from '../authentication.service';
 import {SegmentService} from 'ngx-segment-analytics';
+import {environment} from "../../environments/environment";
 
 @Component({
   templateUrl: './login.component.html',
@@ -24,20 +25,22 @@ import {SegmentService} from 'ngx-segment-analytics';
 })
 export class LoginComponent implements OnInit {
   public error = '';
-  public loginForm!: FormGroup;
+  public loginForm!: UntypedFormGroup;
   public submitted!: boolean;
   private returnUrl!: string;
 
   constructor(
     private segment: SegmentService,
-    private readonly formBuilder: FormBuilder,
+    private readonly formBuilder: UntypedFormBuilder,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly authenticationService: AuthenticationService
   ) {}
 
-  ngOnInit() {
-    this.segment.page('/login');
+  ngOnInit(): void {
+    if (!environment.nt) {
+      this.segment.page('/login');
+    }
     this.loginForm = this.formBuilder.group({
       username: ['', Validators.compose([Validators.required])],
       password: ['', Validators.compose([Validators.required, Validators.minLength(8)])],
@@ -45,7 +48,7 @@ export class LoginComponent implements OnInit {
     this.returnUrl = this.route.snapshot.queryParams.next || '/';
   }
 
-  onSubmit() {
+  onSubmit(): void {
     this.submitted = true;
     this.error = '';
     if (this.loginForm.invalid) {
@@ -59,7 +62,7 @@ export class LoginComponent implements OnInit {
       }, err => {this.error = err; this.submitted = false; });
   }
 
-  get f() {
+  get f(): any {
     return this.loginForm.controls;
   }
 }

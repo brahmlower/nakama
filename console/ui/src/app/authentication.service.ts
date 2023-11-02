@@ -14,11 +14,12 @@
 
 import {Inject, Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {BehaviorSubject, Observable} from 'rxjs';
+import {BehaviorSubject, EMPTY, Observable} from 'rxjs';
 import {tap} from 'rxjs/operators';
 import {ConsoleService, ConsoleSession, UserRole} from './console.service';
 import {WINDOW} from './window.provider';
 import {SegmentService} from 'ngx-segment-analytics';
+import {environment} from "../environments/environment";
 
 const SESSION_LOCALSTORAGE_KEY = 'currentSession';
 
@@ -35,8 +36,8 @@ export class AuthenticationService {
     private readonly http: HttpClient,
     private readonly consoleService: ConsoleService
   ) {
-    const restoredSession: ConsoleSession = JSON.parse(<string> localStorage.getItem(SESSION_LOCALSTORAGE_KEY));
-    if (restoredSession) {
+    const restoredSession: ConsoleSession = JSON.parse(localStorage.getItem(SESSION_LOCALSTORAGE_KEY) as string);
+    if (restoredSession && !environment.nt) {
       this.segmentIdentify(restoredSession);
     }
     this.currentSessionSubject = new BehaviorSubject<ConsoleSession>(restoredSession);
@@ -48,26 +49,26 @@ export class AuthenticationService {
   }
 
   public get username(): string {
-    let token = this.currentSessionSubject.getValue().token;
-    let claims = JSON.parse(atob(token.split(".")[1]))
-    return claims["usn"];
+    const token = this.currentSessionSubject.getValue().token;
+    const claims = JSON.parse(atob(token.split('.')[1]));
+    return claims.usn;
   }
 
   public get sessionRole(): UserRole {
-    let token = this.currentSessionSubject.getValue().token;
-    let claims = JSON.parse(atob(token.split(".")[1]));
-    let role = claims["rol"] as number;
+    const token = this.currentSessionSubject.getValue().token;
+    const claims = JSON.parse(atob(token.split('.')[1]));
+    const role = claims.rol as number;
     switch (role) {
       case 1:
-        return UserRole.USER_ROLE_ADMIN
+        return UserRole.USER_ROLE_ADMIN;
       case 2:
-        return UserRole.USER_ROLE_DEVELOPER
+        return UserRole.USER_ROLE_DEVELOPER;
       case 3:
-        return UserRole.USER_ROLE_MAINTAINER
+        return UserRole.USER_ROLE_MAINTAINER;
       case 4:
-        return UserRole.USER_ROLE_READONLY
+        return UserRole.USER_ROLE_READONLY;
       default:
-        return UserRole.USER_ROLE_UNKNOWN
+        return UserRole.USER_ROLE_UNKNOWN;
     }
   }
 
@@ -75,24 +76,32 @@ export class AuthenticationService {
     return this.consoleService.authenticate({username, password}).pipe(tap(session => {
       localStorage.setItem(SESSION_LOCALSTORAGE_KEY, JSON.stringify(session));
       this.currentSessionSubject.next(session);
-      this.segmentIdentify(session);
+      if (!environment.nt) {
+        this.segmentIdentify(session);
+      }
     }));
   }
 
-  logout() {
-    localStorage.removeItem(SESSION_LOCALSTORAGE_KEY);
-    // @ts-ignore
-    this.currentSessionSubject.next(null);
+  logout(): Observable<any> {
+    if (!this.currentSessionSubject.getValue()) {
+      return EMPTY;
+    }
+    return this.consoleService.authenticateLogout('', {
+      token: this.currentSessionSubject.getValue()?.token,
+    }).pipe(tap(() => {
+      localStorage.removeItem(SESSION_LOCALSTORAGE_KEY);
+      this.currentSessionSubject.next(null);
+    }));
   }
 
-  segmentIdentify(session) {
+  segmentIdentify(session): void {
     const token = session.token;
-    const claims = JSON.parse(atob(token.split(".")[1]))
+    const claims = JSON.parse(atob(token.split('.')[1]));
     // null user ID to ensure we use Anonymous IDs
     const _ = this.segment.identify(null, {
-      "username": claims['usn'],
-      "email": claims['ema'],
-      "cookie": claims['cki'],
+      username: claims.usn,
+      email: claims.ema,
+      cookie: claims.cki,
     });
   }
 }

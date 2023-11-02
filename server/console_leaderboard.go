@@ -15,20 +15,40 @@
 package server
 
 import (
+	"bytes"
 	"context"
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/golang/protobuf/ptypes/wrappers"
+	"encoding/base64"
+	"encoding/gob"
+	"time"
+
+	"github.com/gofrs/uuid/v5"
 	"github.com/heroiclabs/nakama-common/api"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/heroiclabs/nakama/v3/console"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-func (s *ConsoleServer) ListLeaderboards(ctx context.Context, _ *empty.Empty) (*console.LeaderboardList, error) {
-	leaderboards := s.leaderboardCache.GetAllLeaderboards()
+func (s *ConsoleServer) ListLeaderboards(ctx context.Context, in *console.LeaderboardListRequest) (*console.LeaderboardList, error) {
+	var cursor *LeaderboardAllCursor
+	if in.Cursor != "" {
+		cb, err := base64.RawURLEncoding.DecodeString(in.Cursor)
+		if err != nil {
+			s.logger.Error("Error decoding leaderboard list cursor.", zap.String("cursor", in.Cursor), zap.Error(err))
+			return nil, status.Error(codes.InvalidArgument, "An error occurred while trying to decode leaderboard list request cursor.")
+		}
+		cursor = &LeaderboardAllCursor{}
+		if err := gob.NewDecoder(bytes.NewReader(cb)).Decode(&cursor); err != nil {
+			s.logger.Error("Error decoding leaderboard list cursor.", zap.String("cursor", in.Cursor), zap.Error(err))
+			return nil, status.Error(codes.InvalidArgument, "An error occurred while trying to decode leaderboard list request cursor.")
+		}
+	}
+
+	leaderboards, total, newCursor := s.leaderboardCache.ListAll(100, true, cursor)
 
 	resultList := make([]*console.Leaderboard, 0, len(leaderboards))
 	for _, l := range leaderboards {
@@ -41,8 +61,20 @@ func (s *ConsoleServer) ListLeaderboards(ctx context.Context, _ *empty.Empty) (*
 			Tournament:    l.IsTournament(),
 		})
 	}
+	response := &console.LeaderboardList{
+		Leaderboards: resultList,
+		Total:        int32(total),
+	}
+	if newCursor != nil {
+		cursorBuf := &bytes.Buffer{}
+		if err := gob.NewEncoder(cursorBuf).Encode(newCursor); err != nil {
+			s.logger.Error("Error encoding leaderboard list cursor.", zap.Any("in", in), zap.Error(err))
+			return nil, status.Error(codes.Internal, "An error occurred while trying to list leaderboards.")
+		}
+		response.Cursor = base64.RawURLEncoding.EncodeToString(cursorBuf.Bytes())
+	}
 
-	return &console.LeaderboardList{Leaderboards: resultList}, nil
+	return response, nil
 }
 
 func (s *ConsoleServer) GetLeaderboard(ctx context.Context, in *console.LeaderboardRequest) (*console.Leaderboard, error) {
@@ -56,6 +88,7 @@ func (s *ConsoleServer) GetLeaderboard(ctx context.Context, in *console.Leaderbo
 	}
 
 	var t *api.Tournament
+	var prevReset, nextReset int64
 	if l.IsTournament() {
 		results, err := TournamentList(ctx, s.logger, s.db, s.leaderboardCache, l.Category, l.Category, int(l.StartTime), int(l.EndTime), 1, nil)
 		if err != nil {
@@ -70,15 +103,25 @@ func (s *ConsoleServer) GetLeaderboard(ctx context.Context, in *console.Leaderbo
 		t = results.Tournaments[0]
 	}
 
+	if l.ResetSchedule != nil {
+		now := time.Now()
+		prevReset = calculatePrevReset(now, l.CreateTime, l.ResetSchedule)
+
+		next := l.ResetSchedule.Next(now)
+		nextReset = next.Unix()
+	}
+
 	result := &console.Leaderboard{
 		Id:            l.Id,
 		SortOrder:     uint32(l.SortOrder),
 		Operator:      uint32(l.Operator),
 		ResetSchedule: l.ResetScheduleStr,
-		CreateTime:    &timestamp.Timestamp{Seconds: l.CreateTime},
+		CreateTime:    &timestamppb.Timestamp{Seconds: l.CreateTime},
 		Authoritative: l.Authoritative,
 		Metadata:      l.Metadata,
 		Tournament:    false,
+		NextReset:     uint32(nextReset),
+		PrevReset:     uint32(prevReset),
 	}
 
 	if t != nil {
@@ -101,14 +144,14 @@ func (s *ConsoleServer) GetLeaderboard(ctx context.Context, in *console.Leaderbo
 }
 
 func (s *ConsoleServer) ListLeaderboardRecords(ctx context.Context, in *api.ListLeaderboardRecordsRequest) (*api.LeaderboardRecordList, error) {
-	var limit *wrappers.Int32Value
+	var limit *wrapperspb.Int32Value
 	if in.GetLimit() != nil {
 		if in.GetLimit().Value < 1 || in.GetLimit().Value > 100 {
 			return nil, status.Error(codes.InvalidArgument, "Invalid limit - limit must be between 1 and 100.")
 		}
 		limit = in.GetLimit()
 	} else if len(in.GetOwnerIds()) == 0 || in.GetCursor() != "" {
-		limit = &wrappers.Int32Value{Value: 1}
+		limit = &wrapperspb.Int32Value{Value: 1}
 	}
 
 	if len(in.GetOwnerIds()) != 0 {
@@ -136,31 +179,47 @@ func (s *ConsoleServer) ListLeaderboardRecords(ctx context.Context, in *api.List
 	return records, nil
 }
 
-func (s *ConsoleServer) DeleteLeaderboard(ctx context.Context, in *console.LeaderboardRequest) (*empty.Empty, error) {
+func (s *ConsoleServer) DeleteLeaderboard(ctx context.Context, in *console.LeaderboardRequest) (*emptypb.Empty, error) {
 	if in.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "Expects a leaderboard ID")
 	}
 
-	if err := s.leaderboardCache.Delete(ctx, in.Id); err != nil {
-		// Logged internally
+	_, err := s.leaderboardCache.Delete(ctx, s.leaderboardRankCache, s.leaderboardScheduler, in.Id)
+	if err != nil {
+		// Logged internally.
 		return nil, status.Error(codes.Internal, "Error deleting leaderboard.")
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *ConsoleServer) DeleteLeaderboardRecord(ctx context.Context, in *console.DeleteLeaderboardRecordRequest) (*empty.Empty, error) {
+func (s *ConsoleServer) DeleteLeaderboardRecord(ctx context.Context, in *console.DeleteLeaderboardRecordRequest) (*emptypb.Empty, error) {
 	if in.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "Invalid leaderboard ID.")
 	}
 
-	// Pass uuid.Nil as userID to bypass leaderboard Authoritative check.
-	err := LeaderboardRecordDelete(ctx, s.logger, s.db, s.leaderboardCache, s.leaderboardRankCache, uuid.Nil, in.Id, in.OwnerId)
-	if err == ErrLeaderboardNotFound {
+	l := s.leaderboardCache.Get(in.Id)
+	if l == nil {
 		return nil, status.Error(codes.NotFound, "Leaderboard not found.")
-	} else if err != nil {
-		return nil, status.Error(codes.Internal, "Error deleting score from leaderboard.")
 	}
 
-	return &empty.Empty{}, nil
+	if l.IsTournament() {
+		// Pass uuid.Nil as userID to bypass leaderboard Authoritative check.
+		err := TournamentRecordDelete(ctx, s.logger, s.db, s.leaderboardCache, s.leaderboardRankCache, uuid.Nil, in.Id, in.OwnerId)
+		if err == runtime.ErrTournamentNotFound {
+			return nil, status.Error(codes.NotFound, "Tournament not found.")
+		} else if err != nil {
+			return nil, status.Error(codes.Internal, "Error deleting score from tournament.")
+		}
+	} else {
+		// Pass uuid.Nil as userID to bypass leaderboard Authoritative check.
+		err := LeaderboardRecordDelete(ctx, s.logger, s.db, s.leaderboardCache, s.leaderboardRankCache, uuid.Nil, in.Id, in.OwnerId)
+		if err == ErrLeaderboardNotFound {
+			return nil, status.Error(codes.NotFound, "Leaderboard not found.")
+		} else if err != nil {
+			return nil, status.Error(codes.Internal, "Error deleting score from leaderboard.")
+		}
+	}
+
+	return &emptypb.Empty{}, nil
 }

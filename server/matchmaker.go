@@ -16,29 +16,17 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/heroiclabs/nakama-common/rtapi"
-	"github.com/heroiclabs/nakama-common/runtime"
-	"go.uber.org/atomic"
 	"sync"
 	"time"
 
-	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/analysis/analyzer/keyword"
-	"github.com/gofrs/uuid"
+	"github.com/blugelabs/bluge"
+	"github.com/gofrs/uuid/v5"
+	jwt "github.com/golang-jwt/jwt/v4"
+	"github.com/heroiclabs/nakama-common/rtapi"
+	"github.com/heroiclabs/nakama-common/runtime"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
-)
-
-var (
-	ErrMatchmakerQueryInvalid     = errors.New("matchmaker query invalid")
-	ErrMatchmakerDuplicateSession = errors.New("matchmaker duplicate session")
-	ErrMatchmakerIndex            = errors.New("matchmaker index error")
-	ErrMatchmakerDelete           = errors.New("matchmaker delete error")
-	ErrMatchmakerNotAvailable     = errors.New("matchmaker not available")
-	ErrMatchmakerTooManyTickets   = errors.New("matchmaker too many tickets")
-	ErrMatchmakerTicketNotFound   = errors.New("matchmaker ticket not found")
 )
 
 type MatchmakerPresence struct {
@@ -69,6 +57,9 @@ func (p *MatchmakerPresence) GetUsername() string {
 }
 func (p *MatchmakerPresence) GetStatus() string {
 	return ""
+}
+func (p *MatchmakerPresence) GetReason() runtime.PresenceReason {
+	return runtime.PresenceReasonUnknown
 }
 
 type MatchmakerEntry struct {
@@ -103,20 +94,92 @@ type MatchmakerIndex struct {
 	CreatedAt  int64                  `json:"created_at"`
 
 	// Parameters used for correctly processing various matchmaker operations, but not indexed for searching.
-	Query      string              `json:"-"`
-	Count      int                 `json:"-"`
-	SessionID  string              `json:"-"`
-	Intervals  int                 `json:"-"`
-	SessionIDs map[string]struct{} `json:"-"`
+	Query             string              `json:"-"`
+	Count             int                 `json:"-"`
+	CountMultiple     int                 `json:"-"`
+	SessionID         string              `json:"-"`
+	Intervals         int                 `json:"-"`
+	SessionIDs        map[string]struct{} `json:"-"`
+	Node              string              `json:"-"`
+	StringProperties  map[string]string   `json:"-"`
+	NumericProperties map[string]float64  `json:"-"`
+	ParsedQuery       bluge.Query         `json:"-"`
+	Entries           []*MatchmakerEntry  `json:"-"`
+}
+
+type MatchmakerExtract struct {
+	Presences         []*MatchmakerPresence
+	SessionID         string
+	PartyId           string
+	Query             string
+	MinCount          int
+	MaxCount          int
+	CountMultiple     int
+	StringProperties  map[string]string
+	NumericProperties map[string]float64
+	Ticket            string
+	Count             int
+	Intervals         int
+	CreatedAt         int64
+	Node              string
+}
+
+type MatchmakerIndexGroup struct {
+	indexes      []*MatchmakerIndex
+	avgCreatedAt int64
+}
+
+func groupIndexes(indexes []*MatchmakerIndex, required int) []*MatchmakerIndexGroup {
+	if len(indexes) == 0 || required <= 0 {
+		return nil
+	}
+
+	current, others := indexes[0], indexes[1:]
+
+	if current.Count > required {
+		// Current index is too large for the requirement, and cannot be used at all.
+		return groupIndexes(others, required)
+	}
+
+	var results []*MatchmakerIndexGroup
+
+	if current.Count == required {
+		// 1. The current index by itself satisfies the requirement. No need to combine with anything else.
+		results = append(results, &MatchmakerIndexGroup{
+			indexes:      []*MatchmakerIndex{current},
+			avgCreatedAt: current.CreatedAt,
+		})
+	} else if current.Count < required {
+		// 2. The current index plus some combination(s) of the others.
+		fillResults := groupIndexes(others, required-current.Count)
+		for _, fillResult := range fillResults {
+			indexesCount := int64(len(fillResult.indexes))
+			fillResult.avgCreatedAt = (fillResult.avgCreatedAt*indexesCount + current.CreatedAt) / (indexesCount + 1)
+			fillResult.indexes = append(fillResult.indexes, current)
+			results = append(results, fillResult)
+		}
+	}
+
+	// 3. Other combinations not including the current index.
+	results = append(results, groupIndexes(others, required)...)
+
+	return results
 }
 
 type Matchmaker interface {
+	Pause()
+	Resume()
 	Stop()
-	Add(presences []*MatchmakerPresence, sessionID, partyId, query string, minCount, maxCount int, stringProperties map[string]string, numericProperties map[string]float64) (string, error)
+	OnMatchedEntries(fn func(entries [][]*MatchmakerEntry))
+	Add(ctx context.Context, presences []*MatchmakerPresence, sessionID, partyId, query string, minCount, maxCount, countMultiple int, stringProperties map[string]string, numericProperties map[string]float64) (string, int64, error)
+	Insert(extracts []*MatchmakerExtract) error
+	Extract() []*MatchmakerExtract
 	RemoveSession(sessionID, ticket string) error
 	RemoveSessionAll(sessionID string) error
 	RemoveParty(partyID, ticket string) error
 	RemovePartyAll(partyID string) error
+	RemoveAll(node string)
+	Remove(tickets []string)
 }
 
 type LocalMatchmaker struct {
@@ -125,25 +188,32 @@ type LocalMatchmaker struct {
 	node    string
 	config  Config
 	router  MessageRouter
+	metrics Metrics
 	runtime *Runtime
 
+	active      *atomic.Uint32
 	stopped     *atomic.Bool
 	ctx         context.Context
 	ctxCancelFn context.CancelFunc
 
-	index          bleve.Index
+	matchedEntriesFn func([][]*MatchmakerEntry)
+	indexWriter      *bluge.Writer
+	// All tickets for a session ID.
 	sessionTickets map[string]map[string]struct{}
-	partyTickets   map[string]map[string]struct{}
-	entries        map[string][]*MatchmakerEntry
-	indexes        map[string]*MatchmakerIndex
-	activeIndexes  map[string]*MatchmakerIndex
+	// All tickets for a party ID.
+	partyTickets map[string]map[string]struct{}
+	// Index for each ticket.
+	indexes map[string]*MatchmakerIndex
+	// Indexes that have not yet reached their max interval count.
+	activeIndexes map[string]*MatchmakerIndex
+	// Reverse lookup cache for mutual matching.
+	revCache       *MapOf[string, map[string]bool]
+	revThresholdFn func() *time.Timer
 }
 
-func NewLocalMatchmaker(logger, startupLogger *zap.Logger, config Config, router MessageRouter, runtime *Runtime) Matchmaker {
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultAnalyzer = keyword.Name
-
-	index, err := bleve.NewMemOnly(mapping)
+func NewLocalMatchmaker(logger, startupLogger *zap.Logger, config Config, router MessageRouter, metrics Metrics, runtime *Runtime) Matchmaker {
+	cfg := BlugeInMemoryConfig()
+	indexWriter, err := bluge.OpenWriter(cfg)
 	if err != nil {
 		startupLogger.Fatal("Failed to create matchmaker index", zap.Error(err))
 	}
@@ -155,18 +225,26 @@ func NewLocalMatchmaker(logger, startupLogger *zap.Logger, config Config, router
 		node:    config.GetName(),
 		config:  config,
 		router:  router,
+		metrics: metrics,
 		runtime: runtime,
 
+		active:      atomic.NewUint32(1),
 		stopped:     atomic.NewBool(false),
 		ctx:         ctx,
 		ctxCancelFn: ctxCancelFn,
 
-		index:          index,
+		indexWriter:    indexWriter,
 		sessionTickets: make(map[string]map[string]struct{}),
 		partyTickets:   make(map[string]map[string]struct{}),
-		entries:        make(map[string][]*MatchmakerEntry),
 		indexes:        make(map[string]*MatchmakerIndex),
 		activeIndexes:  make(map[string]*MatchmakerIndex),
+		revCache:       &MapOf[string, map[string]bool]{},
+	}
+
+	if revThreshold := m.config.GetMatchmaker().RevThreshold; revThreshold > 0 && m.config.GetMatchmaker().RevPrecision {
+		m.revThresholdFn = func() *time.Timer {
+			return time.NewTimer(time.Duration(m.config.GetMatchmaker().IntervalSec*revThreshold) * time.Second)
+		}
 	}
 
 	go func() {
@@ -176,7 +254,7 @@ func NewLocalMatchmaker(logger, startupLogger *zap.Logger, config Config, router
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				m.process()
+				m.Process()
 			}
 		}
 	}()
@@ -184,251 +262,198 @@ func NewLocalMatchmaker(logger, startupLogger *zap.Logger, config Config, router
 	return m
 }
 
+func (m *LocalMatchmaker) Pause() {
+	m.active.Store(0)
+}
+
+func (m *LocalMatchmaker) Resume() {
+	m.active.Store(1)
+}
+
 func (m *LocalMatchmaker) Stop() {
 	m.stopped.Store(true)
 	m.ctxCancelFn()
 }
 
-func (m *LocalMatchmaker) process() {
-	matchedEntries := make([][]*MatchmakerEntry, 0, 5)
+func (m *LocalMatchmaker) OnMatchedEntries(fn func(entries [][]*MatchmakerEntry)) {
+	m.matchedEntriesFn = fn
+}
+
+func (m *LocalMatchmaker) Process() {
+	startTime := time.Now()
+	var activeIndexCount, indexCount int
+	defer func() {
+		m.metrics.Matchmaker(float64(indexCount), float64(activeIndexCount), time.Since(startTime))
+	}()
 
 	m.Lock()
 
+	activeIndexCount = len(m.activeIndexes)
+	indexCount = len(m.indexes)
+
 	// No active matchmaking tickets, the pool may be non-empty but there are no new tickets to check/query with.
-	if len(m.activeIndexes) == 0 {
+	if activeIndexCount == 0 {
 		m.Unlock()
 		return
 	}
 
-	for ticket, index := range m.activeIndexes {
-		index.Intervals++
-		lastInterval := index.Intervals > m.config.GetMatchmaker().MaxIntervals || index.MinCount == index.MaxCount
-		if lastInterval {
-			// Drop from active indexes if it has reached its max intervals, or if its min/max counts are equal. In the
-			// latter case keeping it active would have the same result as leaving it in the pool, so this saves work.
-			delete(m.activeIndexes, ticket)
-		}
+	activeIndexesCopy := make(map[string]*MatchmakerIndex, activeIndexCount)
+	for ticket, activeIndex := range m.activeIndexes {
+		activeIndexesCopy[ticket] = activeIndex
+	}
+	indexesCopy := make(map[string]*MatchmakerIndex, indexCount)
+	for ticket, index := range m.indexes {
+		indexesCopy[ticket] = index
+	}
 
-		indexQuery := bleve.NewBooleanQuery()
-		// Results must match the query string.
-		indexQuery.AddMust(bleve.NewQueryStringQuery(index.Query))
-		// Results must also have compatible min/max ranges, for example 2-4 must not match with 6-8.
-		indexQuery.AddMust(bleve.NewQueryStringQuery(fmt.Sprintf("+min_count:<=%d +max_count:>=%d", index.MaxCount, index.MinCount)))
-		// Results must not include the current ticket.
-		ticketQuery := bleve.NewTermQuery(ticket)
-		ticketQuery.SetField("ticket")
-		indexQuery.AddMustNot(ticketQuery)
-		// Results must not include the current party, if any.
-		if index.PartyId != "" {
-			partyIdQuery := bleve.NewTermQuery(index.PartyId)
-			partyIdQuery.SetField("party_id")
-			indexQuery.AddMustNot(partyIdQuery)
-		}
+	m.Unlock()
 
-		searchRequest := bleve.NewSearchRequestOptions(indexQuery, len(m.indexes), 0, false)
-		// Sort indexes to try and select the longest waiting tickets first.
-		searchRequest.SortBy([]string{"created_at"})
-		result, err := m.index.SearchInContext(m.ctx, searchRequest)
-		if err != nil {
-			m.logger.Error("error searching index", zap.Error(err))
+	// Run the custom matching function if one is registered in the runtime, otherwise use the default process function.
+	var matchedEntries [][]*MatchmakerEntry
+	var expiredActiveIndexes []string
+	if m.runtime.matchmakerOverrideFunction != nil {
+		matchedEntries, expiredActiveIndexes = m.processCustom(activeIndexesCopy, indexCount, indexesCopy)
+	} else {
+		matchedEntries, expiredActiveIndexes = m.processDefault(activeIndexCount, activeIndexesCopy, indexCount, indexesCopy)
+	}
+
+	m.Lock()
+
+	for _, ticket := range expiredActiveIndexes {
+		delete(m.activeIndexes, ticket)
+	}
+
+	for i := 0; i < len(matchedEntries); i++ {
+		// Check that the current matched entries are all still present and eligible for the match to be formed.
+		currentMatchedEntries := matchedEntries[i]
+		var incomplete bool
+		for _, entry := range currentMatchedEntries {
+			if _, found := m.indexes[entry.Ticket]; !found {
+				incomplete = true
+				break
+			}
+		}
+		if incomplete {
+			matchedEntries[i] = matchedEntries[len(matchedEntries)-1]
+			matchedEntries[len(matchedEntries)-1] = nil
+			matchedEntries = matchedEntries[:len(matchedEntries)-1]
+			i--
 			continue
 		}
 
-		// Form possible combinations, in case multiple matches might be suitable.
-		entryCombos := make([][]*MatchmakerEntry, 0, 5)
-		for _, hit := range result.Hits {
-			if hit.ID == ticket {
-				// Skip the current ticket.
-				continue
+		// Remove all entries/indexes that have just matched.
+		ticketsToDelete := make(map[string]struct{}, len(currentMatchedEntries))
+		for _, entry := range currentMatchedEntries {
+			if _, ok := ticketsToDelete[entry.Ticket]; !ok {
+				ticketsToDelete[entry.Ticket] = struct{}{}
 			}
-
-			hitIndex, ok := m.indexes[hit.ID]
-			if !ok {
-				// Ticket did not exist, should not happen.
-				m.logger.Warn("matchmaker process missing index", zap.String("ticket", hit.ID))
-				continue
-			}
-
-			if index.MaxCount < hitIndex.MaxCount && hitIndex.Intervals <= m.config.GetMatchmaker().MaxIntervals {
-				// This match would be less than the search hit's preferred max, and they can still wait. Let them wait more.
-				continue
-			}
-
-			// Check if there are overlapping session IDs, and if so these tickets are ineligible to match together.
-			var sessionIdConflict bool
-			for sessionID := range index.SessionIDs {
-				if _, found := hitIndex.SessionIDs[sessionID]; found {
-					sessionIdConflict = true
-					break
+			delete(m.indexes, entry.Ticket)
+			delete(m.activeIndexes, entry.Ticket)
+			m.revCache.Delete(entry.Ticket)
+			if sessionTickets, ok := m.sessionTickets[entry.Presence.SessionId]; ok {
+				if l := len(sessionTickets); l <= 1 {
+					delete(m.sessionTickets, entry.Presence.SessionId)
+				} else {
+					delete(sessionTickets, entry.Ticket)
 				}
 			}
-			if sessionIdConflict {
-				continue
-			}
-
-			entries, ok := m.entries[hit.ID]
-			if !ok {
-				// Ticket did not exist, should not happen.
-				m.logger.Warn("matchmaker process missing entries", zap.String("ticket", hit.ID))
-				continue
-			}
-
-			var foundCombo []*MatchmakerEntry
-			for _, entryCombo := range entryCombos {
-				if len(entryCombo)+len(entries)+index.Count <= index.MaxCount {
-					// There is room in this combo for these entries. Check if there are session ID conflicts with current combo.
-					for _, entry := range entryCombo {
-						if _, found := hitIndex.SessionIDs[entry.Presence.SessionId]; found {
-							sessionIdConflict = true
-							break
-						}
-					}
-					if sessionIdConflict {
-						continue
-					}
-
-					entryCombo = append(entryCombo, entries...)
-					foundCombo = entryCombo
-					break
-				}
-			}
-			if foundCombo == nil {
-				entryCombo := make([]*MatchmakerEntry, len(entries))
-				copy(entryCombo, entries)
-				entryCombos = append(entryCombos, entryCombo)
-				foundCombo = entryCombo
-			}
-
-			if l := len(foundCombo) + index.Count; l == index.MaxCount || (lastInterval && l >= index.MinCount) {
-				// Check that the minimum count that satisfies the current index is also good enough for all matched entries.
-				var minCountFailed bool
-				for _, e := range foundCombo {
-					if foundIndex, ok := m.indexes[e.Ticket]; ok && foundIndex.MinCount > l {
-						minCountFailed = true
-						break
+			if entry.PartyId != "" {
+				if partyTickets, ok := m.partyTickets[entry.PartyId]; ok {
+					if l := len(partyTickets); l <= 1 {
+						delete(m.partyTickets, entry.PartyId)
+					} else {
+						delete(partyTickets, entry.Ticket)
 					}
 				}
-				if minCountFailed {
-					continue
-				}
-
-				// Found a suitable match.
-				entries, ok := m.entries[ticket]
-				if !ok {
-					// Ticket did not exist, should not happen.
-					m.logger.Warn("matchmaker process missing entries", zap.String("ticket", hit.ID))
-					break
-				}
-				currentMatchedEntries := append(foundCombo, entries...)
-				matchedEntries = append(matchedEntries, currentMatchedEntries)
-
-				// Remove all entries/indexes that have just matched. It must be done here so any following process iterations
-				// cannot pick up the same tickets to match against.
-				batch := m.index.NewBatch()
-				ticketsToDelete := make(map[string]struct{}, len(currentMatchedEntries))
-				for _, entry := range currentMatchedEntries {
-					if _, ok := ticketsToDelete[entry.Ticket]; !ok {
-						batch.Delete(entry.Ticket)
-						ticketsToDelete[entry.Ticket] = struct{}{}
-					}
-					delete(m.entries, entry.Ticket)
-					delete(m.indexes, entry.Ticket)
-					delete(m.activeIndexes, entry.Ticket)
-					if sessionTickets, ok := m.sessionTickets[entry.Presence.SessionId]; ok {
-						if l := len(sessionTickets); l <= 1 {
-							delete(m.sessionTickets, entry.Presence.SessionId)
-						} else {
-							delete(sessionTickets, ticket)
-						}
-					}
-					if entry.PartyId != "" {
-						if partyTickets, ok := m.partyTickets[entry.PartyId]; ok {
-							if l := len(partyTickets); l <= 1 {
-								delete(m.partyTickets, entry.PartyId)
-							} else {
-								delete(partyTickets, ticket)
-							}
-						}
-					}
-				}
-				if err := m.index.Batch(batch); err != nil {
-					m.logger.Error("error deleting matchmaker process entries batch", zap.Error(err))
-				}
-
-				break
 			}
 		}
 	}
 
 	m.Unlock()
 
-	for _, entries := range matchedEntries {
-		var tokenOrMatchID string
-		var isMatchID bool
-		var err error
+	if matchedEntriesCount := len(matchedEntries); matchedEntriesCount > 0 {
+		wg := &sync.WaitGroup{}
+		wg.Add(matchedEntriesCount)
+		for _, entries := range matchedEntries {
+			go func(entries []*MatchmakerEntry) {
+				var tokenOrMatchID string
+				var isMatchID bool
+				var err error
 
-		// Check if there's a matchmaker matched runtime callback, call it, and see if it returns a match ID.
-		fn := m.runtime.MatchmakerMatched()
-		if fn != nil {
-			tokenOrMatchID, isMatchID, err = fn(context.Background(), entries)
-			if err != nil {
-				m.logger.Error("Error running Matchmaker Matched hook.", zap.Error(err))
-			}
+				// Check if there's a matchmaker matched runtime callback, call it, and see if it returns a match ID.
+				fn := m.runtime.MatchmakerMatched()
+				if fn != nil {
+					tokenOrMatchID, isMatchID, err = fn(context.Background(), entries)
+					if err != nil {
+						m.logger.Error("Error running Matchmaker Matched hook.", zap.Error(err))
+					}
+				}
+
+				if !isMatchID {
+					// If there was no callback or it didn't return a valid match ID always return at least a token.
+					token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+						"mid": fmt.Sprintf("%v.", uuid.Must(uuid.NewV4()).String()),
+						"exp": time.Now().UTC().Add(30 * time.Second).Unix(),
+					})
+					tokenOrMatchID, _ = token.SignedString([]byte(m.config.GetSession().EncryptionKey))
+				}
+
+				users := make([]*rtapi.MatchmakerMatched_MatchmakerUser, 0, len(entries))
+				for _, entry := range entries {
+					users = append(users, &rtapi.MatchmakerMatched_MatchmakerUser{
+						Presence: &rtapi.UserPresence{
+							UserId:    entry.Presence.UserId,
+							SessionId: entry.Presence.SessionId,
+							Username:  entry.Presence.Username,
+						},
+						StringProperties:  entry.StringProperties,
+						NumericProperties: entry.NumericProperties,
+						PartyId:           entry.PartyId,
+					})
+				}
+				outgoing := &rtapi.Envelope{Message: &rtapi.Envelope_MatchmakerMatched{MatchmakerMatched: &rtapi.MatchmakerMatched{
+					// Ticket is set individually below for each recipient.
+					// Id set below to account for token or match ID case.
+					Users: users,
+					// Self is set individually below for each recipient.
+				}}}
+				if isMatchID {
+					outgoing.GetMatchmakerMatched().Id = &rtapi.MatchmakerMatched_MatchId{MatchId: tokenOrMatchID}
+				} else {
+					outgoing.GetMatchmakerMatched().Id = &rtapi.MatchmakerMatched_Token{Token: tokenOrMatchID}
+				}
+
+				for i, entry := range entries {
+					// Set per-recipient fields.
+					outgoing.GetMatchmakerMatched().Self = users[i]
+					outgoing.GetMatchmakerMatched().Ticket = entry.Ticket
+					// Route outgoing message.
+					m.router.SendToPresenceIDs(m.logger, []*PresenceID{{Node: entry.Presence.Node, SessionID: entry.Presence.SessionID}}, outgoing, true)
+				}
+				wg.Done()
+			}(entries)
 		}
-
-		if !isMatchID {
-			// If there was no callback or it didn't return a valid match ID always return at least a token.
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-				"mid": fmt.Sprintf("%v.", uuid.Must(uuid.NewV4()).String()),
-				"exp": time.Now().UTC().Add(30 * time.Second).Unix(),
-			})
-			tokenOrMatchID, _ = token.SignedString([]byte(m.config.GetSession().EncryptionKey))
-		}
-
-		users := make([]*rtapi.MatchmakerMatched_MatchmakerUser, 0, len(entries))
-		for _, entry := range entries {
-			users = append(users, &rtapi.MatchmakerMatched_MatchmakerUser{
-				Presence: &rtapi.UserPresence{
-					UserId:    entry.Presence.UserId,
-					SessionId: entry.Presence.SessionId,
-					Username:  entry.Presence.Username,
-				},
-				StringProperties:  entry.StringProperties,
-				NumericProperties: entry.NumericProperties,
-				PartyId:           entry.PartyId,
-			})
-		}
-		outgoing := &rtapi.Envelope{Message: &rtapi.Envelope_MatchmakerMatched{MatchmakerMatched: &rtapi.MatchmakerMatched{
-			// Ticket is set individually below for each recipient.
-			// Id set below to account for token or match ID case.
-			Users: users,
-			// Self is set individually below for each recipient.
-		}}}
-		if isMatchID {
-			outgoing.GetMatchmakerMatched().Id = &rtapi.MatchmakerMatched_MatchId{MatchId: tokenOrMatchID}
-		} else {
-			outgoing.GetMatchmakerMatched().Id = &rtapi.MatchmakerMatched_Token{Token: tokenOrMatchID}
-		}
-
-		for i, entry := range entries {
-			// Set per-recipient fields.
-			outgoing.GetMatchmakerMatched().Self = users[i]
-			outgoing.GetMatchmakerMatched().Ticket = entry.Ticket
-
-			// Route outgoing message.
-			m.router.SendToPresenceIDs(m.logger, []*PresenceID{{Node: entry.Presence.Node, SessionID: entry.Presence.SessionID}}, outgoing, true)
+		wg.Wait()
+		if m.matchedEntriesFn != nil {
+			go m.matchedEntriesFn(matchedEntries)
 		}
 	}
 }
 
-func (m *LocalMatchmaker) Add(presences []*MatchmakerPresence, sessionID, partyId, query string, minCount, maxCount int, stringProperties map[string]string, numericProperties map[string]float64) (string, error) {
+func (m *LocalMatchmaker) Add(ctx context.Context, presences []*MatchmakerPresence, sessionID, partyId, query string, minCount, maxCount, countMultiple int, stringProperties map[string]string, numericProperties map[string]float64) (string, int64, error) {
 	// Check if the matchmaker has been stopped.
 	if m.stopped.Load() {
-		return "", ErrMatchmakerNotAvailable
+		return "", 0, runtime.ErrMatchmakerNotAvailable
 	}
 
-	if bleve.NewQueryStringQuery(query).Validate() != nil {
-		return "", ErrMatchmakerQueryInvalid
+	parsedQuery, err := ParseQueryString(query)
+	if err != nil {
+		return "", 0, runtime.ErrMatchmakerQueryInvalid
+	}
+	if parsedQuery, ok := parsedQuery.(ValidatableQuery); ok {
+		if parsedQuery.Validate() != nil {
+			return "", 0, runtime.ErrMatchmakerQueryInvalid
+		}
 	}
 
 	// Merge incoming properties.
@@ -445,57 +470,77 @@ func (m *LocalMatchmaker) Add(presences []*MatchmakerPresence, sessionID, partyI
 	sessionIDs := make(map[string]struct{}, len(presences))
 	for _, presence := range presences {
 		if _, found := sessionIDs[presence.SessionId]; found {
-			return "", ErrMatchmakerDuplicateSession
+			return "", 0, runtime.ErrMatchmakerDuplicateSession
 		}
 		sessionIDs[presence.SessionId] = struct{}{}
 	}
 	// Prepare index data.
+	createdAt := time.Now().UTC().UnixNano()
 	index := &MatchmakerIndex{
 		Ticket:     ticket,
 		Properties: properties,
 		MinCount:   minCount,
 		MaxCount:   maxCount,
 		PartyId:    partyId,
-		CreatedAt:  time.Now().UTC().UnixNano(),
+		CreatedAt:  createdAt,
 
-		Query:      query,
-		Count:      len(presences),
-		SessionID:  sessionID,
-		Intervals:  0,
-		SessionIDs: sessionIDs,
+		Query:             query,
+		Count:             len(presences),
+		CountMultiple:     countMultiple,
+		SessionID:         sessionID,
+		Intervals:         0,
+		SessionIDs:        sessionIDs,
+		Node:              m.node,
+		StringProperties:  stringProperties,
+		NumericProperties: numericProperties,
+		ParsedQuery:       parsedQuery,
 	}
 
 	m.Lock()
+
+	select {
+	case <-ctx.Done():
+		m.Unlock()
+		return "", 0, nil
+	default:
+	}
 
 	// Check if all presences are allowed to create more tickets.
 	for _, presence := range presences {
 		if existingTickets := m.sessionTickets[presence.SessionId]; len(existingTickets) >= m.config.GetMatchmaker().MaxTickets {
 			m.Unlock()
-			return "", ErrMatchmakerTooManyTickets
+			return "", 0, runtime.ErrMatchmakerTooManyTickets
 		}
 	}
 	// Check if party is allowed to create more tickets.
 	if partyId != "" {
 		if existingTickets := m.partyTickets[partyId]; len(existingTickets) >= m.config.GetMatchmaker().MaxTickets {
 			m.Unlock()
-			return "", ErrMatchmakerTooManyTickets
+			return "", 0, runtime.ErrMatchmakerTooManyTickets
 		}
 	}
 
-	if err := m.index.Index(ticket, index); err != nil {
+	matchmakerIndexDoc, err := MapMatchmakerIndex(ticket, index)
+	if err != nil {
 		m.Unlock()
-		m.logger.Error("error indexing matchmaker entries", zap.Error(err))
-		return "", ErrMatchmakerIndex
+		m.logger.Error("error mapping matchmaker index document", zap.Error(err))
+		return "", 0, runtime.ErrMatchmakerIndex
 	}
 
-	entries := make([]*MatchmakerEntry, 0, len(presences))
+	if err := m.indexWriter.Update(bluge.Identifier(ticket), matchmakerIndexDoc); err != nil {
+		m.Unlock()
+		m.logger.Error("error indexing matchmaker entries", zap.Error(err))
+		return "", 0, runtime.ErrMatchmakerIndex
+	}
+
+	index.Entries = make([]*MatchmakerEntry, 0, len(presences))
 	for _, presence := range presences {
 		if _, ok := m.sessionTickets[presence.SessionId]; ok {
 			m.sessionTickets[presence.SessionId][ticket] = struct{}{}
 		} else {
 			m.sessionTickets[presence.SessionId] = map[string]struct{}{ticket: {}}
 		}
-		entries = append(entries, &MatchmakerEntry{
+		index.Entries = append(index.Entries, &MatchmakerEntry{
 			Ticket:            ticket,
 			Presence:          presence,
 			Properties:        properties,
@@ -511,12 +556,170 @@ func (m *LocalMatchmaker) Add(presences []*MatchmakerPresence, sessionID, partyI
 			m.partyTickets[partyId] = map[string]struct{}{ticket: {}}
 		}
 	}
-	m.entries[ticket] = entries
 	m.indexes[ticket] = index
 	m.activeIndexes[ticket] = index
+	m.revCache.Store(ticket, make(map[string]bool, 10))
 
 	m.Unlock()
-	return ticket, nil
+	return ticket, createdAt, nil
+}
+
+func (m *LocalMatchmaker) Insert(extracts []*MatchmakerExtract) error {
+	if m.stopped.Load() {
+		return nil
+	}
+	if len(extracts) == 0 {
+		return nil
+	}
+
+	batch := bluge.NewBatch()
+	indexes := make(map[string]*MatchmakerIndex, len(extracts))
+
+	for _, extract := range extracts {
+		parsedQuery, err := ParseQueryString(extract.Query)
+		if err != nil {
+			m.logger.Error("error parsing matchmaker query", zap.Error(err), zap.String("query", extract.Query))
+			continue
+		}
+		if parsedQuery, ok := parsedQuery.(ValidatableQuery); ok {
+			if parsedQuery.Validate() != nil {
+				m.logger.Error("error validating matchmaker query", zap.String("query", extract.Query))
+				continue
+			}
+		}
+
+		properties := make(map[string]interface{}, len(extract.StringProperties)+len(extract.NumericProperties))
+		for k, v := range extract.StringProperties {
+			properties[k] = v
+		}
+		for k, v := range extract.NumericProperties {
+			properties[k] = v
+		}
+
+		sessionIDs := make(map[string]struct{}, len(extract.Presences))
+		for _, presence := range extract.Presences {
+			if _, found := sessionIDs[presence.SessionId]; found {
+				m.logger.Error("error checking matchmaker session duplicates", zap.String("session_id", presence.SessionId))
+				continue
+			}
+			sessionIDs[presence.SessionId] = struct{}{}
+		}
+
+		index := &MatchmakerIndex{
+			Ticket:     extract.Ticket,
+			Properties: properties,
+			MinCount:   extract.MinCount,
+			MaxCount:   extract.MaxCount,
+			PartyId:    extract.PartyId,
+			CreatedAt:  extract.CreatedAt,
+
+			Query:             extract.Query,
+			Count:             len(extract.Presences),
+			CountMultiple:     extract.CountMultiple,
+			SessionID:         extract.SessionID,
+			Intervals:         extract.Intervals,
+			SessionIDs:        sessionIDs,
+			Node:              extract.Node,
+			StringProperties:  extract.StringProperties,
+			NumericProperties: extract.NumericProperties,
+			ParsedQuery:       parsedQuery,
+		}
+
+		matchmakerIndexDoc, err := MapMatchmakerIndex(extract.Ticket, index)
+		if err != nil {
+			m.logger.Error("error mapping matchmaker index document", zap.Error(err))
+			continue
+		}
+
+		batch.Insert(matchmakerIndexDoc)
+
+		index.Entries = make([]*MatchmakerEntry, 0, len(extract.Presences))
+		for _, presence := range extract.Presences {
+			index.Entries = append(index.Entries, &MatchmakerEntry{
+				Ticket:            extract.Ticket,
+				Presence:          presence,
+				Properties:        properties,
+				PartyId:           extract.PartyId,
+				StringProperties:  extract.StringProperties,
+				NumericProperties: extract.NumericProperties,
+			})
+		}
+		indexes[extract.Ticket] = index
+	}
+
+	m.Lock()
+
+	if err := m.indexWriter.Batch(batch); err != nil {
+		m.Unlock()
+		m.logger.Error("error indexing matchmaker entries", zap.Error(err))
+		return runtime.ErrMatchmakerIndex
+	}
+	for ticket, index := range indexes {
+		m.indexes[ticket] = index
+		m.revCache.Store(ticket, make(map[string]bool, 10))
+		if index.Intervals < m.config.GetMatchmaker().MaxIntervals {
+			m.activeIndexes[ticket] = index
+		}
+		if index.PartyId != "" {
+			if _, ok := m.partyTickets[index.PartyId]; ok {
+				m.partyTickets[index.PartyId][ticket] = struct{}{}
+			} else {
+				m.partyTickets[index.PartyId] = map[string]struct{}{ticket: {}}
+			}
+		}
+		for _, entry := range index.Entries {
+			if _, ok := m.sessionTickets[entry.Presence.SessionId]; ok {
+				m.sessionTickets[entry.Presence.SessionId][ticket] = struct{}{}
+			} else {
+				m.sessionTickets[entry.Presence.SessionId] = map[string]struct{}{ticket: {}}
+			}
+		}
+	}
+
+	m.Unlock()
+
+	return nil
+}
+
+func (m *LocalMatchmaker) Extract() []*MatchmakerExtract {
+	if m.stopped.Load() {
+		return nil
+	}
+
+	extracts := make([]*MatchmakerExtract, 0, 100)
+	m.Lock()
+
+	for ticket, index := range m.indexes {
+		if index.Node != m.node {
+			continue
+		}
+
+		extract := &MatchmakerExtract{
+			Presences:         make([]*MatchmakerPresence, 0, len(index.Entries)),
+			SessionID:         index.SessionID,
+			PartyId:           index.PartyId,
+			Query:             index.Query,
+			MinCount:          index.MinCount,
+			MaxCount:          index.MaxCount,
+			CountMultiple:     index.CountMultiple,
+			StringProperties:  index.StringProperties,
+			NumericProperties: index.NumericProperties,
+			Ticket:            ticket,
+			Count:             index.Count,
+			Intervals:         index.Intervals,
+			CreatedAt:         index.CreatedAt,
+			Node:              index.Node,
+		}
+		for _, entry := range index.Entries {
+			extract.Presences = append(extract.Presences, entry.Presence)
+		}
+
+		extracts = append(extracts, extract)
+	}
+
+	m.Unlock()
+
+	return extracts
 }
 
 func (m *LocalMatchmaker) RemoveSession(sessionID, ticket string) error {
@@ -526,17 +729,11 @@ func (m *LocalMatchmaker) RemoveSession(sessionID, ticket string) error {
 	if !ok || index.PartyId != "" || index.SessionID != sessionID {
 		// Ticket did not exist, or the caller was not the ticket owner - for example a user attempting to remove a party ticket.
 		m.Unlock()
-		return ErrMatchmakerTicketNotFound
+		return runtime.ErrMatchmakerTicketNotFound
 	}
 	delete(m.indexes, ticket)
 
-	entries, ok := m.entries[ticket]
-	if !ok {
-		m.logger.Warn("matchmaker remove found ticket with no entries", zap.String("ticket", ticket))
-	}
-	delete(m.entries, ticket)
-
-	for _, entry := range entries {
+	for _, entry := range index.Entries {
 		if sessionTickets, ok := m.sessionTickets[entry.Presence.SessionId]; ok {
 			if l := len(sessionTickets); l <= 1 {
 				delete(m.sessionTickets, entry.Presence.SessionId)
@@ -557,11 +754,12 @@ func (m *LocalMatchmaker) RemoveSession(sessionID, ticket string) error {
 	}
 
 	delete(m.activeIndexes, ticket)
+	m.revCache.Delete(ticket)
 
-	if err := m.index.Delete(ticket); err != nil {
+	if err := m.indexWriter.Delete(bluge.Identifier(ticket)); err != nil {
 		m.Unlock()
 		m.logger.Error("error deleting matchmaker entries", zap.Error(err))
-		return ErrMatchmakerDelete
+		return runtime.ErrMatchmakerDelete
 	}
 
 	m.Unlock()
@@ -569,6 +767,8 @@ func (m *LocalMatchmaker) RemoveSession(sessionID, ticket string) error {
 }
 
 func (m *LocalMatchmaker) RemoveSessionAll(sessionID string) error {
+	batch := bluge.NewBatch()
+
 	m.Lock()
 
 	sessionTickets, ok := m.sessionTickets[sessionID]
@@ -579,27 +779,21 @@ func (m *LocalMatchmaker) RemoveSessionAll(sessionID string) error {
 	}
 	delete(m.sessionTickets, sessionID)
 
-	batch := m.index.NewBatch()
 	for ticket := range sessionTickets {
-		batch.Delete(ticket)
+		batch.Delete(bluge.Identifier(ticket))
 
 		index, ok := m.indexes[ticket]
 		if !ok {
 			// Ticket did not exist, should not happen.
-			m.logger.Warn("matchmaker remove all found ticket with no index", zap.String("ticket", ticket))
+			m.logger.Warn("matchmaker remove session all found ticket with no index", zap.String("ticket", ticket))
 			continue
 		}
 		delete(m.indexes, ticket)
 
 		delete(m.activeIndexes, ticket)
+		m.revCache.Delete(ticket)
 
-		entries, ok := m.entries[ticket]
-		if !ok {
-			m.logger.Warn("matchmaker remove all found ticket with no entries", zap.String("ticket", ticket))
-		}
-		delete(m.entries, ticket)
-
-		for _, entry := range entries {
+		for _, entry := range index.Entries {
 			if entry.Presence.SessionId == sessionID {
 				// Already deleted above.
 				continue
@@ -624,15 +818,12 @@ func (m *LocalMatchmaker) RemoveSessionAll(sessionID string) error {
 		}
 	}
 
-	if batch.Size() > 0 {
-		if err := m.index.Batch(batch); err != nil {
-			m.Unlock()
-			m.logger.Error("error deleting matchmaker entries batch", zap.Error(err))
-			return ErrMatchmakerDelete
-		}
-	}
-
+	err := m.indexWriter.Batch(batch)
 	m.Unlock()
+	if err != nil {
+		m.logger.Error("error deleting matchmaker entries batch", zap.Error(err))
+		return runtime.ErrMatchmakerDelete
+	}
 	return nil
 }
 
@@ -643,17 +834,11 @@ func (m *LocalMatchmaker) RemoveParty(partyID, ticket string) error {
 	if !ok || index.SessionID != "" || index.PartyId != partyID {
 		// Ticket did not exist, or the caller was not the ticket owner - for example a user attempting to remove a party ticket.
 		m.Unlock()
-		return ErrMatchmakerTicketNotFound
+		return runtime.ErrMatchmakerTicketNotFound
 	}
 	delete(m.indexes, ticket)
 
-	entries, ok := m.entries[ticket]
-	if !ok {
-		m.logger.Warn("matchmaker remove found ticket with no entries", zap.String("ticket", ticket))
-	}
-	delete(m.entries, ticket)
-
-	for _, entry := range entries {
+	for _, entry := range index.Entries {
 		if sessionTickets, ok := m.sessionTickets[entry.Presence.SessionId]; ok {
 			if l := len(sessionTickets); l <= 1 {
 				delete(m.sessionTickets, entry.Presence.SessionId)
@@ -672,11 +857,12 @@ func (m *LocalMatchmaker) RemoveParty(partyID, ticket string) error {
 	}
 
 	delete(m.activeIndexes, ticket)
+	m.revCache.Delete(ticket)
 
-	if err := m.index.Delete(ticket); err != nil {
+	if err := m.indexWriter.Delete(bluge.Identifier(ticket)); err != nil {
 		m.Unlock()
 		m.logger.Error("error deleting matchmaker entries", zap.Error(err))
-		return ErrMatchmakerDelete
+		return runtime.ErrMatchmakerDelete
 	}
 
 	m.Unlock()
@@ -684,6 +870,8 @@ func (m *LocalMatchmaker) RemoveParty(partyID, ticket string) error {
 }
 
 func (m *LocalMatchmaker) RemovePartyAll(partyID string) error {
+	batch := bluge.NewBatch()
+
 	m.Lock()
 
 	partyTickets, ok := m.partyTickets[partyID]
@@ -694,27 +882,21 @@ func (m *LocalMatchmaker) RemovePartyAll(partyID string) error {
 	}
 	delete(m.partyTickets, partyID)
 
-	batch := m.index.NewBatch()
 	for ticket := range partyTickets {
-		batch.Delete(ticket)
+		batch.Delete(bluge.Identifier(ticket))
 
-		_, ok := m.indexes[ticket]
+		partyIndex, ok := m.indexes[ticket]
 		if !ok {
 			// Ticket did not exist, should not happen.
-			m.logger.Warn("matchmaker remove all found ticket with no index", zap.String("ticket", ticket))
+			m.logger.Warn("matchmaker remove party all found ticket with no index", zap.String("ticket", ticket))
 			continue
 		}
 		delete(m.indexes, ticket)
 
 		delete(m.activeIndexes, ticket)
+		m.revCache.Delete(ticket)
 
-		entries, ok := m.entries[ticket]
-		if !ok {
-			m.logger.Warn("matchmaker remove all found ticket with no entries", zap.String("ticket", ticket))
-		}
-		delete(m.entries, ticket)
-
-		for _, entry := range entries {
+		for _, entry := range partyIndex.Entries {
 			if sessionTickets, ok := m.sessionTickets[entry.Presence.SessionId]; ok {
 				if l := len(sessionTickets); l <= 1 {
 					delete(m.sessionTickets, entry.Presence.SessionId)
@@ -725,14 +907,162 @@ func (m *LocalMatchmaker) RemovePartyAll(partyID string) error {
 		}
 	}
 
-	if batch.Size() > 0 {
-		if err := m.index.Batch(batch); err != nil {
-			m.Unlock()
-			m.logger.Error("error deleting matchmaker entries batch", zap.Error(err))
-			return ErrMatchmakerDelete
+	err := m.indexWriter.Batch(batch)
+	m.Unlock()
+	if err != nil {
+		m.logger.Error("error deleting matchmaker entries batch", zap.Error(err))
+		return runtime.ErrMatchmakerDelete
+	}
+	return nil
+}
+
+func (m *LocalMatchmaker) RemoveAll(node string) {
+	batch := bluge.NewBatch()
+
+	m.Lock()
+
+	var removedCount uint32
+	for ticket, index := range m.indexes {
+		if index.Node != node {
+			continue
+		}
+
+		batch.Delete(bluge.Identifier(ticket))
+
+		removedCount++
+		delete(m.indexes, ticket)
+
+		delete(m.activeIndexes, ticket)
+		m.revCache.Delete(ticket)
+
+		if index.PartyId != "" {
+			partyTickets, ok := m.partyTickets[index.PartyId]
+			if ok {
+				if len(partyTickets) <= 1 {
+					delete(m.partyTickets, index.PartyId)
+				} else {
+					delete(partyTickets, ticket)
+				}
+			}
+		}
+
+		for _, entry := range index.Entries {
+			if sessionTickets, ok := m.sessionTickets[entry.Presence.SessionId]; ok {
+				if l := len(sessionTickets); l <= 1 {
+					delete(m.sessionTickets, entry.Presence.SessionId)
+				} else {
+					delete(sessionTickets, ticket)
+				}
+			}
 		}
 	}
 
+	if removedCount == 0 {
+		m.Unlock()
+		return
+	}
+
+	err := m.indexWriter.Batch(batch)
 	m.Unlock()
-	return nil
+	if err != nil {
+		m.logger.Error("error deleting matchmaker entries batch", zap.Error(err))
+	}
+}
+
+func (m *LocalMatchmaker) Remove(tickets []string) {
+	batch := bluge.NewBatch()
+
+	m.Lock()
+
+	var removedCount uint32
+	for _, ticket := range tickets {
+		index, found := m.indexes[ticket]
+		if !found {
+			continue
+		}
+
+		batch.Delete(bluge.Identifier(ticket))
+
+		removedCount++
+		delete(m.indexes, ticket)
+
+		delete(m.activeIndexes, ticket)
+		m.revCache.Delete(ticket)
+
+		if index.PartyId != "" {
+			partyTickets, ok := m.partyTickets[index.PartyId]
+			if ok {
+				if len(partyTickets) <= 1 {
+					delete(m.partyTickets, index.PartyId)
+				} else {
+					delete(partyTickets, ticket)
+				}
+			}
+		}
+
+		for _, entry := range index.Entries {
+			if sessionTickets, ok := m.sessionTickets[entry.Presence.SessionId]; ok {
+				if l := len(sessionTickets); l <= 1 {
+					delete(m.sessionTickets, entry.Presence.SessionId)
+				} else {
+					delete(sessionTickets, ticket)
+				}
+			}
+		}
+	}
+
+	if removedCount == 0 {
+		m.Unlock()
+		return
+	}
+
+	err := m.indexWriter.Batch(batch)
+	m.Unlock()
+	if err != nil {
+		m.logger.Error("error deleting matchmaker entries batch", zap.Error(err))
+	}
+}
+
+func MapMatchmakerIndex(id string, in *MatchmakerIndex) (*bluge.Document, error) {
+	rv := bluge.NewDocument(id)
+
+	rv.AddField(bluge.NewKeywordField("ticket", in.Ticket).StoreValue())
+	rv.AddField(bluge.NewNumericField("min_count", float64(in.MinCount)).StoreValue())
+	rv.AddField(bluge.NewNumericField("max_count", float64(in.MaxCount)).StoreValue())
+	rv.AddField(bluge.NewKeywordField("party_id", in.PartyId).StoreValue())
+	rv.AddField(bluge.NewNumericField("created_at", float64(in.CreatedAt)).StoreValue())
+
+	if in.Properties != nil {
+		BlugeWalkDocument(in.Properties, []string{"properties"}, rv)
+	}
+
+	return rv, nil
+}
+
+func validateMatch(ctx context.Context, revCache *MapOf[string, map[string]bool], r *bluge.Reader, fromTicketQuery bluge.Query, fromTicket, toTicket string) (bool, error) {
+	cache, found := revCache.Load(fromTicket)
+	if !found {
+		return false, nil
+	}
+
+	if cachedResult, seenBefore := cache[toTicket]; seenBefore {
+		return cachedResult, nil
+	}
+
+	idQuery := bluge.NewTermQuery(toTicket).SetField("_id")
+
+	topQuery := bluge.NewBooleanQuery()
+	topQuery.AddMust(idQuery, fromTicketQuery)
+
+	req := bluge.NewTopNSearch(0, topQuery).WithStandardAggregations()
+	dmi, err := r.Search(ctx, req)
+	if err != nil {
+		return false, err
+	}
+
+	valid := dmi.Aggregations().Count() == 1
+
+	cache[toTicket] = valid
+
+	return valid, nil
 }

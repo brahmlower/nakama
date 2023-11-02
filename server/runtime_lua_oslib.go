@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heroiclabs/nakama/v3/internal/gopher-lua"
+	lua "github.com/heroiclabs/nakama/v3/internal/gopher-lua"
 )
 
 var startedAt time.Time
@@ -65,7 +65,7 @@ var osFuncs = map[string]lua.LGFunction{
 }
 
 func osClock(L *lua.LState) int {
-	L.Push(lua.LNumber(float64(time.Now().Sub(startedAt)) / float64(time.Second)))
+	L.Push(lua.LNumber(float64(time.Since(startedAt)) / float64(time.Second)))
 	return 1
 }
 

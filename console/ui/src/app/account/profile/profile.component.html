@@ -66,11 +66,11 @@
       <div class="col-3 pl-0">
         <label class="d-inline" for="update_time">Update Time</label>
       </div>
-      <input type="text" id="update_time" [value]="account.user.create_time" class="form-control-plaintext form-control-sm my-2" placeholder="Update Time" disabled readonly>
+      <input type="text" id="update_time" [value]="account.user.update_time" class="form-control-plaintext form-control-sm my-2" placeholder="Update Time" disabled readonly>
     </div>
   </div>
 
-  <div class="card p-2 mb-3" style="height: 400px">
+  <div class="card p-2 mb-3 jsoneditor" style="height: 400px">
     <div #editor style="height: 400px"></div>
   </div>
   <button type="submit" class="btn btn-primary" [disabled]="updating" *ngIf="updateAllowed()">Save</button>

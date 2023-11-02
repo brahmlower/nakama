@@ -16,6 +16,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/base64"
 	"encoding/gob"
@@ -25,18 +26,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
-
-	"context"
-
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/gofrs/uuid/v5"
 	"github.com/heroiclabs/nakama-common/api"
-	"github.com/jackc/pgx/pgtype"
+	"github.com/heroiclabs/nakama-common/runtime"
+	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
-
-var ErrFriendInvalidCursor = errors.New("friend cursor invalid")
 
 type edgeListCursor struct {
 	// ID fields.
@@ -57,7 +54,7 @@ FROM users, user_edge WHERE id = destination_id AND source_id = $1`
 	}
 	defer rows.Close()
 
-	friends := make([]*api.Friend, 0)
+	friends := make([]*api.Friend, 0, 10)
 
 	for rows.Next() {
 		var id string
@@ -75,7 +72,7 @@ FROM users, user_edge WHERE id = destination_id AND source_id = $1`
 
 		friends = append(friends, &api.Friend{
 			User: user,
-			State: &wrappers.Int32Value{
+			State: &wrapperspb.Int32Value{
 				Value: int32(state.Int64),
 			},
 		})
@@ -88,21 +85,21 @@ FROM users, user_edge WHERE id = destination_id AND source_id = $1`
 	return &api.FriendList{Friends: friends}, nil
 }
 
-func ListFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tracker, userID uuid.UUID, limit int, state *wrappers.Int32Value, cursor string) (*api.FriendList, error) {
+func ListFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, statusRegistry *StatusRegistry, userID uuid.UUID, limit int, state *wrapperspb.Int32Value, cursor string) (*api.FriendList, error) {
 	var incomingCursor *edgeListCursor
 	if cursor != "" {
 		cb, err := base64.StdEncoding.DecodeString(cursor)
 		if err != nil {
-			return nil, ErrFriendInvalidCursor
+			return nil, runtime.ErrFriendInvalidCursor
 		}
 		incomingCursor = &edgeListCursor{}
 		if err := gob.NewDecoder(bytes.NewReader(cb)).Decode(incomingCursor); err != nil {
-			return nil, ErrFriendInvalidCursor
+			return nil, runtime.ErrFriendInvalidCursor
 		}
 
 		// Cursor and filter mismatch. Perhaps the caller has sent an old cursor with a changed filter.
 		if state != nil && int64(state.Value) != incomingCursor.State {
-			return nil, ErrFriendInvalidCursor
+			return nil, runtime.ErrFriendInvalidCursor
 		}
 	}
 
@@ -181,24 +178,18 @@ FROM users, user_edge WHERE id = destination_id AND source_id = $1`
 			break
 		}
 
-		friendID := uuid.FromStringOrNil(id)
-		online := false
-		if tracker != nil {
-			online = tracker.StreamExists(PresenceStream{Mode: StreamModeNotifications, Subject: friendID})
-		}
-
 		user := &api.User{
-			Id:                    friendID.String(),
-			Username:              username.String,
-			DisplayName:           displayName.String,
-			AvatarUrl:             avatarURL.String,
-			LangTag:               lang.String,
-			Location:              location.String,
-			Timezone:              timezone.String,
-			Metadata:              string(metadata),
-			CreateTime:            &timestamp.Timestamp{Seconds: createTime.Time.Unix()},
-			UpdateTime:            &timestamp.Timestamp{Seconds: updateTime.Time.Unix()},
-			Online:                online,
+			Id:          id,
+			Username:    username.String,
+			DisplayName: displayName.String,
+			AvatarUrl:   avatarURL.String,
+			LangTag:     lang.String,
+			Location:    location.String,
+			Timezone:    timezone.String,
+			Metadata:    string(metadata),
+			CreateTime:  &timestamppb.Timestamp{Seconds: createTime.Time.Unix()},
+			UpdateTime:  &timestamppb.Timestamp{Seconds: updateTime.Time.Unix()},
+			// Online filled below.
 			FacebookId:            facebookID.String,
 			GoogleId:              googleID.String,
 			GamecenterId:          gamecenterID.String,
@@ -209,15 +200,19 @@ FROM users, user_edge WHERE id = destination_id AND source_id = $1`
 
 		friends = append(friends, &api.Friend{
 			User: user,
-			State: &wrappers.Int32Value{
+			State: &wrapperspb.Int32Value{
 				Value: int32(state.Int64),
 			},
-			UpdateTime: &timestamp.Timestamp{Seconds: edgeUpdateTime.Time.Unix()},
+			UpdateTime: &timestamppb.Timestamp{Seconds: edgeUpdateTime.Time.Unix()},
 		})
 	}
 	if err = rows.Err(); err != nil {
 		logger.Error("Error retrieving friends.", zap.Error(err))
 		return nil, err
+	}
+
+	if statusRegistry != nil {
+		statusRegistry.FillOnlineFriends(friends)
 	}
 
 	return &api.FriendList{Friends: friends, Cursor: outgoingCursor}, nil
@@ -231,17 +226,25 @@ func AddFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, messageRout
 
 	var notificationToSend map[string]bool
 
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		logger.Error("Could not begin database transaction.", zap.Error(err))
-		return err
-	}
-
-	if err = ExecuteInTx(ctx, tx, func() error {
+	if err := ExecuteInTx(ctx, db, func(tx *sql.Tx) error {
 		// If the transaction is retried ensure we wipe any notifications that may have been prepared by previous attempts.
 		notificationToSend = make(map[string]bool)
 
 		for id := range uniqueFriendIDs {
+			// Check to see if user has already blocked friend, if so, don't add friend or send notification.
+			var blockState int
+			err := tx.QueryRowContext(ctx, "SELECT state FROM user_edge WHERE source_id = $1 AND destination_id = $2 AND state = 3", userID, id).Scan(&blockState)
+			// ignore if the error is sql.ErrNoRows as means block was not found - continue as intended.
+			if err != nil && err != sql.ErrNoRows {
+				// genuine DB error was found.
+				logger.Debug("Failed to check edge state.", zap.Error(err), zap.String("user", userID.String()), zap.String("friend", id))
+				return err
+			} else if err == nil {
+				// the block was found, don't add friend or send notification.
+				logger.Info("Ignoring previously blocked friend. Delete friend first before attempting to add.", zap.String("user", userID.String()), zap.String("friend", id))
+				continue
+			}
+
 			isFriendAccept, addFriendErr := addFriend(ctx, logger, tx, userID, id)
 			if addFriendErr == nil {
 				notificationToSend[id] = isFriendAccept
@@ -272,7 +275,7 @@ func AddFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, messageRout
 			SenderId:   userID.String(),
 			Code:       code,
 			Persistent: true,
-			CreateTime: &timestamp.Timestamp{Seconds: time.Now().UTC().Unix()},
+			CreateTime: &timestamppb.Timestamp{Seconds: time.Now().UTC().Unix()},
 		}}
 	}
 
@@ -284,20 +287,6 @@ func AddFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, messageRout
 
 // Returns "true" if accepting an invite, otherwise false
 func addFriend(ctx context.Context, logger *zap.Logger, tx *sql.Tx, userID uuid.UUID, friendID string) (bool, error) {
-	// Check to see if user has already blocked friend, if so ignore.
-	var blockState int
-	err := tx.QueryRowContext(ctx, "SELECT state FROM user_edge WHERE source_id = $1 AND destination_id = $2 AND state = 3", userID, friendID).Scan(&blockState)
-	// ignore if the error is sql.ErrNoRows as means block was not found - continue as intended.
-	if err != nil && err != sql.ErrNoRows {
-		// genuine DB error was found.
-		logger.Debug("Failed to check edge state.", zap.Error(err), zap.String("user", userID.String()), zap.String("friend", friendID))
-		return false, err
-	} else if err == nil {
-		// the block was found, return early.
-		logger.Info("Ignoring previously blocked friend. Delete friend first before attempting to add.", zap.String("user", userID.String()), zap.String("friend", friendID))
-		return false, nil
-	}
-
 	// Mark an invite as accepted, if one was in place.
 	res, err := tx.ExecContext(ctx, `
 UPDATE user_edge SET state = 0, update_time = now()
@@ -378,13 +367,7 @@ func DeleteFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, currentU
 		uniqueFriendIDs[fid] = struct{}{}
 	}
 
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		logger.Error("Could not begin database transaction.", zap.Error(err))
-		return err
-	}
-
-	if err = ExecuteInTx(ctx, tx, func() error {
+	if err := ExecuteInTx(ctx, db, func(tx *sql.Tx) error {
 		for id := range uniqueFriendIDs {
 			if deleteFriendErr := deleteFriend(ctx, logger, tx, currentUser, id); deleteFriendErr != nil {
 				return deleteFriendErr
@@ -433,13 +416,7 @@ func BlockFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, currentUs
 		uniqueFriendIDs[fid] = struct{}{}
 	}
 
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		logger.Error("Could not begin database transaction.", zap.Error(err))
-		return err
-	}
-
-	if err = ExecuteInTx(ctx, tx, func() error {
+	if err := ExecuteInTx(ctx, db, func(tx *sql.Tx) error {
 		for id := range uniqueFriendIDs {
 			if blockFriendErr := blockFriend(ctx, logger, tx, currentUser, id); blockFriendErr != nil {
 				return blockFriendErr

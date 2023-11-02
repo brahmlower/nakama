@@ -1,5 +1,12 @@
 package goja
 
+import (
+	"fmt"
+	"reflect"
+)
+
+var setExportType = reflectTypeArray
+
 type setObject struct {
 	baseObject
 	m *orderedMap
@@ -38,11 +45,75 @@ func (so *setObject) init() {
 	so.m = newOrderedMap(so.val.runtime.getHash())
 }
 
+func (so *setObject) exportType() reflect.Type {
+	return setExportType
+}
+
+func (so *setObject) export(ctx *objectExportCtx) interface{} {
+	a := make([]interface{}, so.m.size)
+	ctx.put(so.val, a)
+	iter := so.m.newIter()
+	for i := 0; i < len(a); i++ {
+		entry := iter.next()
+		if entry == nil {
+			break
+		}
+		a[i] = exportValue(entry.key, ctx)
+	}
+	return a
+}
+
+func (so *setObject) exportToArrayOrSlice(dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
+	l := so.m.size
+	if typ.Kind() == reflect.Array {
+		if dst.Len() != l {
+			return fmt.Errorf("cannot convert a Set into an array, lengths mismatch: have %d, need %d)", l, dst.Len())
+		}
+	} else {
+		dst.Set(reflect.MakeSlice(typ, l, l))
+	}
+	ctx.putTyped(so.val, typ, dst.Interface())
+	iter := so.m.newIter()
+	r := so.val.runtime
+	for i := 0; i < l; i++ {
+		entry := iter.next()
+		if entry == nil {
+			break
+		}
+		err := r.toReflectValue(entry.key, dst.Index(i), ctx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (so *setObject) exportToMap(dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
+	dst.Set(reflect.MakeMap(typ))
+	keyTyp := typ.Key()
+	elemTyp := typ.Elem()
+	iter := so.m.newIter()
+	r := so.val.runtime
+	for {
+		entry := iter.next()
+		if entry == nil {
+			break
+		}
+		keyVal := reflect.New(keyTyp).Elem()
+		err := r.toReflectValue(entry.key, keyVal, ctx)
+		if err != nil {
+			return err
+		}
+		dst.SetMapIndex(keyVal, reflect.Zero(elemTyp))
+	}
+	return nil
+}
+
 func (r *Runtime) setProto_add(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	so, ok := thisObj.self.(*setObject)
 	if !ok {
-		panic(r.NewTypeError("Method Set.prototype.add called on incompatible receiver %s", thisObj.String()))
+		panic(r.NewTypeError("Method Set.prototype.add called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
 	}
 
 	so.m.set(call.Argument(0), nil)
@@ -53,7 +124,7 @@ func (r *Runtime) setProto_clear(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	so, ok := thisObj.self.(*setObject)
 	if !ok {
-		panic(r.NewTypeError("Method Set.prototype.clear called on incompatible receiver %s", thisObj.String()))
+		panic(r.NewTypeError("Method Set.prototype.clear called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
 	}
 
 	so.m.clear()
@@ -64,7 +135,7 @@ func (r *Runtime) setProto_delete(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	so, ok := thisObj.self.(*setObject)
 	if !ok {
-		panic(r.NewTypeError("Method Set.prototype.delete called on incompatible receiver %s", thisObj.String()))
+		panic(r.NewTypeError("Method Set.prototype.delete called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
 	}
 
 	return r.toBoolean(so.m.remove(call.Argument(0)))
@@ -78,7 +149,7 @@ func (r *Runtime) setProto_forEach(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	so, ok := thisObj.self.(*setObject)
 	if !ok {
-		panic(r.NewTypeError("Method Set.prototype.forEach called on incompatible receiver %s", thisObj.String()))
+		panic(r.NewTypeError("Method Set.prototype.forEach called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
 	}
 	callbackFn, ok := r.toObject(call.Argument(0)).self.assertCallable()
 	if !ok {
@@ -101,7 +172,7 @@ func (r *Runtime) setProto_has(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	so, ok := thisObj.self.(*setObject)
 	if !ok {
-		panic(r.NewTypeError("Method Set.prototype.has called on incompatible receiver %s", thisObj.String()))
+		panic(r.NewTypeError("Method Set.prototype.has called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
 	}
 
 	return r.toBoolean(so.m.has(call.Argument(0)))
@@ -111,7 +182,7 @@ func (r *Runtime) setProto_getSize(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	so, ok := thisObj.self.(*setObject)
 	if !ok {
-		panic(r.NewTypeError("Method get Set.prototype.size called on incompatible receiver %s", thisObj.String()))
+		panic(r.NewTypeError("Method get Set.prototype.size called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
 	}
 
 	return intToValue(int64(so.m.size))
@@ -129,7 +200,7 @@ func (r *Runtime) builtin_newSet(args []Value, newTarget *Object) *Object {
 	o := &Object{runtime: r}
 
 	so := &setObject{}
-	so.class = classSet
+	so.class = classObject
 	so.val = o
 	so.extensible = true
 	o.self = so
@@ -138,19 +209,31 @@ func (r *Runtime) builtin_newSet(args []Value, newTarget *Object) *Object {
 	if len(args) > 0 {
 		if arg := args[0]; arg != nil && arg != _undefined && arg != _null {
 			adder := so.getStr("add", nil)
-			iter := r.getIterator(arg, nil)
+			stdArr := r.checkStdArrayIter(arg)
 			if adder == r.global.setAdder {
-				r.iterate(iter, func(item Value) {
-					so.m.set(item, nil)
-				})
+				if stdArr != nil {
+					for _, v := range stdArr.values {
+						so.m.set(v, nil)
+					}
+				} else {
+					r.getIterator(arg, nil).iterate(func(item Value) {
+						so.m.set(item, nil)
+					})
+				}
 			} else {
 				adderFn := toMethod(adder)
 				if adderFn == nil {
 					panic(r.NewTypeError("Set.add in missing"))
 				}
-				r.iterate(iter, func(item Value) {
-					adderFn(FunctionCall{This: o, Arguments: []Value{item}})
-				})
+				if stdArr != nil {
+					for _, item := range stdArr.values {
+						adderFn(FunctionCall{This: o, Arguments: []Value{item}})
+					}
+				} else {
+					r.getIterator(arg, nil).iterate(func(item Value) {
+						adderFn(FunctionCall{This: o, Arguments: []Value{item}})
+					})
+				}
 			}
 		}
 	}
@@ -170,11 +253,11 @@ func (r *Runtime) createSetIterator(setValue Value, kind iterationKind) Value {
 		iter: setObj.m.newIter(),
 		kind: kind,
 	}
-	si.class = classSetIterator
+	si.class = classObject
 	si.val = o
 	si.extensible = true
 	o.self = si
-	si.prototype = r.global.SetIteratorPrototype
+	si.prototype = r.getSetIteratorPrototype()
 	si.init()
 
 	return o
@@ -185,31 +268,31 @@ func (r *Runtime) setIterProto_next(call FunctionCall) Value {
 	if iter, ok := thisObj.self.(*setIterObject); ok {
 		return iter.next()
 	}
-	panic(r.NewTypeError("Method Set Iterator.prototype.next called on incompatible receiver %s", thisObj.String()))
+	panic(r.NewTypeError("Method Set Iterator.prototype.next called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
 }
 
 func (r *Runtime) createSetProto(val *Object) objectImpl {
 	o := newBaseObjectObj(val, r.global.ObjectPrototype, classObject)
 
-	o._putProp("constructor", r.global.Set, true, false, true)
-	r.global.setAdder = r.newNativeFunc(r.setProto_add, nil, "add", nil, 1)
+	o._putProp("constructor", r.getSet(), true, false, true)
+	r.global.setAdder = r.newNativeFunc(r.setProto_add, "add", 1)
 	o._putProp("add", r.global.setAdder, true, false, true)
 
-	o._putProp("clear", r.newNativeFunc(r.setProto_clear, nil, "clear", nil, 0), true, false, true)
-	o._putProp("delete", r.newNativeFunc(r.setProto_delete, nil, "delete", nil, 1), true, false, true)
-	o._putProp("forEach", r.newNativeFunc(r.setProto_forEach, nil, "forEach", nil, 1), true, false, true)
-	o._putProp("has", r.newNativeFunc(r.setProto_has, nil, "has", nil, 1), true, false, true)
+	o._putProp("clear", r.newNativeFunc(r.setProto_clear, "clear", 0), true, false, true)
+	o._putProp("delete", r.newNativeFunc(r.setProto_delete, "delete", 1), true, false, true)
+	o._putProp("forEach", r.newNativeFunc(r.setProto_forEach, "forEach", 1), true, false, true)
+	o._putProp("has", r.newNativeFunc(r.setProto_has, "has", 1), true, false, true)
 	o.setOwnStr("size", &valueProperty{
-		getterFunc:   r.newNativeFunc(r.setProto_getSize, nil, "get size", nil, 0),
+		getterFunc:   r.newNativeFunc(r.setProto_getSize, "get size", 0),
 		accessor:     true,
 		writable:     true,
 		configurable: true,
 	}, true)
 
-	valuesFunc := r.newNativeFunc(r.setProto_values, nil, "values", nil, 0)
+	valuesFunc := r.newNativeFunc(r.setProto_values, "values", 0)
 	o._putProp("values", valuesFunc, true, false, true)
 	o._putProp("keys", valuesFunc, true, false, true)
-	o._putProp("entries", r.newNativeFunc(r.setProto_entries, nil, "entries", nil, 0), true, false, true)
+	o._putProp("entries", r.newNativeFunc(r.setProto_entries, "entries", 0), true, false, true)
 	o._putSym(SymIterator, valueProp(valuesFunc, true, false, true))
 	o._putSym(SymToStringTag, valueProp(asciiString(classSet), false, false, true))
 
@@ -217,30 +300,47 @@ func (r *Runtime) createSetProto(val *Object) objectImpl {
 }
 
 func (r *Runtime) createSet(val *Object) objectImpl {
-	o := r.newNativeConstructOnly(val, r.builtin_newSet, r.global.SetPrototype, "Set", 0)
-	o._putSym(SymSpecies, &valueProperty{
-		getterFunc:   r.newNativeFunc(r.returnThis, nil, "get [Symbol.species]", nil, 0),
-		accessor:     true,
-		configurable: true,
-	})
+	o := r.newNativeConstructOnly(val, r.builtin_newSet, r.getSetPrototype(), "Set", 0)
+	r.putSpeciesReturnThis(o)
 
 	return o
 }
 
 func (r *Runtime) createSetIterProto(val *Object) objectImpl {
-	o := newBaseObjectObj(val, r.global.IteratorPrototype, classObject)
+	o := newBaseObjectObj(val, r.getIteratorPrototype(), classObject)
 
-	o._putProp("next", r.newNativeFunc(r.setIterProto_next, nil, "next", nil, 0), true, false, true)
+	o._putProp("next", r.newNativeFunc(r.setIterProto_next, "next", 0), true, false, true)
 	o._putSym(SymToStringTag, valueProp(asciiString(classSetIterator), false, false, true))
 
 	return o
 }
 
-func (r *Runtime) initSet() {
-	r.global.SetIteratorPrototype = r.newLazyObject(r.createSetIterProto)
+func (r *Runtime) getSetIteratorPrototype() *Object {
+	var o *Object
+	if o = r.global.SetIteratorPrototype; o == nil {
+		o = &Object{runtime: r}
+		r.global.SetIteratorPrototype = o
+		o.self = r.createSetIterProto(o)
+	}
+	return o
+}
 
-	r.global.SetPrototype = r.newLazyObject(r.createSetProto)
-	r.global.Set = r.newLazyObject(r.createSet)
+func (r *Runtime) getSetPrototype() *Object {
+	ret := r.global.SetPrototype
+	if ret == nil {
+		ret = &Object{runtime: r}
+		r.global.SetPrototype = ret
+		ret.self = r.createSetProto(ret)
+	}
+	return ret
+}
 
-	r.addToGlobal("Set", r.global.Set)
+func (r *Runtime) getSet() *Object {
+	ret := r.global.Set
+	if ret == nil {
+		ret = &Object{runtime: r}
+		r.global.Set = ret
+		ret.self = r.createSet(ret)
+	}
+	return ret
 }

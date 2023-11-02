@@ -16,16 +16,17 @@ package server
 
 import (
 	"context"
-	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/golang/protobuf/ptypes/timestamp"
+	"time"
+
 	"github.com/heroiclabs/nakama/v3/console"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"time"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *ConsoleServer) GetStatus(ctx context.Context, in *empty.Empty) (*console.StatusList, error) {
+func (s *ConsoleServer) GetStatus(ctx context.Context, in *emptypb.Empty) (*console.StatusList, error) {
 	nodes, err := s.statusHandler.GetStatus(ctx)
 	if err != nil {
 		s.logger.Error("Error getting status.", zap.Error(err))
@@ -34,6 +35,6 @@ func (s *ConsoleServer) GetStatus(ctx context.Context, in *empty.Empty) (*consol
 
 	return &console.StatusList{
 		Nodes:     nodes,
-		Timestamp: &timestamp.Timestamp{Seconds: time.Now().UTC().Unix()},
+		Timestamp: &timestamppb.Timestamp{Seconds: time.Now().UTC().Unix()},
 	}, nil
 }

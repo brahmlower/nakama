@@ -2,7 +2,6 @@ package goja
 
 import (
 	"math"
-	"math/bits"
 	"reflect"
 	"strconv"
 	"unsafe"
@@ -53,17 +52,19 @@ type typedArray interface {
 	less(i, j int) bool
 	swap(i, j int)
 	typeMatch(v Value) bool
+	export(offset int, length int) interface{}
+	exportType() reflect.Type
 }
 
-type uint8Array []uint8
-type uint8ClampedArray []uint8
-type int8Array []int8
-type uint16Array []uint16
-type int16Array []int16
-type uint32Array []uint32
-type int32Array []int32
-type float32Array []float32
-type float64Array []float64
+type uint8Array []byte
+type uint8ClampedArray []byte
+type int8Array []byte
+type uint16Array []byte
+type int16Array []byte
+type uint32Array []byte
+type int32Array []byte
+type float32Array []byte
+type float64Array []byte
 
 type typedArrayObject struct {
 	baseObject
@@ -109,40 +110,52 @@ func (a ArrayBuffer) Detached() bool {
 	return a.buf.detached
 }
 
+// NewArrayBuffer creates a new instance of ArrayBuffer backed by the provided byte slice.
+//
+// Warning: be careful when using unaligned slices (sub-slices that do not start at word boundaries). If later a
+// typed array of a multibyte type (uint16, uint32, etc.) is created from a buffer backed by an unaligned slice,
+// using this typed array will result in unaligned access which may cause performance degradation or runtime panics
+// on some architectures or configurations.
 func (r *Runtime) NewArrayBuffer(data []byte) ArrayBuffer {
-	buf := r._newArrayBuffer(r.global.ArrayBufferPrototype, nil)
+	buf := r._newArrayBuffer(r.getArrayBufferPrototype(), nil)
 	buf.data = data
 	return ArrayBuffer{
 		buf: buf,
 	}
 }
 
-func (a *uint8Array) get(idx int) Value {
-	return intToValue(int64((*a)[idx]))
-}
-
-func (a *uint8Array) getRaw(idx int) uint64 {
-	return uint64((*a)[idx])
-}
-
-func (a *uint8Array) set(idx int, value Value) {
-	(*a)[idx] = toUint8(value)
-}
-
 func (a *uint8Array) toRaw(v Value) uint64 {
 	return uint64(toUint8(v))
 }
 
-func (a *uint8Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = uint8(v)
+func (a *uint8Array) ptr(idx int) *uint8 {
+	p := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(a)).Data)
+	return (*uint8)(unsafe.Pointer(uintptr(p) + uintptr(idx)))
+}
+
+func (a *uint8Array) get(idx int) Value {
+	return intToValue(int64(*(a.ptr(idx))))
+}
+
+func (a *uint8Array) set(idx int, value Value) {
+	*(a.ptr(idx)) = toUint8(value)
+}
+
+func (a *uint8Array) getRaw(idx int) uint64 {
+	return uint64(*(a.ptr(idx)))
+}
+
+func (a *uint8Array) setRaw(idx int, raw uint64) {
+	*(a.ptr(idx)) = uint8(raw)
 }
 
 func (a *uint8Array) less(i, j int) bool {
-	return (*a)[i] < (*a)[j]
+	return *(a.ptr(i)) < *(a.ptr(j))
 }
 
 func (a *uint8Array) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+	pi, pj := a.ptr(i), a.ptr(j)
+	*pi, *pj = *pj, *pi
 }
 
 func (a *uint8Array) typeMatch(v Value) bool {
@@ -152,32 +165,46 @@ func (a *uint8Array) typeMatch(v Value) bool {
 	return false
 }
 
-func (a *uint8ClampedArray) get(idx int) Value {
-	return intToValue(int64((*a)[idx]))
+func (a *uint8Array) export(offset int, length int) interface{} {
+	return ([]uint8)(*a)[offset : offset+length : offset+length]
 }
 
-func (a *uint8ClampedArray) getRaw(idx int) uint64 {
-	return uint64((*a)[idx])
-}
-
-func (a *uint8ClampedArray) set(idx int, value Value) {
-	(*a)[idx] = toUint8Clamp(value)
+func (a *uint8Array) exportType() reflect.Type {
+	return typeBytes
 }
 
 func (a *uint8ClampedArray) toRaw(v Value) uint64 {
 	return uint64(toUint8Clamp(v))
 }
 
-func (a *uint8ClampedArray) setRaw(idx int, v uint64) {
-	(*a)[idx] = uint8(v)
+func (a *uint8ClampedArray) ptr(idx int) *uint8 {
+	p := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(a)).Data)
+	return (*uint8)(unsafe.Pointer(uintptr(p) + uintptr(idx)))
+}
+
+func (a *uint8ClampedArray) get(idx int) Value {
+	return intToValue(int64(*(a.ptr(idx))))
+}
+
+func (a *uint8ClampedArray) set(idx int, value Value) {
+	*(a.ptr(idx)) = toUint8Clamp(value)
+}
+
+func (a *uint8ClampedArray) getRaw(idx int) uint64 {
+	return uint64(*(a.ptr(idx)))
+}
+
+func (a *uint8ClampedArray) setRaw(idx int, raw uint64) {
+	*(a.ptr(idx)) = uint8(raw)
 }
 
 func (a *uint8ClampedArray) less(i, j int) bool {
-	return (*a)[i] < (*a)[j]
+	return *(a.ptr(i)) < *(a.ptr(j))
 }
 
 func (a *uint8ClampedArray) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+	pi, pj := a.ptr(i), a.ptr(j)
+	*pi, *pj = *pj, *pi
 }
 
 func (a *uint8ClampedArray) typeMatch(v Value) bool {
@@ -187,16 +214,29 @@ func (a *uint8ClampedArray) typeMatch(v Value) bool {
 	return false
 }
 
+func (a *uint8ClampedArray) export(offset int, length int) interface{} {
+	return ([]uint8)(*a)[offset : offset+length : offset+length]
+}
+
+func (a *uint8ClampedArray) exportType() reflect.Type {
+	return typeBytes
+}
+
+func (a *int8Array) ptr(idx int) *int8 {
+	p := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(a)).Data)
+	return (*int8)(unsafe.Pointer(uintptr(p) + uintptr(idx)))
+}
+
 func (a *int8Array) get(idx int) Value {
-	return intToValue(int64((*a)[idx]))
+	return intToValue(int64(*(a.ptr(idx))))
 }
 
 func (a *int8Array) getRaw(idx int) uint64 {
-	return uint64((*a)[idx])
+	return uint64(*(a.ptr(idx)))
 }
 
 func (a *int8Array) set(idx int, value Value) {
-	(*a)[idx] = toInt8(value)
+	*(a.ptr(idx)) = toInt8(value)
 }
 
 func (a *int8Array) toRaw(v Value) uint64 {
@@ -204,15 +244,16 @@ func (a *int8Array) toRaw(v Value) uint64 {
 }
 
 func (a *int8Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = int8(v)
+	*(a.ptr(idx)) = int8(v)
 }
 
 func (a *int8Array) less(i, j int) bool {
-	return (*a)[i] < (*a)[j]
+	return *(a.ptr(i)) < *(a.ptr(j))
 }
 
 func (a *int8Array) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+	pi, pj := a.ptr(i), a.ptr(j)
+	*pi, *pj = *pj, *pi
 }
 
 func (a *int8Array) typeMatch(v Value) bool {
@@ -222,32 +263,53 @@ func (a *int8Array) typeMatch(v Value) bool {
 	return false
 }
 
-func (a *uint16Array) get(idx int) Value {
-	return intToValue(int64((*a)[idx]))
+func (a *int8Array) export(offset int, length int) interface{} {
+	var res []int8
+	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+	sliceHeader.Data = (*reflect.SliceHeader)(unsafe.Pointer(a)).Data + uintptr(offset)
+	sliceHeader.Len = length
+	sliceHeader.Cap = length
+	return res
 }
 
-func (a *uint16Array) getRaw(idx int) uint64 {
-	return uint64((*a)[idx])
-}
+var typeInt8Array = reflect.TypeOf(([]int8)(nil))
 
-func (a *uint16Array) set(idx int, value Value) {
-	(*a)[idx] = toUint16(value)
+func (a *int8Array) exportType() reflect.Type {
+	return typeInt8Array
 }
 
 func (a *uint16Array) toRaw(v Value) uint64 {
 	return uint64(toUint16(v))
 }
 
-func (a *uint16Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = uint16(v)
+func (a *uint16Array) ptr(idx int) *uint16 {
+	p := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(a)).Data)
+	return (*uint16)(unsafe.Pointer(uintptr(p) + uintptr(idx)*2))
+}
+
+func (a *uint16Array) get(idx int) Value {
+	return intToValue(int64(*(a.ptr(idx))))
+}
+
+func (a *uint16Array) set(idx int, value Value) {
+	*(a.ptr(idx)) = toUint16(value)
+}
+
+func (a *uint16Array) getRaw(idx int) uint64 {
+	return uint64(*(a.ptr(idx)))
+}
+
+func (a *uint16Array) setRaw(idx int, raw uint64) {
+	*(a.ptr(idx)) = uint16(raw)
 }
 
 func (a *uint16Array) less(i, j int) bool {
-	return (*a)[i] < (*a)[j]
+	return *(a.ptr(i)) < *(a.ptr(j))
 }
 
 func (a *uint16Array) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+	pi, pj := a.ptr(i), a.ptr(j)
+	*pi, *pj = *pj, *pi
 }
 
 func (a *uint16Array) typeMatch(v Value) bool {
@@ -257,16 +319,36 @@ func (a *uint16Array) typeMatch(v Value) bool {
 	return false
 }
 
+var typeUint16Array = reflect.TypeOf(([]uint16)(nil))
+
+func (a *uint16Array) export(offset int, length int) interface{} {
+	var res []uint16
+	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+	sliceHeader.Data = (*reflect.SliceHeader)(unsafe.Pointer(a)).Data + uintptr(offset)*2
+	sliceHeader.Len = length
+	sliceHeader.Cap = length
+	return res
+}
+
+func (a *uint16Array) exportType() reflect.Type {
+	return typeUint16Array
+}
+
+func (a *int16Array) ptr(idx int) *int16 {
+	p := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(a)).Data)
+	return (*int16)(unsafe.Pointer(uintptr(p) + uintptr(idx)*2))
+}
+
 func (a *int16Array) get(idx int) Value {
-	return intToValue(int64((*a)[idx]))
+	return intToValue(int64(*(a.ptr(idx))))
 }
 
 func (a *int16Array) getRaw(idx int) uint64 {
-	return uint64((*a)[idx])
+	return uint64(*(a.ptr(idx)))
 }
 
 func (a *int16Array) set(idx int, value Value) {
-	(*a)[idx] = toInt16(value)
+	*(a.ptr(idx)) = toInt16(value)
 }
 
 func (a *int16Array) toRaw(v Value) uint64 {
@@ -274,15 +356,16 @@ func (a *int16Array) toRaw(v Value) uint64 {
 }
 
 func (a *int16Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = int16(v)
+	*(a.ptr(idx)) = int16(v)
 }
 
 func (a *int16Array) less(i, j int) bool {
-	return (*a)[i] < (*a)[j]
+	return *(a.ptr(i)) < *(a.ptr(j))
 }
 
 func (a *int16Array) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+	pi, pj := a.ptr(i), a.ptr(j)
+	*pi, *pj = *pj, *pi
 }
 
 func (a *int16Array) typeMatch(v Value) bool {
@@ -292,16 +375,36 @@ func (a *int16Array) typeMatch(v Value) bool {
 	return false
 }
 
+func (a *int16Array) export(offset int, length int) interface{} {
+	var res []int16
+	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+	sliceHeader.Data = (*reflect.SliceHeader)(unsafe.Pointer(a)).Data + uintptr(offset)*2
+	sliceHeader.Len = length
+	sliceHeader.Cap = length
+	return res
+}
+
+var typeInt16Array = reflect.TypeOf(([]int16)(nil))
+
+func (a *int16Array) exportType() reflect.Type {
+	return typeInt16Array
+}
+
+func (a *uint32Array) ptr(idx int) *uint32 {
+	p := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(a)).Data)
+	return (*uint32)(unsafe.Pointer(uintptr(p) + uintptr(idx)*4))
+}
+
 func (a *uint32Array) get(idx int) Value {
-	return intToValue(int64((*a)[idx]))
+	return intToValue(int64(*(a.ptr(idx))))
 }
 
 func (a *uint32Array) getRaw(idx int) uint64 {
-	return uint64((*a)[idx])
+	return uint64(*(a.ptr(idx)))
 }
 
 func (a *uint32Array) set(idx int, value Value) {
-	(*a)[idx] = toUint32(value)
+	*(a.ptr(idx)) = toUint32(value)
 }
 
 func (a *uint32Array) toRaw(v Value) uint64 {
@@ -309,15 +412,16 @@ func (a *uint32Array) toRaw(v Value) uint64 {
 }
 
 func (a *uint32Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = uint32(v)
+	*(a.ptr(idx)) = uint32(v)
 }
 
 func (a *uint32Array) less(i, j int) bool {
-	return (*a)[i] < (*a)[j]
+	return *(a.ptr(i)) < *(a.ptr(j))
 }
 
 func (a *uint32Array) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+	pi, pj := a.ptr(i), a.ptr(j)
+	*pi, *pj = *pj, *pi
 }
 
 func (a *uint32Array) typeMatch(v Value) bool {
@@ -327,16 +431,36 @@ func (a *uint32Array) typeMatch(v Value) bool {
 	return false
 }
 
+func (a *uint32Array) export(offset int, length int) interface{} {
+	var res []uint32
+	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+	sliceHeader.Data = (*reflect.SliceHeader)(unsafe.Pointer(a)).Data + uintptr(offset)*4
+	sliceHeader.Len = length
+	sliceHeader.Cap = length
+	return res
+}
+
+var typeUint32Array = reflect.TypeOf(([]uint32)(nil))
+
+func (a *uint32Array) exportType() reflect.Type {
+	return typeUint32Array
+}
+
+func (a *int32Array) ptr(idx int) *int32 {
+	p := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(a)).Data)
+	return (*int32)(unsafe.Pointer(uintptr(p) + uintptr(idx)*4))
+}
+
 func (a *int32Array) get(idx int) Value {
-	return intToValue(int64((*a)[idx]))
+	return intToValue(int64(*(a.ptr(idx))))
 }
 
 func (a *int32Array) getRaw(idx int) uint64 {
-	return uint64((*a)[idx])
+	return uint64(*(a.ptr(idx)))
 }
 
 func (a *int32Array) set(idx int, value Value) {
-	(*a)[idx] = toInt32(value)
+	*(a.ptr(idx)) = toInt32(value)
 }
 
 func (a *int32Array) toRaw(v Value) uint64 {
@@ -344,15 +468,16 @@ func (a *int32Array) toRaw(v Value) uint64 {
 }
 
 func (a *int32Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = int32(v)
+	*(a.ptr(idx)) = int32(v)
 }
 
 func (a *int32Array) less(i, j int) bool {
-	return (*a)[i] < (*a)[j]
+	return *(a.ptr(i)) < *(a.ptr(j))
 }
 
 func (a *int32Array) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+	pi, pj := a.ptr(i), a.ptr(j)
+	*pi, *pj = *pj, *pi
 }
 
 func (a *int32Array) typeMatch(v Value) bool {
@@ -362,16 +487,36 @@ func (a *int32Array) typeMatch(v Value) bool {
 	return false
 }
 
+func (a *int32Array) export(offset int, length int) interface{} {
+	var res []int32
+	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+	sliceHeader.Data = (*reflect.SliceHeader)(unsafe.Pointer(a)).Data + uintptr(offset)*4
+	sliceHeader.Len = length
+	sliceHeader.Cap = length
+	return res
+}
+
+var typeInt32Array = reflect.TypeOf(([]int32)(nil))
+
+func (a *int32Array) exportType() reflect.Type {
+	return typeInt32Array
+}
+
+func (a *float32Array) ptr(idx int) *float32 {
+	p := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(a)).Data)
+	return (*float32)(unsafe.Pointer(uintptr(p) + uintptr(idx)*4))
+}
+
 func (a *float32Array) get(idx int) Value {
-	return floatToValue(float64((*a)[idx]))
+	return floatToValue(float64(*(a.ptr(idx))))
 }
 
 func (a *float32Array) getRaw(idx int) uint64 {
-	return uint64(math.Float32bits((*a)[idx]))
+	return uint64(math.Float32bits(*(a.ptr(idx))))
 }
 
 func (a *float32Array) set(idx int, value Value) {
-	(*a)[idx] = toFloat32(value)
+	*(a.ptr(idx)) = toFloat32(value)
 }
 
 func (a *float32Array) toRaw(v Value) uint64 {
@@ -379,33 +524,30 @@ func (a *float32Array) toRaw(v Value) uint64 {
 }
 
 func (a *float32Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = math.Float32frombits(uint32(v))
+	*(a.ptr(idx)) = math.Float32frombits(uint32(v))
 }
 
 func typedFloatLess(x, y float64) bool {
 	xNan := math.IsNaN(x)
 	yNan := math.IsNaN(y)
-	if xNan && yNan {
-		return false
-	}
-	if xNan {
-		return false
-	}
 	if yNan {
-		return true
-	}
-	if x >= y {
+		return !xNan
+	} else if xNan {
 		return false
 	}
-	return true
+	if x == 0 && y == 0 { // handle neg zero
+		return math.Signbit(x)
+	}
+	return x < y
 }
 
 func (a *float32Array) less(i, j int) bool {
-	return typedFloatLess(float64((*a)[i]), float64((*a)[j]))
+	return typedFloatLess(float64(*(a.ptr(i))), float64(*(a.ptr(j))))
 }
 
 func (a *float32Array) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+	pi, pj := a.ptr(i), a.ptr(j)
+	*pi, *pj = *pj, *pi
 }
 
 func (a *float32Array) typeMatch(v Value) bool {
@@ -416,16 +558,36 @@ func (a *float32Array) typeMatch(v Value) bool {
 	return false
 }
 
+func (a *float32Array) export(offset int, length int) interface{} {
+	var res []float32
+	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+	sliceHeader.Data = (*reflect.SliceHeader)(unsafe.Pointer(a)).Data + uintptr(offset)*4
+	sliceHeader.Len = length
+	sliceHeader.Cap = length
+	return res
+}
+
+var typeFloat32Array = reflect.TypeOf(([]float32)(nil))
+
+func (a *float32Array) exportType() reflect.Type {
+	return typeFloat32Array
+}
+
+func (a *float64Array) ptr(idx int) *float64 {
+	p := unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(a)).Data)
+	return (*float64)(unsafe.Pointer(uintptr(p) + uintptr(idx)*8))
+}
+
 func (a *float64Array) get(idx int) Value {
-	return floatToValue((*a)[idx])
+	return floatToValue(*(a.ptr(idx)))
 }
 
 func (a *float64Array) getRaw(idx int) uint64 {
-	return math.Float64bits((*a)[idx])
+	return math.Float64bits(*(a.ptr(idx)))
 }
 
 func (a *float64Array) set(idx int, value Value) {
-	(*a)[idx] = value.ToFloat()
+	*(a.ptr(idx)) = value.ToFloat()
 }
 
 func (a *float64Array) toRaw(v Value) uint64 {
@@ -433,15 +595,16 @@ func (a *float64Array) toRaw(v Value) uint64 {
 }
 
 func (a *float64Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = math.Float64frombits(v)
+	*(a.ptr(idx)) = math.Float64frombits(v)
 }
 
 func (a *float64Array) less(i, j int) bool {
-	return typedFloatLess((*a)[i], (*a)[j])
+	return typedFloatLess(*(a.ptr(i)), *(a.ptr(j)))
 }
 
 func (a *float64Array) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+	pi, pj := a.ptr(i), a.ptr(j)
+	*pi, *pj = *pj, *pi
 }
 
 func (a *float64Array) typeMatch(v Value) bool {
@@ -452,103 +615,115 @@ func (a *float64Array) typeMatch(v Value) bool {
 	return false
 }
 
+func (a *float64Array) export(offset int, length int) interface{} {
+	var res []float64
+	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+	sliceHeader.Data = (*reflect.SliceHeader)(unsafe.Pointer(a)).Data + uintptr(offset)*8
+	sliceHeader.Len = length
+	sliceHeader.Cap = length
+	return res
+}
+
+var typeFloat64Array = reflect.TypeOf(([]float64)(nil))
+
+func (a *float64Array) exportType() reflect.Type {
+	return typeFloat64Array
+}
+
 func (a *typedArrayObject) _getIdx(idx int) Value {
-	a.viewedArrayBuf.ensureNotDetached()
 	if 0 <= idx && idx < a.length {
+		if !a.viewedArrayBuf.ensureNotDetached(false) {
+			return nil
+		}
 		return a.typedArray.get(idx + a.offset)
 	}
 	return nil
 }
 
-func strToTAIdx(s unistring.String) (int, bool) {
-	i, err := strconv.ParseInt(string(s), 10, bits.UintSize)
-	if err != nil {
-		return 0, false
-	}
-	return int(i), true
-}
-
 func (a *typedArrayObject) getOwnPropStr(name unistring.String) Value {
-	if idx, ok := strToTAIdx(name); ok {
+	idx, ok := strToIntNum(name)
+	if ok {
 		v := a._getIdx(idx)
 		if v != nil {
 			return &valueProperty{
-				value:      v,
-				writable:   true,
-				enumerable: true,
+				value:        v,
+				writable:     true,
+				enumerable:   true,
+				configurable: true,
 			}
 		}
+		return nil
+	}
+	if idx == 0 {
 		return nil
 	}
 	return a.baseObject.getOwnPropStr(name)
 }
 
 func (a *typedArrayObject) getOwnPropIdx(idx valueInt) Value {
-	v := a._getIdx(toIntStrict(int64(idx)))
+	v := a._getIdx(toIntClamp(int64(idx)))
 	if v != nil {
 		return &valueProperty{
-			value:      v,
-			writable:   true,
-			enumerable: true,
+			value:        v,
+			writable:     true,
+			enumerable:   true,
+			configurable: true,
 		}
 	}
 	return nil
 }
 
 func (a *typedArrayObject) getStr(name unistring.String, receiver Value) Value {
-	if idx, ok := strToTAIdx(name); ok {
-		prop := a._getIdx(idx)
-		if prop == nil {
-			if a.prototype != nil {
-				if receiver == nil {
-					return a.prototype.self.getStr(name, a.val)
-				}
-				return a.prototype.self.getStr(name, receiver)
-			}
-		}
-		return prop
+	idx, ok := strToIntNum(name)
+	if ok {
+		return a._getIdx(idx)
+	}
+	if idx == 0 {
+		return nil
 	}
 	return a.baseObject.getStr(name, receiver)
 }
 
 func (a *typedArrayObject) getIdx(idx valueInt, receiver Value) Value {
-	prop := a._getIdx(toIntStrict(int64(idx)))
-	if prop == nil {
-		if a.prototype != nil {
-			if receiver == nil {
-				return a.prototype.self.getIdx(idx, a.val)
-			}
-			return a.prototype.self.getIdx(idx, receiver)
-		}
-	}
-	return prop
+	return a._getIdx(toIntClamp(int64(idx)))
 }
 
-func (a *typedArrayObject) _putIdx(idx int, v Value, throw bool) bool {
-	v = v.ToNumber()
-	a.viewedArrayBuf.ensureNotDetached()
-	if idx >= 0 && idx < a.length {
-		a.typedArray.set(idx+a.offset, v)
-		return true
+func (a *typedArrayObject) isValidIntegerIndex(idx int) bool {
+	if a.viewedArrayBuf.ensureNotDetached(false) {
+		if idx >= 0 && idx < a.length {
+			return true
+		}
 	}
-	// As far as I understand the specification this should throw, but neither V8 nor SpiderMonkey does
 	return false
 }
 
+func (a *typedArrayObject) _putIdx(idx int, v Value) {
+	v = v.ToNumber()
+	if a.isValidIntegerIndex(idx) {
+		a.typedArray.set(idx+a.offset, v)
+	}
+}
+
 func (a *typedArrayObject) _hasIdx(idx int) bool {
-	a.viewedArrayBuf.ensureNotDetached()
-	return idx >= 0 && idx < a.length
+	return a.isValidIntegerIndex(idx)
 }
 
 func (a *typedArrayObject) setOwnStr(p unistring.String, v Value, throw bool) bool {
-	if idx, ok := strToTAIdx(p); ok {
-		return a._putIdx(idx, v, throw)
+	idx, ok := strToIntNum(p)
+	if ok {
+		a._putIdx(idx, v)
+		return true
+	}
+	if idx == 0 {
+		v.ToNumber() // make sure it throws
+		return true
 	}
 	return a.baseObject.setOwnStr(p, v, throw)
 }
 
 func (a *typedArrayObject) setOwnIdx(p valueInt, v Value, throw bool) bool {
-	return a._putIdx(toIntStrict(int64(p)), v, throw)
+	a._putIdx(toIntClamp(int64(p)), v)
+	return true
 }
 
 func (a *typedArrayObject) setForeignStr(p unistring.String, v, receiver Value, throw bool) (res bool, handled bool) {
@@ -560,63 +735,101 @@ func (a *typedArrayObject) setForeignIdx(p valueInt, v, receiver Value, throw bo
 }
 
 func (a *typedArrayObject) hasOwnPropertyStr(name unistring.String) bool {
-	if idx, ok := strToTAIdx(name); ok {
-		a.viewedArrayBuf.ensureNotDetached()
-		return idx < a.length
+	idx, ok := strToIntNum(name)
+	if ok {
+		return a._hasIdx(idx)
 	}
-
+	if idx == 0 {
+		return false
+	}
 	return a.baseObject.hasOwnPropertyStr(name)
 }
 
 func (a *typedArrayObject) hasOwnPropertyIdx(idx valueInt) bool {
-	return a._hasIdx(toIntStrict(int64(idx)))
+	return a._hasIdx(toIntClamp(int64(idx)))
+}
+
+func (a *typedArrayObject) hasPropertyStr(name unistring.String) bool {
+	idx, ok := strToIntNum(name)
+	if ok {
+		return a._hasIdx(idx)
+	}
+	if idx == 0 {
+		return false
+	}
+	return a.baseObject.hasPropertyStr(name)
+}
+
+func (a *typedArrayObject) hasPropertyIdx(idx valueInt) bool {
+	return a.hasOwnPropertyIdx(idx)
 }
 
 func (a *typedArrayObject) _defineIdxProperty(idx int, desc PropertyDescriptor, throw bool) bool {
-	prop, ok := a._defineOwnProperty(unistring.String(strconv.Itoa(idx)), a.getOwnPropIdx(valueInt(idx)), desc, throw)
+	if desc.Configurable == FLAG_FALSE || desc.Enumerable == FLAG_FALSE || desc.IsAccessor() || desc.Writable == FLAG_FALSE {
+		a.val.runtime.typeErrorResult(throw, "Cannot redefine property: %d", idx)
+		return false
+	}
+	_, ok := a._defineOwnProperty(unistring.String(strconv.Itoa(idx)), a.getOwnPropIdx(valueInt(idx)), desc, throw)
 	if ok {
-		return a._putIdx(idx, prop, throw)
+		if !a.isValidIntegerIndex(idx) {
+			a.val.runtime.typeErrorResult(throw, "Invalid typed array index")
+			return false
+		}
+		a._putIdx(idx, desc.Value)
+		return true
 	}
 	return ok
 }
 
 func (a *typedArrayObject) defineOwnPropertyStr(name unistring.String, desc PropertyDescriptor, throw bool) bool {
-	if idx, ok := strToTAIdx(name); ok {
+	idx, ok := strToIntNum(name)
+	if ok {
 		return a._defineIdxProperty(idx, desc, throw)
+	}
+	if idx == 0 {
+		a.viewedArrayBuf.ensureNotDetached(throw)
+		a.val.runtime.typeErrorResult(throw, "Invalid typed array index")
+		return false
 	}
 	return a.baseObject.defineOwnPropertyStr(name, desc, throw)
 }
 
 func (a *typedArrayObject) defineOwnPropertyIdx(name valueInt, desc PropertyDescriptor, throw bool) bool {
-	return a._defineIdxProperty(toIntStrict(int64(name)), desc, throw)
+	return a._defineIdxProperty(toIntClamp(int64(name)), desc, throw)
 }
 
 func (a *typedArrayObject) deleteStr(name unistring.String, throw bool) bool {
-	if idx, ok := strToTAIdx(name); ok {
-		if idx < a.length {
+	idx, ok := strToIntNum(name)
+	if ok {
+		if a.isValidIntegerIndex(idx) {
 			a.val.runtime.typeErrorResult(throw, "Cannot delete property '%d' of %s", idx, a.val.String())
+			return false
 		}
+		return true
 	}
-
+	if idx == 0 {
+		return true
+	}
 	return a.baseObject.deleteStr(name, throw)
 }
 
 func (a *typedArrayObject) deleteIdx(idx valueInt, throw bool) bool {
-	if idx >= 0 && int64(idx) < int64(a.length) {
+	if a.viewedArrayBuf.ensureNotDetached(false) && idx >= 0 && int64(idx) < int64(a.length) {
 		a.val.runtime.typeErrorResult(throw, "Cannot delete property '%d' of %s", idx, a.val.String())
+		return false
 	}
 
 	return true
 }
 
-func (a *typedArrayObject) ownKeys(all bool, accum []Value) []Value {
+func (a *typedArrayObject) stringKeys(all bool, accum []Value) []Value {
 	if accum == nil {
 		accum = make([]Value, 0, a.length)
 	}
 	for i := 0; i < a.length; i++ {
 		accum = append(accum, asciiString(strconv.Itoa(i)))
 	}
-	return a.baseObject.ownKeys(all, accum)
+	return a.baseObject.stringKeys(all, accum)
 }
 
 type typedArrayPropIter struct {
@@ -629,16 +842,40 @@ func (i *typedArrayPropIter) next() (propIterItem, iterNextFunc) {
 		name := strconv.Itoa(i.idx)
 		prop := i.a._getIdx(i.idx)
 		i.idx++
-		return propIterItem{name: unistring.String(name), value: prop}, i.next
+		return propIterItem{name: asciiString(name), value: prop}, i.next
 	}
 
-	return i.a.baseObject.enumerateUnfiltered()()
+	return i.a.baseObject.iterateStringKeys()()
 }
 
-func (a *typedArrayObject) enumerateUnfiltered() iterNextFunc {
+func (a *typedArrayObject) iterateStringKeys() iterNextFunc {
 	return (&typedArrayPropIter{
 		a: a,
 	}).next
+}
+
+func (a *typedArrayObject) exportToArrayOrSlice(dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
+	if typ == typeBytes {
+		dst.Set(reflect.ValueOf(a.viewedArrayBuf.data))
+		return nil
+	}
+	return a.baseObject.exportToArrayOrSlice(dst, typ, ctx)
+}
+
+func (a *typedArrayObject) export(_ *objectExportCtx) interface{} {
+	return a.typedArray.export(a.offset, a.length)
+}
+
+func (a *typedArrayObject) exportType() reflect.Type {
+	return a.typedArray.exportType()
+}
+
+func (o *dataViewObject) exportToArrayOrSlice(dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
+	if typ == typeBytes {
+		dst.Set(reflect.ValueOf(o.viewedArrayBuf.data))
+		return nil
+	}
+	return o.baseObject.exportToArrayOrSlice(dst, typ, ctx)
 }
 
 func (r *Runtime) _newTypedArrayObject(buf *arrayBufferObject, offset, length, elemSize int, defCtor *Object, arr typedArray, proto *Object) *typedArrayObject {
@@ -664,6 +901,8 @@ func (r *Runtime) _newTypedArrayObject(buf *arrayBufferObject, offset, length, e
 }
 
 func (r *Runtime) newUint8ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
+	// Note, no need to use r.getUint8Array() here or in the similar methods below, because the value is already set
+	// by the time they are called.
 	return r._newTypedArrayObject(buf, offset, length, 1, r.global.Uint8Array, (*uint8Array)(&buf.data), proto)
 }
 
@@ -672,38 +911,37 @@ func (r *Runtime) newUint8ClampedArrayObject(buf *arrayBufferObject, offset, len
 }
 
 func (r *Runtime) newInt8ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
-	return r._newTypedArrayObject(buf, offset, length, 1, r.global.Int8Array, (*int8Array)(unsafe.Pointer(&buf.data)), proto)
+	return r._newTypedArrayObject(buf, offset, length, 1, r.global.Int8Array, (*int8Array)(&buf.data), proto)
 }
 
 func (r *Runtime) newUint16ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
-	return r._newTypedArrayObject(buf, offset, length, 2, r.global.Uint16Array, (*uint16Array)(unsafe.Pointer(&buf.data)), proto)
+	return r._newTypedArrayObject(buf, offset, length, 2, r.global.Uint16Array, (*uint16Array)(&buf.data), proto)
 }
 
 func (r *Runtime) newInt16ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
-	return r._newTypedArrayObject(buf, offset, length, 2, r.global.Int16Array, (*int16Array)(unsafe.Pointer(&buf.data)), proto)
+	return r._newTypedArrayObject(buf, offset, length, 2, r.global.Int16Array, (*int16Array)(&buf.data), proto)
 }
 
 func (r *Runtime) newUint32ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
-	return r._newTypedArrayObject(buf, offset, length, 4, r.global.Uint32Array, (*uint32Array)(unsafe.Pointer(&buf.data)), proto)
+	return r._newTypedArrayObject(buf, offset, length, 4, r.global.Uint32Array, (*uint32Array)(&buf.data), proto)
 }
 
 func (r *Runtime) newInt32ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
-	return r._newTypedArrayObject(buf, offset, length, 4, r.global.Int32Array, (*int32Array)(unsafe.Pointer(&buf.data)), proto)
+	return r._newTypedArrayObject(buf, offset, length, 4, r.global.Int32Array, (*int32Array)(&buf.data), proto)
 }
 
 func (r *Runtime) newFloat32ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
-	return r._newTypedArrayObject(buf, offset, length, 4, r.global.Float32Array, (*float32Array)(unsafe.Pointer(&buf.data)), proto)
+	return r._newTypedArrayObject(buf, offset, length, 4, r.global.Float32Array, (*float32Array)(&buf.data), proto)
 }
 
 func (r *Runtime) newFloat64ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
-	return r._newTypedArrayObject(buf, offset, length, 8, r.global.Float64Array, (*float64Array)(unsafe.Pointer(&buf.data)), proto)
+	return r._newTypedArrayObject(buf, offset, length, 8, r.global.Float64Array, (*float64Array)(&buf.data), proto)
 }
 
-func (o *dataViewObject) getIdxAndByteOrder(idxVal, littleEndianVal Value, size int) (int, byteOrder) {
-	getIdx := o.val.runtime.toIndex(idxVal)
-	o.viewedArrayBuf.ensureNotDetached()
+func (o *dataViewObject) getIdxAndByteOrder(getIdx int, littleEndianVal Value, size int) (int, byteOrder) {
+	o.viewedArrayBuf.ensureNotDetached(true)
 	if getIdx+size > o.byteLen {
-		panic(o.val.runtime.newError(o.val.runtime.global.RangeError, "Index %d is out of bounds", getIdx))
+		panic(o.val.runtime.newError(o.val.runtime.getRangeError(), "Index %d is out of bounds", getIdx))
 	}
 	getIdx += o.byteOffset
 	var bo byteOrder
@@ -719,10 +957,12 @@ func (o *dataViewObject) getIdxAndByteOrder(idxVal, littleEndianVal Value, size 
 	return getIdx, bo
 }
 
-func (o *arrayBufferObject) ensureNotDetached() {
+func (o *arrayBufferObject) ensureNotDetached(throw bool) bool {
 	if o.detached {
-		panic(o.val.runtime.NewTypeError("ArrayBuffer is detached"))
+		o.val.runtime.typeErrorResult(throw, "ArrayBuffer is detached")
+		return false
 	}
+	return true
 }
 
 func (o *arrayBufferObject) getFloat32(idx int, byteOrder byteOrder) float32 {
@@ -776,6 +1016,7 @@ func (o *arrayBufferObject) getUint32(idx int, byteOrder byteOrder) uint32 {
 }
 
 func (o *arrayBufferObject) setUint32(idx int, val uint32, byteOrder byteOrder) {
+	o.ensureNotDetached(true)
 	if byteOrder == nativeEndian {
 		*(*uint32)(unsafe.Pointer(&o.data[idx])) = val
 	} else {
@@ -852,6 +1093,14 @@ func (o *arrayBufferObject) export(*objectExportCtx) interface{} {
 	return ArrayBuffer{
 		buf: o,
 	}
+}
+
+func (o *arrayBufferObject) exportToArrayOrSlice(dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
+	if typ == typeBytes {
+		dst.Set(reflect.ValueOf(o.data))
+		return nil
+	}
+	return o.baseObject.exportToArrayOrSlice(dst, typ, ctx)
 }
 
 func (r *Runtime) _newArrayBuffer(proto *Object, o *Object) *arrayBufferObject {

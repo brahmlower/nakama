@@ -4,34 +4,39 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"runtime"
 	"sort"
-	"sync"
 
 	"github.com/dop251/goja/unistring"
 )
 
 const (
-	classObject   = "Object"
-	classArray    = "Array"
-	classWeakSet  = "WeakSet"
-	classWeakMap  = "WeakMap"
-	classMap      = "Map"
-	classMath     = "Math"
-	classSet      = "Set"
-	classFunction = "Function"
-	classNumber   = "Number"
-	classString   = "String"
-	classBoolean  = "Boolean"
-	classError    = "Error"
-	classRegExp   = "RegExp"
-	classDate     = "Date"
-	classJSON     = "JSON"
+	classObject        = "Object"
+	classArray         = "Array"
+	classWeakSet       = "WeakSet"
+	classWeakMap       = "WeakMap"
+	classMap           = "Map"
+	classMath          = "Math"
+	classSet           = "Set"
+	classFunction      = "Function"
+	classAsyncFunction = "AsyncFunction"
+	classNumber        = "Number"
+	classString        = "String"
+	classBoolean       = "Boolean"
+	classError         = "Error"
+	classRegExp        = "RegExp"
+	classDate          = "Date"
+	classJSON          = "JSON"
+	classGlobal        = "global"
+	classPromise       = "Promise"
 
-	classArrayIterator  = "Array Iterator"
-	classMapIterator    = "Map Iterator"
-	classSetIterator    = "Set Iterator"
-	classStringIterator = "String Iterator"
+	classArrayIterator        = "Array Iterator"
+	classMapIterator          = "Map Iterator"
+	classSetIterator          = "Set Iterator"
+	classStringIterator       = "String Iterator"
+	classRegExpStringIterator = "RegExp String Iterator"
+
+	classGenerator         = "Generator"
+	classGeneratorFunction = "GeneratorFunction"
 )
 
 var (
@@ -40,80 +45,12 @@ var (
 	hintString  Value = asciiString("string")
 )
 
-type weakCollection interface {
-	removeId(uint64)
-}
-
-type weakCollections struct {
-	objId uint64
-	colls []weakCollection
-}
-
-func (r *weakCollections) add(c weakCollection) {
-	for _, ec := range r.colls {
-		if ec == c {
-			return
-		}
-	}
-	r.colls = append(r.colls, c)
-}
-
-func (r *weakCollections) id() uint64 {
-	return r.objId
-}
-
-func (r *weakCollections) remove(c weakCollection) {
-	if cap(r.colls) > 16 && cap(r.colls)>>2 > len(r.colls) {
-		// shrink
-		colls := make([]weakCollection, 0, len(r.colls))
-		for _, coll := range r.colls {
-			if coll != c {
-				colls = append(colls, coll)
-			}
-		}
-		r.colls = colls
-	} else {
-		for i, coll := range r.colls {
-			if coll == c {
-				l := len(r.colls) - 1
-				r.colls[i] = r.colls[l]
-				r.colls[l] = nil
-				r.colls = r.colls[:l]
-				break
-			}
-		}
-	}
-}
-
-func finalizeObjectWeakRefs(r *objectWeakRef) {
-	r.tracker.add(r.id)
-}
-
-type weakRefTracker struct {
-	sync.Mutex
-	list []uint64
-}
-
-func (t *weakRefTracker) add(id uint64) {
-	t.Lock()
-	t.list = append(t.list, id)
-	t.Unlock()
-}
-
-// An object that gets finalized when the corresponding *Object is garbage-collected.
-// It must be ensured that neither the *Object, nor the *Runtime is reachable from this struct,
-// otherwise it will create a circular reference with a Finalizer which will make it not garbage-collectable.
-type objectWeakRef struct {
-	id      uint64
-	tracker *weakRefTracker
-}
-
 type Object struct {
 	id      uint64
 	runtime *Runtime
 	self    objectImpl
 
-	weakRef *objectWeakRef
+	weakRefs map[weakMap]Value
 }
 
 type iterNextFunc func() (propIterItem, iterNextFunc)
@@ -133,11 +70,25 @@ func (p *PropertyDescriptor) Empty() bool {
 	return *p == empty
 }
 
+func (p *PropertyDescriptor) IsAccessor() bool {
+	return p.Setter != nil || p.Getter != nil
+}
+
+func (p *PropertyDescriptor) IsData() bool {
+	return p.Value != nil || p.Writable != FLAG_NOT_SET
+}
+
+func (p *PropertyDescriptor) IsGeneric() bool {
+	return !p.IsAccessor() && !p.IsData()
+}
+
 func (p *PropertyDescriptor) toValue(r *Runtime) Value {
 	if p.jsDescriptor != nil {
 		return p.jsDescriptor
 	}
-
+	if p.Empty() {
+		return _undefined
+	}
 	o := r.NewObject()
 	s := o.self
 
@@ -194,12 +145,13 @@ func (p *PropertyDescriptor) complete() {
 type objectExportCacheItem map[reflect.Type]interface{}
 
 type objectExportCtx struct {
-	cache map[objectImpl]interface{}
+	cache map[*Object]interface{}
 }
 
 type objectImpl interface {
 	sortable
 	className() string
+	typeOf() String
 	getStr(p unistring.String, receiver Value) Value
 	getIdx(p valueInt, receiver Value) Value
 	getSym(p *Symbol, receiver Value) Value
@@ -232,27 +184,32 @@ type objectImpl interface {
 	deleteIdx(idx valueInt, throw bool) bool
 	deleteSym(s *Symbol, throw bool) bool
 
-	toPrimitiveNumber() Value
-	toPrimitiveString() Value
-	toPrimitive() Value
 	assertCallable() (call func(FunctionCall) Value, ok bool)
+	vmCall(vm *vm, n int)
 	assertConstructor() func(args []Value, newTarget *Object) *Object
 	proto() *Object
 	setProto(proto *Object, throw bool) bool
 	hasInstance(v Value) bool
 	isExtensible() bool
 	preventExtensions(throw bool) bool
-	enumerate() iterNextFunc
-	enumerateUnfiltered() iterNextFunc
+
 	export(ctx *objectExportCtx) interface{}
 	exportType() reflect.Type
+	exportToMap(m reflect.Value, typ reflect.Type, ctx *objectExportCtx) error
+	exportToArrayOrSlice(s reflect.Value, typ reflect.Type, ctx *objectExportCtx) error
 	equal(objectImpl) bool
-	ownKeys(all bool, accum []Value) []Value
-	ownSymbols(all bool, accum []Value) []Value
-	ownPropertyKeys(all bool, accum []Value) []Value
+
+	iterateStringKeys() iterNextFunc
+	iterateSymbols() iterNextFunc
+	iterateKeys() iterNextFunc
+
+	stringKeys(all bool, accum []Value) []Value
+	symbols(all bool, accum []Value) []Value
+	keys(all bool, accum []Value) []Value
 
 	_putProp(name unistring.String, value Value, writable, enumerable, configurable bool) Value
 	_putSym(s *Symbol, prop Value)
+	getPrivateEnv(typ *privateEnvType, create bool) *privateElements
 }
 
 type baseObject struct {
@@ -267,6 +224,8 @@ type baseObject struct {
 	lastSortedPropLen, idxPropCount int
 
 	symValues *orderedMap
+
+	privateElements map[*privateEnvType]*privateElements
 }
 
 type guardedObject struct {
@@ -318,6 +277,10 @@ func (o *baseObject) init() {
 
 func (o *baseObject) className() string {
 	return o.class
+}
+
+func (o *baseObject) typeOf() String {
+	return stringObjectC
 }
 
 func (o *baseObject) hasPropertyStr(name unistring.String) bool {
@@ -420,7 +383,10 @@ func (o *baseObject) getOwnPropStr(name unistring.String) Value {
 
 func (o *baseObject) checkDeleteProp(name unistring.String, prop *valueProperty, throw bool) bool {
 	if !prop.configurable {
-		o.val.runtime.typeErrorResult(throw, "Cannot delete property '%s' of %s", name, o.val.toString())
+		if throw {
+			r := o.val.runtime
+			panic(r.NewTypeError("Cannot delete property '%s' of %s", name, r.objectproto_toString(FunctionCall{This: o.val})))
+		}
 		return false
 	}
 	return true
@@ -437,8 +403,17 @@ func (o *baseObject) _delete(name unistring.String) {
 	delete(o.values, name)
 	for i, n := range o.propNames {
 		if n == name {
-			copy(o.propNames[i:], o.propNames[i+1:])
-			o.propNames = o.propNames[:len(o.propNames)-1]
+			names := o.propNames
+			if namesMarkedForCopy(names) {
+				newNames := make([]unistring.String, len(names)-1, shrinkCap(len(names), cap(names)))
+				copy(newNames, names[:i])
+				copy(newNames[i:], names[i+1:])
+				o.propNames = newNames
+			} else {
+				copy(names[i:], names[i+1:])
+				names[len(names)-1] = ""
+				o.propNames = names[:len(names)-1]
+			}
 			if i < o.lastSortedPropLen {
 				o.lastSortedPropLen--
 				if i < o.idxPropCount {
@@ -457,7 +432,7 @@ func (o *baseObject) deleteIdx(idx valueInt, throw bool) bool {
 func (o *baseObject) deleteSym(s *Symbol, throw bool) bool {
 	if o.symValues != nil {
 		if val := o.symValues.get(s); val != nil {
-			if !o.checkDelete(s.desc.string(), val, throw) {
+			if !o.checkDelete(s.descriptiveString().string(), val, throw) {
 				return false
 			}
 			o.symValues.remove(s)
@@ -485,12 +460,14 @@ func (o *baseObject) setProto(proto *Object, throw bool) bool {
 		o.val.runtime.typeErrorResult(throw, "%s is not extensible", o.val)
 		return false
 	}
-	for p := proto; p != nil; {
+	for p := proto; p != nil; p = p.self.proto() {
 		if p.SameAs(o.val) {
 			o.val.runtime.typeErrorResult(throw, "Cyclic __proto__ value")
 			return false
 		}
-		p = p.self.proto()
+		if _, ok := p.self.(*proxyObject); ok {
+			break
+		}
 	}
 	o.prototype = proto
 	return true
@@ -511,7 +488,8 @@ func (o *baseObject) setOwnStr(name unistring.String, val Value, throw bool) boo
 			return false
 		} else {
 			o.values[name] = val
-			o.propNames = append(o.propNames, name)
+			names := copyNamesIfNeeded(o.propNames, 1)
+			o.propNames = append(names, name)
 		}
 		return true
 	}
@@ -620,7 +598,13 @@ func (o *baseObject) setForeignStr(name unistring.String, val, receiver Value, t
 }
 
 func (o *baseObject) setForeignIdx(name valueInt, val, receiver Value, throw bool) (bool, bool) {
-	return o.val.self.setForeignStr(name.string(), val, receiver, throw)
+	if idx := toIdx(name); idx != math.MaxUint32 {
+		o.ensurePropOrder()
+		if o.idxPropCount == 0 {
+			return o._setForeignIdx(name, name, nil, receiver, throw)
+		}
+	}
+	return o.setForeignStr(name.string(), val, receiver, throw)
 }
 
 func (o *baseObject) setForeignSym(name *Symbol, val, receiver Value, throw bool) (bool, bool) {
@@ -774,7 +758,8 @@ func (o *baseObject) defineOwnPropertyStr(name unistring.String, descr PropertyD
 	if v, ok := o._defineOwnProperty(name, existingVal, descr, throw); ok {
 		o.values[name] = v
 		if existingVal == nil {
-			o.propNames = append(o.propNames, name)
+			names := copyNamesIfNeeded(o.propNames, 1)
+			o.propNames = append(names, name)
 		}
 		return true
 	}
@@ -790,7 +775,7 @@ func (o *baseObject) defineOwnPropertySym(s *Symbol, descr PropertyDescriptor, t
 	if o.symValues != nil {
 		existingVal = o.symValues.get(s)
 	}
-	if v, ok := o._defineOwnProperty(s.desc.string(), existingVal, descr, throw); ok {
+	if v, ok := o._defineOwnProperty(s.descriptiveString().string(), existingVal, descr, throw); ok {
 		if o.symValues == nil {
 			o.symValues = newOrderedMap(nil)
 		}
@@ -802,7 +787,8 @@ func (o *baseObject) defineOwnPropertySym(s *Symbol, descr PropertyDescriptor, t
 
 func (o *baseObject) _put(name unistring.String, v Value) {
 	if _, exists := o.values[name]; !exists {
-		o.propNames = append(o.propNames, name)
+		names := copyNamesIfNeeded(o.propNames, 1)
+		o.propNames = append(names, name)
 	}
 
 	o.values[name] = v
@@ -833,11 +819,28 @@ func (o *baseObject) _putSym(s *Symbol, prop Value) {
 	o.symValues.set(s, prop)
 }
 
-func (o *baseObject) tryPrimitive(methodName unistring.String) Value {
-	if method, ok := o.val.self.getStr(methodName, nil).(*Object); ok {
+func (o *baseObject) getPrivateEnv(typ *privateEnvType, create bool) *privateElements {
+	env := o.privateElements[typ]
+	if env != nil && create {
+		panic(o.val.runtime.NewTypeError("Private fields for the class have already been set"))
+	}
+	if env == nil && create {
+		env = &privateElements{
+			fields: make([]Value, typ.numFields),
+		}
+		if o.privateElements == nil {
+			o.privateElements = make(map[*privateEnvType]*privateElements)
+		}
+		o.privateElements[typ] = env
+	}
+	return env
+}
+
+func (o *Object) tryPrimitive(methodName unistring.String) Value {
+	if method, ok := o.self.getStr(methodName, nil).(*Object); ok {
 		if call, ok := method.self.assertCallable(); ok {
 			v := call(FunctionCall{
-				This: o.val,
+				This: o,
 			})
 			if _, fail := v.(*Object); !fail {
 				return v
@@ -847,7 +850,7 @@ func (o *baseObject) tryPrimitive(methodName unistring.String) Value {
 	return nil
 }
 
-func (o *baseObject) toPrimitiveNumber() Value {
+func (o *Object) ordinaryToPrimitiveNumber() Value {
 	if v := o.tryPrimitive("valueOf"); v != nil {
 		return v
 	}
@@ -856,11 +859,10 @@ func (o *baseObject) toPrimitiveNumber() Value {
 		return v
 	}
 
-	o.val.runtime.typeErrorResult(true, "Could not convert %v to primitive", o)
-	return nil
+	panic(o.runtime.NewTypeError("Could not convert %v to primitive", o.self))
 }
 
-func (o *baseObject) toPrimitiveString() Value {
+func (o *Object) ordinaryToPrimitiveString() Value {
 	if v := o.tryPrimitive("toString"); v != nil {
 		return v
 	}
@@ -869,21 +871,7 @@ func (o *baseObject) toPrimitiveString() Value {
 		return v
 	}
 
-	o.val.runtime.typeErrorResult(true, "Could not convert %v to primitive", o)
-	return nil
-}
-
-func (o *baseObject) toPrimitive() Value {
-	if v := o.tryPrimitive("valueOf"); v != nil {
-		return v
-	}
-
-	if v := o.tryPrimitive("toString"); v != nil {
-		return v
-	}
-
-	o.val.runtime.typeErrorResult(true, "Could not convert %v to primitive", o)
-	return nil
+	panic(o.runtime.NewTypeError("Could not convert %v (%T) to primitive", o.self, o.self))
 }
 
 func (o *Object) tryExoticToPrimitive(hint Value) Value {
@@ -906,7 +894,7 @@ func (o *Object) toPrimitiveNumber() Value {
 		return v
 	}
 
-	return o.self.toPrimitiveNumber()
+	return o.ordinaryToPrimitiveNumber()
 }
 
 func (o *Object) toPrimitiveString() Value {
@@ -914,18 +902,22 @@ func (o *Object) toPrimitiveString() Value {
 		return v
 	}
 
-	return o.self.toPrimitiveString()
+	return o.ordinaryToPrimitiveString()
 }
 
 func (o *Object) toPrimitive() Value {
 	if v := o.tryExoticToPrimitive(hintDefault); v != nil {
 		return v
 	}
-	return o.self.toPrimitive()
+	return o.ordinaryToPrimitiveNumber()
 }
 
 func (o *baseObject) assertCallable() (func(FunctionCall) Value, bool) {
 	return nil, false
+}
+
+func (o *baseObject) vmCall(vm *vm, _ int) {
+	panic(vm.r.NewTypeError("Not a function: %s", o.val.toString()))
 }
 
 func (o *baseObject) assertConstructor() func(args []Value, newTarget *Object) *Object {
@@ -945,15 +937,15 @@ func (o *baseObject) preventExtensions(bool) bool {
 	return true
 }
 
-func (o *baseObject) sortLen() int64 {
-	return toLength(o.val.self.getStr("length", nil))
+func (o *baseObject) sortLen() int {
+	return toIntStrict(toLength(o.val.self.getStr("length", nil)))
 }
 
-func (o *baseObject) sortGet(i int64) Value {
+func (o *baseObject) sortGet(i int) Value {
 	return o.val.self.getIdx(valueInt(i), nil)
 }
 
-func (o *baseObject) swap(i, j int64) {
+func (o *baseObject) swap(i int, j int) {
 	ii := valueInt(i)
 	jj := valueInt(j)
 
@@ -965,12 +957,12 @@ func (o *baseObject) swap(i, j int64) {
 }
 
 func (o *baseObject) export(ctx *objectExportCtx) interface{} {
-	if v, exists := ctx.get(o); exists {
+	if v, exists := ctx.get(o.val); exists {
 		return v
 	}
-	keys := o.ownKeys(false, nil)
+	keys := o.stringKeys(false, nil)
 	m := make(map[string]interface{}, len(keys))
-	ctx.put(o, m)
+	ctx.put(o.val, m)
 	for _, itemName := range keys {
 		itemNameStr := itemName.String()
 		v := o.val.self.getStr(itemName.string(), nil)
@@ -988,6 +980,112 @@ func (o *baseObject) exportType() reflect.Type {
 	return reflectTypeMap
 }
 
+func genericExportToMap(o *Object, dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
+	dst.Set(reflect.MakeMap(typ))
+	ctx.putTyped(o, typ, dst.Interface())
+	keyTyp := typ.Key()
+	elemTyp := typ.Elem()
+	needConvertKeys := !reflectTypeString.AssignableTo(keyTyp)
+	iter := &enumerableIter{
+		o:       o,
+		wrapped: o.self.iterateStringKeys(),
+	}
+	r := o.runtime
+	for item, next := iter.next(); next != nil; item, next = next() {
+		var kv reflect.Value
+		var err error
+		if needConvertKeys {
+			kv = reflect.New(keyTyp).Elem()
+			err = r.toReflectValue(item.name, kv, ctx)
+			if err != nil {
+				return fmt.Errorf("could not convert map key %s to %v: %w", item.name.String(), typ, err)
+			}
+		} else {
+			kv = reflect.ValueOf(item.name.String())
+		}
+
+		ival := o.self.getStr(item.name.string(), nil)
+		if ival != nil {
+			vv := reflect.New(elemTyp).Elem()
+			err = r.toReflectValue(ival, vv, ctx)
+			if err != nil {
+				return fmt.Errorf("could not convert map value %v to %v at key %s: %w", ival, typ, item.name.String(), err)
+			}
+			dst.SetMapIndex(kv, vv)
+		} else {
+			dst.SetMapIndex(kv, reflect.Zero(elemTyp))
+		}
+	}
+
+	return nil
+}
+
+func (o *baseObject) exportToMap(m reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
+	return genericExportToMap(o.val, m, typ, ctx)
+}
+
+func genericExportToArrayOrSlice(o *Object, dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) (err error) {
+	r := o.runtime
+
+	if method := toMethod(r.getV(o, SymIterator)); method != nil {
+		// iterable
+
+		var values []Value
+		// cannot change (append to) the slice once it's been put into the cache, so we need to know its length beforehand
+		ex := r.try(func() {
+			values = r.iterableToList(o, method)
+		})
+		if ex != nil {
+			return ex
+		}
+		if typ.Kind() == reflect.Array {
+			if dst.Len() != len(values) {
+				return fmt.Errorf("cannot convert an iterable into an array, lengths mismatch (have %d, need %d)", len(values), dst.Len())
+			}
+		} else {
+			dst.Set(reflect.MakeSlice(typ, len(values), len(values)))
+		}
+		ctx.putTyped(o, typ, dst.Interface())
+		for i, val := range values {
+			err = r.toReflectValue(val, dst.Index(i), ctx)
+			if err != nil {
+				return
+			}
+		}
+	} else {
+		// array-like
+		var lp Value
+		if _, ok := o.self.assertCallable(); !ok {
+			lp = o.self.getStr("length", nil)
+		}
+		if lp == nil {
+			return fmt.Errorf("cannot convert %v to %v: not an array or iterable", o, typ)
+		}
+		l := toIntStrict(toLength(lp))
+		if dst.Len() != l {
+			if typ.Kind() == reflect.Array {
+				return fmt.Errorf("cannot convert an array-like object into an array, lengths mismatch (have %d, need %d)", l, dst.Len())
+			} else {
+				dst.Set(reflect.MakeSlice(typ, l, l))
+			}
+		}
+		ctx.putTyped(o, typ, dst.Interface())
+		for i := 0; i < l; i++ {
+			val := nilSafe(o.self.getIdx(valueInt(i), nil))
+			err = r.toReflectValue(val, dst.Index(i), ctx)
+			if err != nil {
+				return
+			}
+		}
+	}
+
+	return
+}
+
+func (o *baseObject) exportToArrayOrSlice(dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
+	return genericExportToArrayOrSlice(o.val, dst, typ, ctx)
+}
+
 type enumerableFlag int
 
 const (
@@ -997,8 +1095,8 @@ const (
 )
 
 type propIterItem struct {
-	name       unistring.String
-	value      Value // set only when enumerable == _ENUM_UNKNOWN
+	name       Value
+	value      Value
 	enumerable enumerableFlag
 }
 
@@ -1008,37 +1106,76 @@ type objectPropIter struct {
 	idx       int
 }
 
-type propFilterIter struct {
-	wrapped iterNextFunc
-	all     bool
-	seen    map[unistring.String]bool
+type recursivePropIter struct {
+	o    objectImpl
+	cur  iterNextFunc
+	seen map[unistring.String]struct{}
 }
 
-func (i *propFilterIter) next() (propIterItem, iterNextFunc) {
+type enumerableIter struct {
+	o       *Object
+	wrapped iterNextFunc
+}
+
+func (i *enumerableIter) next() (propIterItem, iterNextFunc) {
 	for {
 		var item propIterItem
 		item, i.wrapped = i.wrapped()
 		if i.wrapped == nil {
-			return propIterItem{}, nil
+			return item, nil
 		}
-
-		if !i.seen[item.name] {
-			i.seen[item.name] = true
-			if !i.all {
-				if item.enumerable == _ENUM_FALSE {
+		if item.enumerable == _ENUM_FALSE {
+			continue
+		}
+		if item.enumerable == _ENUM_UNKNOWN {
+			var prop Value
+			if item.value == nil {
+				prop = i.o.getOwnProp(item.name)
+			} else {
+				prop = item.value
+			}
+			if prop == nil {
+				continue
+			}
+			if prop, ok := prop.(*valueProperty); ok {
+				if !prop.enumerable {
 					continue
 				}
-				if item.enumerable == _ENUM_UNKNOWN {
-					if prop, ok := item.value.(*valueProperty); ok {
-						if !prop.enumerable {
-							continue
-						}
-					}
-				}
 			}
+		}
+		return item, i.next
+	}
+}
+
+func (i *recursivePropIter) next() (propIterItem, iterNextFunc) {
+	for {
+		var item propIterItem
+		item, i.cur = i.cur()
+		if i.cur == nil {
+			if proto := i.o.proto(); proto != nil {
+				i.cur = proto.self.iterateStringKeys()
+				i.o = proto.self
+				continue
+			}
+			return propIterItem{}, nil
+		}
+		name := item.name.string()
+		if _, exists := i.seen[name]; !exists {
+			i.seen[name] = struct{}{}
 			return item, i.next
 		}
 	}
+}
+
+func enumerateRecursive(o *Object) iterNextFunc {
+	return (&enumerableIter{
+		o: o,
+		wrapped: (&recursivePropIter{
+			o:    o.self,
+			cur:  o.self.iterateStringKeys(),
+			seen: make(map[unistring.String]struct{}),
+		}).next,
+	}).next
 }
 
 func (i *objectPropIter) next() (propIterItem, iterNextFunc) {
@@ -1047,58 +1184,124 @@ func (i *objectPropIter) next() (propIterItem, iterNextFunc) {
 		i.idx++
 		prop := i.o.values[name]
 		if prop != nil {
-			return propIterItem{name: name, value: prop}, i.next
+			return propIterItem{name: stringValueFromRaw(name), value: prop}, i.next
 		}
 	}
-
+	clearNamesCopyMarker(i.propNames)
 	return propIterItem{}, nil
 }
 
-func (o *baseObject) enumerate() iterNextFunc {
-	return (&propFilterIter{
-		wrapped: o.val.self.enumerateUnfiltered(),
-		seen:    make(map[unistring.String]bool),
-	}).next
+var copyMarker = unistring.String(" ")
+
+// Set a copy-on-write flag so that any subsequent modifications of anything below the current length
+// trigger a copy.
+// The marker is a special value put at the index position of cap-1. Capacity is set so that the marker is
+// beyond the current length (therefore invisible to normal slice operations).
+// This function is called before an iteration begins to avoid copying of the names array if
+// there are no modifications within the iteration.
+// Note that the copying also occurs in two cases: nested iterations (on the same object) and
+// iterations after a previously abandoned iteration (because there is currently no mechanism to close an
+// iterator). It is still better than copying every time.
+func prepareNamesForCopy(names []unistring.String) []unistring.String {
+	if len(names) == 0 {
+		return names
+	}
+	if namesMarkedForCopy(names) || cap(names) == len(names) {
+		var newcap int
+		if cap(names) == len(names) {
+			newcap = growCap(len(names)+1, len(names), cap(names))
+		} else {
+			newcap = cap(names)
+		}
+		newNames := make([]unistring.String, len(names), newcap)
+		copy(newNames, names)
+		names = newNames
+	}
+	names[cap(names)-1 : cap(names)][0] = copyMarker
+	return names
 }
 
-func (o *baseObject) ownIter() iterNextFunc {
-	if len(o.propNames) > o.lastSortedPropLen {
-		o.fixPropOrder()
+func namesMarkedForCopy(names []unistring.String) bool {
+	return cap(names) > len(names) && names[cap(names)-1 : cap(names)][0] == copyMarker
+}
+
+func clearNamesCopyMarker(names []unistring.String) {
+	if cap(names) > len(names) {
+		names[cap(names)-1 : cap(names)][0] = ""
 	}
-	propNames := make([]unistring.String, len(o.propNames))
-	copy(propNames, o.propNames)
+}
+
+func copyNamesIfNeeded(names []unistring.String, extraCap int) []unistring.String {
+	if namesMarkedForCopy(names) && len(names)+extraCap >= cap(names) {
+		var newcap int
+		newsize := len(names) + extraCap + 1
+		if newsize > cap(names) {
+			newcap = growCap(newsize, len(names), cap(names))
+		} else {
+			newcap = cap(names)
+		}
+		newNames := make([]unistring.String, len(names), newcap)
+		copy(newNames, names)
+		return newNames
+	}
+	return names
+}
+
+func (o *baseObject) iterateStringKeys() iterNextFunc {
+	o.ensurePropOrder()
+	propNames := prepareNamesForCopy(o.propNames)
+	o.propNames = propNames
 	return (&objectPropIter{
 		o:         o,
 		propNames: propNames,
 	}).next
 }
 
-func (o *baseObject) recursiveIter(iter iterNextFunc) iterNextFunc {
-	return (&recursiveIter{
-		o:       o,
-		wrapped: iter,
-	}).next
+type objectSymbolIter struct {
+	iter *orderedMapIter
 }
 
-func (o *baseObject) enumerateUnfiltered() iterNextFunc {
-	return o.recursiveIter(o.ownIter())
-}
-
-type recursiveIter struct {
-	o       *baseObject
-	wrapped iterNextFunc
-}
-
-func (iter *recursiveIter) next() (propIterItem, iterNextFunc) {
-	item, next := iter.wrapped()
-	if next != nil {
-		iter.wrapped = next
-		return item, iter.next
-	}
-	if proto := iter.o.prototype; proto != nil {
-		return proto.self.enumerateUnfiltered()()
+func (i *objectSymbolIter) next() (propIterItem, iterNextFunc) {
+	entry := i.iter.next()
+	if entry != nil {
+		return propIterItem{
+			name:  entry.key,
+			value: entry.value,
+		}, i.next
 	}
 	return propIterItem{}, nil
+}
+
+func (o *baseObject) iterateSymbols() iterNextFunc {
+	if o.symValues != nil {
+		return (&objectSymbolIter{
+			iter: o.symValues.newIter(),
+		}).next
+	}
+	return func() (propIterItem, iterNextFunc) {
+		return propIterItem{}, nil
+	}
+}
+
+type objectAllPropIter struct {
+	o      *Object
+	curStr iterNextFunc
+}
+
+func (i *objectAllPropIter) next() (propIterItem, iterNextFunc) {
+	item, next := i.curStr()
+	if next != nil {
+		i.curStr = next
+		return item, i.next
+	}
+	return i.o.self.iterateSymbols()()
+}
+
+func (o *baseObject) iterateKeys() iterNextFunc {
+	return (&objectAllPropIter{
+		o:      o.val,
+		curStr: o.val.self.iterateStringKeys(),
+	}).next
 }
 
 func (o *baseObject) equal(objectImpl) bool {
@@ -1106,8 +1309,15 @@ func (o *baseObject) equal(objectImpl) bool {
 	return false
 }
 
+// hopefully this gets inlined
+func (o *baseObject) ensurePropOrder() {
+	if o.lastSortedPropLen < len(o.propNames) {
+		o.fixPropOrder()
+	}
+}
+
 // Reorder property names so that any integer properties are shifted to the beginning of the list
-// in ascending order. This is to conform to ES6 9.1.12.
+// in ascending order. This is to conform to https://262.ecma-international.org/#sec-ordinaryownpropertykeys.
 // Personally I think this requirement is strange. I can sort of understand where they are coming from,
 // this way arrays can be specified just as objects with a 'magic' length property. However, I think
 // it's safe to assume most devs don't use Objects to store integer properties. Therefore, performing
@@ -1117,12 +1327,21 @@ func (o *baseObject) fixPropOrder() {
 	names := o.propNames
 	for i := o.lastSortedPropLen; i < len(names); i++ {
 		name := names[i]
-		if idx := strToIdx(name); idx != math.MaxUint32 {
+		if idx := strToArrayIdx(name); idx != math.MaxUint32 {
 			k := sort.Search(o.idxPropCount, func(j int) bool {
-				return strToIdx(names[j]) >= idx
+				return strToArrayIdx(names[j]) >= idx
 			})
 			if k < i {
-				copy(names[k+1:i+1], names[k:i])
+				if namesMarkedForCopy(names) {
+					newNames := make([]unistring.String, len(names), cap(names))
+					copy(newNames[:k], names)
+					copy(newNames[k+1:i+1], names[k:i])
+					copy(newNames[i+1:], names[i+1:])
+					names = newNames
+					o.propNames = names
+				} else {
+					copy(names[k+1:i+1], names[k:i])
+				}
 				names[k] = name
 			}
 			o.idxPropCount++
@@ -1131,10 +1350,8 @@ func (o *baseObject) fixPropOrder() {
 	o.lastSortedPropLen = len(names)
 }
 
-func (o *baseObject) ownKeys(all bool, keys []Value) []Value {
-	if len(o.propNames) > o.lastSortedPropLen {
-		o.fixPropOrder()
-	}
+func (o *baseObject) stringKeys(all bool, keys []Value) []Value {
+	o.ensurePropOrder()
 	if all {
 		for _, k := range o.propNames {
 			keys = append(keys, stringValueFromRaw(k))
@@ -1151,7 +1368,7 @@ func (o *baseObject) ownKeys(all bool, keys []Value) []Value {
 	return keys
 }
 
-func (o *baseObject) ownSymbols(all bool, accum []Value) []Value {
+func (o *baseObject) symbols(all bool, accum []Value) []Value {
 	if o.symValues != nil {
 		iter := o.symValues.newIter()
 		if all {
@@ -1181,8 +1398,8 @@ func (o *baseObject) ownSymbols(all bool, accum []Value) []Value {
 	return accum
 }
 
-func (o *baseObject) ownPropertyKeys(all bool, accum []Value) []Value {
-	return o.ownSymbols(all, o.val.self.ownKeys(all, accum))
+func (o *baseObject) keys(all bool, accum []Value) []Value {
+	return o.symbols(all, o.val.self.stringKeys(all, accum))
 }
 
 func (o *baseObject) hasInstance(Value) bool {
@@ -1198,7 +1415,7 @@ func toMethod(v Value) func(FunctionCall) Value {
 			return call
 		}
 	}
-	panic(typeError(fmt.Sprintf("%s is not a method", v.String())))
+	panic(newTypeError("%s is not a method", v.String()))
 }
 
 func instanceOfOperator(o Value, c *Object) bool {
@@ -1273,9 +1490,9 @@ func (o *Object) setStr(name unistring.String, val, receiver Value, throw bool) 
 							return false
 						}
 					}
-					robj.self.defineOwnPropertyStr(name, PropertyDescriptor{Value: val}, throw)
+					return robj.self.defineOwnPropertyStr(name, PropertyDescriptor{Value: val}, throw)
 				} else {
-					robj.self.defineOwnPropertyStr(name, PropertyDescriptor{
+					return robj.self.defineOwnPropertyStr(name, PropertyDescriptor{
 						Value:        val,
 						Writable:     FLAG_TRUE,
 						Configurable: FLAG_TRUE,
@@ -1290,7 +1507,6 @@ func (o *Object) setStr(name unistring.String, val, receiver Value, throw bool) 
 			return res
 		}
 	}
-	return true
 }
 
 func (o *Object) set(name Value, val, receiver Value, throw bool) bool {
@@ -1411,31 +1627,22 @@ func (o *Object) defineOwnProperty(n Value, desc PropertyDescriptor, throw bool)
 	}
 }
 
-func (o *Object) getWeakRef() *objectWeakRef {
-	if o.weakRef == nil {
-		if o.runtime.weakRefTracker == nil {
-			o.runtime.weakRefTracker = &weakRefTracker{}
-		}
-		o.weakRef = &objectWeakRef{
-			id:      o.getId(),
-			tracker: o.runtime.weakRefTracker,
-		}
-		runtime.SetFinalizer(o.weakRef, finalizeObjectWeakRefs)
+func (o *Object) getWeakRefs() map[weakMap]Value {
+	refs := o.weakRefs
+	if refs == nil {
+		refs = make(map[weakMap]Value)
+		o.weakRefs = refs
 	}
-
-	return o.weakRef
+	return refs
 }
 
 func (o *Object) getId() uint64 {
-	for o.id == 0 {
-		if o.runtime.hash == nil {
-			h := o.runtime.getHash()
-			o.runtime.idSeq = h.Sum64()
-		}
-		o.id = o.runtime.idSeq
-		o.runtime.idSeq++
+	id := o.id
+	if id == 0 {
+		id = o.runtime.genId()
+		o.id = id
 	}
-	return o.id
+	return id
 }
 
 func (o *guardedObject) guard(props ...unistring.String) {
@@ -1477,10 +1684,10 @@ func (o *guardedObject) deleteStr(name unistring.String, throw bool) bool {
 	return res
 }
 
-func (ctx *objectExportCtx) get(key objectImpl) (interface{}, bool) {
+func (ctx *objectExportCtx) get(key *Object) (interface{}, bool) {
 	if v, exists := ctx.cache[key]; exists {
 		if item, ok := v.(objectExportCacheItem); ok {
-			r, exists := item[key.exportType()]
+			r, exists := item[key.self.exportType()]
 			return r, exists
 		} else {
 			return v, true
@@ -1489,7 +1696,7 @@ func (ctx *objectExportCtx) get(key objectImpl) (interface{}, bool) {
 	return nil, false
 }
 
-func (ctx *objectExportCtx) getTyped(key objectImpl, typ reflect.Type) (interface{}, bool) {
+func (ctx *objectExportCtx) getTyped(key *Object, typ reflect.Type) (interface{}, bool) {
 	if v, exists := ctx.cache[key]; exists {
 		if item, ok := v.(objectExportCacheItem); ok {
 			r, exists := item[typ]
@@ -1503,20 +1710,20 @@ func (ctx *objectExportCtx) getTyped(key objectImpl, typ reflect.Type) (interfac
 	return nil, false
 }
 
-func (ctx *objectExportCtx) put(key objectImpl, value interface{}) {
+func (ctx *objectExportCtx) put(key *Object, value interface{}) {
 	if ctx.cache == nil {
-		ctx.cache = make(map[objectImpl]interface{})
+		ctx.cache = make(map[*Object]interface{})
 	}
 	if item, ok := ctx.cache[key].(objectExportCacheItem); ok {
-		item[key.exportType()] = value
+		item[key.self.exportType()] = value
 	} else {
 		ctx.cache[key] = value
 	}
 }
 
-func (ctx *objectExportCtx) putTyped(key objectImpl, typ reflect.Type, value interface{}) {
+func (ctx *objectExportCtx) putTyped(key *Object, typ reflect.Type, value interface{}) {
 	if ctx.cache == nil {
-		ctx.cache = make(map[objectImpl]interface{})
+		ctx.cache = make(map[*Object]interface{})
 	}
 	v, exists := ctx.cache[key]
 	if exists {
@@ -1524,7 +1731,7 @@ func (ctx *objectExportCtx) putTyped(key objectImpl, typ reflect.Type, value int
 			item[typ] = value
 		} else {
 			m := make(objectExportCacheItem, 2)
-			m[key.exportType()] = v
+			m[key.self.exportType()] = v
 			m[typ] = value
 			ctx.cache[key] = m
 		}
@@ -1533,4 +1740,85 @@ func (ctx *objectExportCtx) putTyped(key objectImpl, typ reflect.Type, value int
 		m[typ] = value
 		ctx.cache[key] = m
 	}
+}
+
+type enumPropertiesIter struct {
+	o       *Object
+	wrapped iterNextFunc
+}
+
+func (i *enumPropertiesIter) next() (propIterItem, iterNextFunc) {
+	for i.wrapped != nil {
+		item, next := i.wrapped()
+		i.wrapped = next
+		if next == nil {
+			break
+		}
+		if item.value == nil {
+			item.value = i.o.get(item.name, nil)
+			if item.value == nil {
+				continue
+			}
+		} else {
+			if prop, ok := item.value.(*valueProperty); ok {
+				item.value = prop.get(i.o)
+			}
+		}
+		return item, i.next
+	}
+	return propIterItem{}, nil
+}
+
+func iterateEnumerableProperties(o *Object) iterNextFunc {
+	return (&enumPropertiesIter{
+		o: o,
+		wrapped: (&enumerableIter{
+			o:       o,
+			wrapped: o.self.iterateKeys(),
+		}).next,
+	}).next
+}
+
+func iterateEnumerableStringProperties(o *Object) iterNextFunc {
+	return (&enumPropertiesIter{
+		o: o,
+		wrapped: (&enumerableIter{
+			o:       o,
+			wrapped: o.self.iterateStringKeys(),
+		}).next,
+	}).next
+}
+
+type privateId struct {
+	typ      *privateEnvType
+	name     unistring.String
+	idx      uint32
+	isMethod bool
+}
+
+type privateEnvType struct {
+	numFields, numMethods uint32
+}
+
+type privateNames map[unistring.String]*privateId
+
+type privateEnv struct {
+	instanceType, staticType *privateEnvType
+
+	names privateNames
+
+	outer *privateEnv
+}
+
+type privateElements struct {
+	methods []Value
+	fields  []Value
+}
+
+func (i *privateId) String() string {
+	return "#" + i.name.String()
+}
+
+func (i *privateId) string() unistring.String {
+	return privateIdString(i.name)
 }

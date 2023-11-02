@@ -20,16 +20,17 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/gob"
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/gofrs/uuid/v5"
 	"github.com/heroiclabs/nakama-common/api"
 	"github.com/heroiclabs/nakama-common/rtapi"
-	"github.com/jackc/pgx/pgtype"
+	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
-	"time"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -39,6 +40,8 @@ const (
 	NotificationCodeGroupAdd         int32 = -4
 	NotificationCodeGroupJoinRequest int32 = -5
 	NotificationCodeFriendJoinGame   int32 = -6
+	NotificationCodeSingleSocket     int32 = -7
+	NotificationCodeUserBanned       int32 = -8
 )
 
 type notificationCacheableCursor struct {
@@ -47,7 +50,7 @@ type notificationCacheableCursor struct {
 }
 
 func NotificationSend(ctx context.Context, logger *zap.Logger, db *sql.DB, messageRouter MessageRouter, notifications map[uuid.UUID][]*api.Notification) error {
-	persistentNotifications := make(map[uuid.UUID][]*api.Notification)
+	persistentNotifications := make(map[uuid.UUID][]*api.Notification, len(notifications))
 	for userID, ns := range notifications {
 		for _, userNotification := range ns {
 			// Select persistent notifications for storage.
@@ -82,6 +85,105 @@ func NotificationSend(ctx context.Context, logger *zap.Logger, db *sql.DB, messa
 	return nil
 }
 
+func NotificationSendAll(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tracker, messageRouter MessageRouter, notification *api.Notification) error {
+	// Non-persistent notifications don't need to work through all database users, just use currently connected notification streams.
+	if !notification.Persistent {
+		env := &rtapi.Envelope{
+			Message: &rtapi.Envelope_Notifications{
+				Notifications: &rtapi.Notifications{
+					Notifications: []*api.Notification{notification},
+				},
+			},
+		}
+
+		messageRouter.SendToAll(logger, env, true)
+
+		return nil
+	}
+
+	const limit = 10_000
+
+	// Start dispatch in paginated batches.
+	go func() {
+		// Switch to a background context, the caller should not wait for the full operation to complete.
+		ctx := context.Background()
+		notificationLogger := logger.With(zap.String("notification_subject", notification.Subject))
+
+		var userIDStr string
+		for {
+			sends := make(map[uuid.UUID][]*api.Notification, limit)
+
+			params := make([]interface{}, 0, 1)
+			query := "SELECT id FROM users"
+			if userIDStr != "" {
+				query += " WHERE id > $1"
+				params = append(params, userIDStr)
+			}
+			query += fmt.Sprintf(" ORDER BY id ASC LIMIT %d", limit)
+
+			rows, err := db.QueryContext(ctx, query, params...)
+			if err != nil {
+				notificationLogger.Error("Failed to retrieve user data to send notification", zap.Error(err))
+				return
+			}
+
+			for rows.Next() {
+				if err = rows.Scan(&userIDStr); err != nil {
+					_ = rows.Close()
+					notificationLogger.Error("Failed to scan user data to send notification", zap.String("id", userIDStr), zap.Error(err))
+					return
+				}
+				userID, err := uuid.FromString(userIDStr)
+				if err != nil {
+					_ = rows.Close()
+					notificationLogger.Error("Failed to parse scanned user id data to send notification", zap.String("id", userIDStr), zap.Error(err))
+					return
+				}
+				sends[userID] = []*api.Notification{{
+					Id:         uuid.Must(uuid.NewV4()).String(),
+					Subject:    notification.Subject,
+					Content:    notification.Content,
+					Code:       notification.Code,
+					SenderId:   notification.SenderId,
+					CreateTime: notification.CreateTime,
+					Persistent: notification.Persistent,
+				}}
+			}
+			_ = rows.Close()
+
+			if len(sends) == 0 {
+				// Pagination finished.
+				return
+			}
+
+			if err := NotificationSave(ctx, notificationLogger, db, sends); err != nil {
+				notificationLogger.Error("Failed to save persistent notifications", zap.Error(err))
+				return
+			}
+
+			// Deliver live notifications to connected users.
+			for userID, notifications := range sends {
+				env := &rtapi.Envelope{
+					Message: &rtapi.Envelope_Notifications{
+						Notifications: &rtapi.Notifications{
+							Notifications: []*api.Notification{notifications[0]},
+						},
+					},
+				}
+
+				messageRouter.SendToStream(logger, PresenceStream{Mode: StreamModeNotifications, Subject: userID}, env, true)
+			}
+
+			// Stop pagination when reaching the last (incomplete) page.
+			if len(sends) < limit {
+				return
+			}
+		}
+	}()
+
+	return nil
+}
+
 func NotificationList(ctx context.Context, logger *zap.Logger, db *sql.DB, userID uuid.UUID, limit int, cursor string, nc *notificationCacheableCursor) (*api.NotificationList, error) {
 	params := []interface{}{userID}
 
@@ -108,10 +210,10 @@ ORDER BY create_time ASC, id ASC`+limitQuery, params...)
 		return nil, err
 	}
 
-	notifications := make([]*api.Notification, 0)
+	notifications := make([]*api.Notification, 0, limit)
 	var lastCreateTime int64
 	for rows.Next() {
-		no := &api.Notification{Persistent: true, CreateTime: &timestamp.Timestamp{}}
+		no := &api.Notification{Persistent: true, CreateTime: &timestamppb.Timestamp{}}
 		var createTime pgtype.Timestamptz
 		if err := rows.Scan(&no.Id, &no.Subject, &no.Content, &no.Code, &no.SenderId, &createTime); err != nil {
 			_ = rows.Close()

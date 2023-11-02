@@ -17,15 +17,17 @@ package server
 import (
 	"context"
 	"database/sql"
-	"github.com/gofrs/uuid"
+	"errors"
+	"strconv"
+	"strings"
+
+	"github.com/gofrs/uuid/v5"
 	"github.com/heroiclabs/nakama/v3/social"
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgconn"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"strconv"
-	"strings"
 )
 
 func LinkApple(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, socialClient *social.Client, userID uuid.UUID, token string) error {
@@ -44,7 +46,7 @@ func LinkApple(ctx context.Context, logger *zap.Logger, db *sql.DB, config Confi
 	}
 
 	res, err := db.ExecContext(ctx, `
-UPDATE users
+UPDATE users AS u
 SET apple_id = $2, update_time = now()
 WHERE (id = $1)
 AND (NOT EXISTS
@@ -59,6 +61,20 @@ AND (NOT EXISTS
 		return status.Error(codes.Internal, "Error while trying to link Apple ID.")
 	} else if count, _ := res.RowsAffected(); count == 0 {
 		return status.Error(codes.AlreadyExists, "Apple ID is already in use.")
+	}
+
+	// Import email address, if it exists.
+	if profile.Email != "" {
+		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", profile.Email, userID)
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
+				logger.Warn("Skipping apple account email import as it is already set in another user.", zap.Error(err), zap.String("appleID", profile.ID), zap.String("user_id", userID.String()))
+			} else {
+				logger.Error("Failed to import apple account email.", zap.Error(err), zap.String("appleID", profile.ID), zap.String("user_id", userID.String()))
+				return status.Error(codes.Internal, "Error importing apple account email.")
+			}
+		}
 	}
 
 	return nil
@@ -102,13 +118,7 @@ func LinkDevice(ctx context.Context, logger *zap.Logger, db *sql.DB, userID uuid
 		return status.Error(codes.InvalidArgument, "Device ID invalid, must be 10-128 bytes.")
 	}
 
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		logger.Error("Could not begin database transaction.", zap.Error(err))
-		return status.Error(codes.Internal, "Error linking Device ID.")
-	}
-
-	err = ExecuteInTx(ctx, tx, func() error {
+	err := ExecuteInTx(ctx, db, func(tx *sql.Tx) error {
 		var dbDeviceIDLinkedUser int64
 		err := tx.QueryRowContext(ctx, "SELECT COUNT(id) FROM user_device WHERE id = $1 AND user_id = $2 LIMIT 1", deviceID, userID).Scan(&dbDeviceIDLinkedUser)
 		if err != nil {
@@ -119,7 +129,8 @@ func LinkDevice(ctx context.Context, logger *zap.Logger, db *sql.DB, userID uuid
 		if dbDeviceIDLinkedUser == 0 {
 			_, err = tx.ExecContext(ctx, "INSERT INTO user_device (id, user_id) VALUES ($1, $2)", deviceID, userID)
 			if err != nil {
-				if e, ok := err.(pgx.PgError); ok && e.Code == dbErrorUniqueViolation {
+				var pgErr *pgconn.PgError
+				if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
 					return StatusError(codes.AlreadyExists, "Device ID already in use.", err)
 				}
 				logger.Debug("Cannot link device ID.", zap.Error(err), zap.Any("input", deviceID))
@@ -182,27 +193,35 @@ AND (NOT EXISTS
 	return nil
 }
 
-func LinkFacebook(ctx context.Context, logger *zap.Logger, db *sql.DB, socialClient *social.Client, router MessageRouter, userID uuid.UUID, username, token string, sync bool) error {
+func LinkFacebook(ctx context.Context, logger *zap.Logger, db *sql.DB, socialClient *social.Client, router MessageRouter, userID uuid.UUID, username, appId, token string, sync bool) error {
 	if token == "" {
 		return status.Error(codes.InvalidArgument, "Facebook access token is required.")
 	}
 
-	facebookProfile, err := socialClient.GetFacebookProfile(ctx, token)
+	var facebookProfile *social.FacebookProfile
+	var err error
+	var importFriendsPossible bool
+
+	facebookProfile, err = socialClient.CheckFacebookLimitedLoginToken(ctx, appId, token)
 	if err != nil {
-		logger.Info("Could not authenticate Facebook profile.", zap.Error(err))
-		return status.Error(codes.Unauthenticated, "Could not authenticate Facebook profile.")
+		facebookProfile, err = socialClient.GetFacebookProfile(ctx, token)
+		if err != nil {
+			logger.Info("Could not authenticate Facebook profile.", zap.Error(err))
+			return status.Error(codes.Unauthenticated, "Could not authenticate Facebook profile.")
+		}
+		importFriendsPossible = true
 	}
 
 	res, err := db.ExecContext(ctx, `
-UPDATE users
-SET facebook_id = $2, update_time = now()
+UPDATE users AS u
+SET facebook_id = $2, display_name = COALESCE(NULLIF(u.display_name, ''), $3), avatar_url = COALESCE(NULLIF(u.avatar_url, ''), $4), update_time = now()
 WHERE (id = $1)
 AND (NOT EXISTS
     (SELECT id
      FROM users
      WHERE facebook_id = $2 AND NOT id = $1))`,
 		userID,
-		facebookProfile.ID)
+		facebookProfile.ID, facebookProfile.Name, facebookProfile.Picture.Data.Url)
 
 	if err != nil {
 		logger.Error("Could not link Facebook ID.", zap.Error(err), zap.Any("input", token))
@@ -211,8 +230,22 @@ AND (NOT EXISTS
 		return status.Error(codes.AlreadyExists, "Facebook ID is already in use.")
 	}
 
+	// Import email address, if it exists.
+	if facebookProfile.Email != "" {
+		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", facebookProfile.Email, userID)
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
+				logger.Warn("Skipping facebook account email import as it is already set in another user.", zap.Error(err), zap.String("facebookID", facebookProfile.ID), zap.String("username", username), zap.String("user_id", userID.String()))
+			} else {
+				logger.Error("Failed to import facebook account email.", zap.Error(err), zap.String("facebookID", facebookProfile.ID), zap.String("username", username), zap.String("user_id", userID.String()))
+				return status.Error(codes.Internal, "Error importing facebook account email.")
+			}
+		}
+	}
+
 	// Import friends if requested.
-	if sync {
+	if sync && importFriendsPossible {
 		_ = importFacebookFriends(ctx, logger, db, router, socialClient, userID, username, token, false)
 	}
 
@@ -291,52 +324,74 @@ AND (NOT EXISTS
 	return nil
 }
 
-func LinkGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, socialClient *social.Client, userID uuid.UUID, token string) error {
-	if token == "" {
+func LinkGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, socialClient *social.Client, userID uuid.UUID, idToken string) error {
+	if idToken == "" {
 		return status.Error(codes.InvalidArgument, "Google access token is required.")
 	}
 
-	googleProfile, err := socialClient.CheckGoogleToken(ctx, token)
+	googleProfile, err := socialClient.CheckGoogleToken(ctx, idToken)
 	if err != nil {
 		logger.Info("Could not authenticate Google profile.", zap.Error(err))
 		return status.Error(codes.Unauthenticated, "Could not authenticate Google profile.")
 	}
 
-	displayName := googleProfile.Name
+	displayName := googleProfile.GetDisplayName()
 	if len(displayName) > 255 {
 		// Ignore the name in case it is longer than db can store
 		logger.Warn("Skipping updating display_name: value received from Google longer than max length of 255 chars.", zap.String("display_name", displayName))
 		displayName = ""
 	}
 
-	avatarURL := googleProfile.Picture
+	avatarURL := googleProfile.GetAvatarImageUrl()
 	if len(avatarURL) > 512 {
 		// Ignore the url in case it is longer than db can store
 		logger.Warn("Skipping updating avatar_url: value received from Google longer than max length of 512 chars.", zap.String("avatar_url", avatarURL))
 		avatarURL = ""
 	}
 
+	err = RemapGoogleId(ctx, logger, db, googleProfile)
+	if err != nil {
+		logger.Error("Could not remap Google ID.", zap.Error(err), zap.String("googleId", googleProfile.GetGoogleId()),
+			zap.String("originalGoogleId", googleProfile.GetOriginalGoogleId()), zap.Any("input", idToken))
+		return status.Error(codes.Internal, "Error while trying to link Google ID.")
+	}
+
 	res, err := db.ExecContext(ctx, `
-UPDATE users
-SET google_id = $2, display_name = $3, avatar_url = $4, update_time = now()
+UPDATE users AS u
+SET google_id = $2, display_name = COALESCE(NULLIF(u.display_name, ''), $3), avatar_url = COALESCE(NULLIF(u.avatar_url, ''), $4), update_time = now()
 WHERE (id = $1)
 AND (NOT EXISTS
     (SELECT id
      FROM users
      WHERE google_id = $2 AND NOT id = $1))`,
 		userID,
-		googleProfile.Sub, displayName, avatarURL)
+		googleProfile.GetGoogleId(), displayName, avatarURL)
 
 	if err != nil {
-		logger.Error("Could not link Google ID.", zap.Error(err), zap.Any("input", token))
+		logger.Error("Could not link Google ID.", zap.Error(err), zap.Any("input", idToken))
 		return status.Error(codes.Internal, "Error while trying to link Google ID.")
 	} else if count, _ := res.RowsAffected(); count == 0 {
 		return status.Error(codes.AlreadyExists, "Google ID is already in use.")
 	}
+
+	// Import email address, if it exists.
+	if googleProfile.GetEmail() != "" {
+		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", googleProfile.GetEmail(), userID)
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
+				logger.Warn("Skipping google account email import as it is already set in another user.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("created_user_id", userID.String()))
+			} else {
+				logger.Error("Failed to import google account email.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("created_user_id", userID.String()))
+				return status.Error(codes.Internal, "Error importing google account email.")
+			}
+		}
+	}
+
 	return nil
 }
 
-func LinkSteam(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, socialClient *social.Client, userID uuid.UUID, token string) error {
+func LinkSteam(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, socialClient *social.Client, router MessageRouter, userID uuid.UUID, username, token string, sync bool) error {
 	if config.GetSocial().Steam.PublisherKey == "" || config.GetSocial().Steam.AppID == 0 {
 		return status.Error(codes.FailedPrecondition, "Steam authentication is not configured.")
 	}
@@ -368,5 +423,12 @@ AND (NOT EXISTS
 	} else if count, _ := res.RowsAffected(); count == 0 {
 		return status.Error(codes.AlreadyExists, "Steam ID is already in use.")
 	}
+
+	// Import friends if requested.
+	if sync {
+		steamID := strconv.FormatUint(steamProfile.SteamID, 10)
+		_ = importSteamFriends(ctx, logger, db, router, socialClient, userID, username, config.GetSocial().Steam.PublisherKey, steamID, false)
+	}
+
 	return nil
 }

@@ -15,11 +15,10 @@
 package server
 
 import (
-	"bytes"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
 	"github.com/heroiclabs/nakama-common/rtapi"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 // Deferred message expected to be batched with other deferred messages.
@@ -35,19 +34,20 @@ type MessageRouter interface {
 	SendToPresenceIDs(*zap.Logger, []*PresenceID, *rtapi.Envelope, bool)
 	SendToStream(*zap.Logger, PresenceStream, *rtapi.Envelope, bool)
 	SendDeferred(*zap.Logger, []*DeferredMessage)
+	SendToAll(*zap.Logger, *rtapi.Envelope, bool)
 }
 
 type LocalMessageRouter struct {
-	jsonpbMarshaler *jsonpb.Marshaler
-	sessionRegistry SessionRegistry
-	tracker         Tracker
+	protojsonMarshaler *protojson.MarshalOptions
+	sessionRegistry    SessionRegistry
+	tracker            Tracker
 }
 
-func NewLocalMessageRouter(sessionRegistry SessionRegistry, tracker Tracker, jsonpbMarshaler *jsonpb.Marshaler) MessageRouter {
+func NewLocalMessageRouter(sessionRegistry SessionRegistry, tracker Tracker, protojsonMarshaler *protojson.MarshalOptions) MessageRouter {
 	return &LocalMessageRouter{
-		jsonpbMarshaler: jsonpbMarshaler,
-		sessionRegistry: sessionRegistry,
-		tracker:         tracker,
+		protojsonMarshaler: protojsonMarshaler,
+		sessionRegistry:    sessionRegistry,
+		tracker:            tracker,
 	}
 }
 
@@ -84,9 +84,8 @@ func (r *LocalMessageRouter) SendToPresenceIDs(logger *zap.Logger, presenceIDs [
 		default:
 			if payloadJSON == nil {
 				// Marshal the payload now that we know this format is needed.
-				var buf bytes.Buffer
-				if err = r.jsonpbMarshaler.Marshal(&buf, envelope); err == nil {
-					payloadJSON = buf.Bytes()
+				if buf, err := r.protojsonMarshaler.Marshal(envelope); err == nil {
+					payloadJSON = buf
 				} else {
 					logger.Error("Could not marshal message", zap.Error(err))
 					return
@@ -109,4 +108,43 @@ func (r *LocalMessageRouter) SendDeferred(logger *zap.Logger, messages []*Deferr
 	for _, message := range messages {
 		r.SendToPresenceIDs(logger, message.PresenceIDs, message.Envelope, message.Reliable)
 	}
+}
+
+func (r *LocalMessageRouter) SendToAll(logger *zap.Logger, envelope *rtapi.Envelope, reliable bool) {
+	// Prepare payload variables but do not initialize until we hit a session that needs them to avoid unnecessary work.
+	var payloadProtobuf []byte
+	var payloadJSON []byte
+
+	r.sessionRegistry.Range(func(session Session) bool {
+		var err error
+		switch session.Format() {
+		case SessionFormatProtobuf:
+			if payloadProtobuf == nil {
+				// Marshal the payload now that we know this format is needed.
+				payloadProtobuf, err = proto.Marshal(envelope)
+				if err != nil {
+					logger.Error("Could not marshal message", zap.Error(err))
+					return false
+				}
+			}
+			err = session.SendBytes(payloadProtobuf, reliable)
+		case SessionFormatJson:
+			fallthrough
+		default:
+			if payloadJSON == nil {
+				// Marshal the payload now that we know this format is needed.
+				if buf, err := r.protojsonMarshaler.Marshal(envelope); err == nil {
+					payloadJSON = buf
+				} else {
+					logger.Error("Could not marshal message", zap.Error(err))
+					return false
+				}
+			}
+			err = session.SendBytes(payloadJSON, reliable)
+		}
+		if err != nil {
+			logger.Error("Failed to route message", zap.String("sid", session.ID().String()), zap.Error(err))
+		}
+		return true
+	})
 }

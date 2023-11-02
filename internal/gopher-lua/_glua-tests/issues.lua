@@ -331,3 +331,131 @@ function test()
 	assert(os.time(t1) == os.time(t6))
 end
 test()
+
+--issue #331
+--[[
+function test()
+	local select_a = function()
+		return select(3, "1")
+	end
+	assert(true == pcall(select_a))
+	local select_b = function()
+		return select(0)
+	end
+	assert(false == pcall(select_b))
+	local select_c = function()
+		return select(1/9)
+	end
+	assert(false == pcall(select_c))
+	local select_d = function()
+		return select(1, "a")
+	end
+	assert("a" == select_d())
+	local select_e = function()
+		return select(3, "a", "b", "c")
+	end
+	assert("c" == select_e())
+	local select_f = function()
+		return select(0)(select(1/9))
+	end
+	assert(false == pcall(select_f))
+end
+test()
+--]]
+
+-- issue #363
+-- Any expression enclosed in parentheses always results in only one value.
+function test()
+    function ret2(a, b)
+        return a, b
+    end
+    function enclosed_ret()
+        return (ret2(1, 2))
+    end
+    local a,b = enclosed_ret()
+    assert(a == 1 and b == nil)
+
+    function enclosed_vararg_ret(...)
+        return (...)
+    end
+    local a,b,c=enclosed_vararg_ret(1, 2, 3)
+    assert(a == 1 and b == nil and c == nil)
+
+    function enclosed_vararg_assign(...)
+        local a,b,c = (...)
+        return a,b,c
+    end
+    local a,b,c=enclosed_vararg_assign(1, 2, 3)
+    assert(a == 1 and b == nil and c == nil)
+end
+test()
+
+-- issue #412
+-- issue #418
+-- Conversion from symmetric modulo is incorrect.
+function test()
+    assert(-2 % -2 == 0)
+    assert(-1 % -2 == -1)
+    assert(0 % -2 == 0)
+    assert(1 % -2 == -1)
+    assert(2 % -2 == 0)
+    assert(-2 % 2 == 0)
+    assert(-1 % 2 == 1)
+    assert(0 % 2 == 0)
+    assert(1 % 2 == 1)
+    assert(2 % 2 == 0)
+end
+test()
+
+-- issue #355
+function test()
+  local x = "valid"
+  assert(x == "valid")
+  assert(zzz == nil)
+  x = zzz and "not-valid" or x
+  assert(x == "valid")
+end
+test()
+
+function test()
+  local x = "valid"
+  local z = nil
+  assert(x == "valid")
+  assert(z == nil)
+  x = z and "not-valid" or x
+  assert(x == "valid")
+end
+test()
+
+function test()
+  local x = "valid"
+  assert(x == "valid")
+  assert(zzz == nil)
+  x = zzz and "not-valid" or "still " .. x
+  assert(x == "still valid")
+end
+test()
+
+-- issue #315
+function test()
+  local a = {}
+  local d = 'e'
+  local f = 1
+  
+  f, a.d = f, d
+  
+  assert(f..", "..a.d == "1, e")
+end
+test()
+
+-- issue #423
+function test()
+  local a, b, c = "1", "3", "1"
+  a, b, c= tonumber(a), tonumber(b) or a, tonumber(c)
+  assert(a == 1)
+  assert(type(a) == "number")
+  assert(b == 3)
+  assert(type(b) == "number")
+  assert(c == 1)
+  assert(type(c) == "number")
+end

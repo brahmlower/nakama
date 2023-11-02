@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	"sync/atomic"
+	"time"
 
 	"google.golang.org/grpc/stats"
 )
@@ -30,7 +31,7 @@ type metricsGrpcHandlerData struct {
 }
 
 type MetricsGrpcHandler struct {
-	metrics *Metrics
+	MetricsFn func(name string, elapsed time.Duration, recvBytes, sentBytes int64, isErr bool)
 }
 
 // TagRPC can attach some information to the given context.
@@ -51,7 +52,7 @@ func (m *MetricsGrpcHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 	case *stats.OutPayload:
 		atomic.AddInt64(&data.sentBytes, int64(rs.WireLength))
 	case *stats.End:
-		m.metrics.Api(data.fullMethodName, rs.EndTime.Sub(rs.BeginTime), data.recvBytes, data.sentBytes, rs.Error != nil)
+		m.MetricsFn(data.fullMethodName, rs.EndTime.Sub(rs.BeginTime), data.recvBytes, data.sentBytes, rs.Error != nil)
 	}
 }
 
@@ -60,9 +61,10 @@ func (m *MetricsGrpcHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 // For conn stats handling, the context used in HandleConn for this
 // connection will be derived from the context returned.
 // For RPC stats handling,
-//  - On server side, the context used in HandleRPC for all RPCs on this
+//   - On server side, the context used in HandleRPC for all RPCs on this
+//
 // connection will be derived from the context returned.
-//  - On client side, the context is not derived from the context returned.
+//   - On client side, the context is not derived from the context returned.
 func (m *MetricsGrpcHandler) TagConn(ctx context.Context, _ *stats.ConnTagInfo) context.Context {
 	return ctx
 }

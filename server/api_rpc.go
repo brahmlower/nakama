@@ -17,12 +17,12 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/mux"
 	grpcgw "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/heroiclabs/nakama-common/api"
@@ -46,24 +46,12 @@ var (
 func (s *ApiServer) RpcFuncHttp(w http.ResponseWriter, r *http.Request) {
 	// Check first token then HTTP key for authentication, and add user info to the context.
 	queryParams := r.URL.Query()
-	var tokenAuth bool
+	var isTokenAuth bool
 	var userID uuid.UUID
 	var username string
 	var vars map[string]string
 	var expiry int64
-	if auth := r.Header["Authorization"]; len(auth) >= 1 {
-		userID, username, vars, expiry, tokenAuth = parseBearerAuth([]byte(s.config.GetSession().EncryptionKey), auth[0])
-		if !tokenAuth {
-			// Auth token not valid or expired.
-			w.Header().Set("content-type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			_, err := w.Write(authTokenInvalidBytes)
-			if err != nil {
-				s.logger.Debug("Error writing response to client", zap.Error(err))
-			}
-			return
-		}
-	} else if httpKey := queryParams.Get("http_key"); httpKey != "" {
+	if httpKey := queryParams.Get("http_key"); httpKey != "" {
 		if httpKey != s.config.GetRuntime().HTTPKey {
 			// HTTP key did not match.
 			w.Header().Set("content-type", "application/json")
@@ -73,6 +61,32 @@ func (s *ApiServer) RpcFuncHttp(w http.ResponseWriter, r *http.Request) {
 				s.logger.Debug("Error writing response to client", zap.Error(err))
 			}
 			return
+		}
+	} else if auth := r.Header["Authorization"]; len(auth) >= 1 {
+		if httpKey, _, ok := parseBasicAuth(auth[0]); ok {
+			if httpKey != s.config.GetRuntime().HTTPKey {
+				// HTTP key did not match.
+				w.Header().Set("content-type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				_, err := w.Write(httpKeyInvalidBytes)
+				if err != nil {
+					s.logger.Debug("Error writing response to client", zap.Error(err))
+				}
+				return
+			}
+		} else {
+			var token string
+			userID, username, vars, expiry, token, isTokenAuth = parseBearerAuth([]byte(s.config.GetSession().EncryptionKey), auth[0])
+			if !isTokenAuth || !s.sessionCache.IsValidSession(userID, expiry, token) {
+				// Auth token not valid or expired.
+				w.Header().Set("content-type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				_, err := w.Write(authTokenInvalidBytes)
+				if err != nil {
+					s.logger.Debug("Error writing response to client", zap.Error(err))
+				}
+				return
+			}
 		}
 	} else {
 		// No authentication present.
@@ -85,14 +99,16 @@ func (s *ApiServer) RpcFuncHttp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// After this point the RPC will be captured in metrics.
 	start := time.Now()
 	var success bool
 	var recvBytes, sentBytes int
-	defer func() {
-		s.metrics.Api("Rpc", time.Since(start), int64(recvBytes), int64(sentBytes), !success)
-	}()
 	var err error
+	var id string
+
+	// After this point the RPC will be captured in metrics.
+	defer func() {
+		s.metrics.ApiRpc(id, time.Since(start), int64(recvBytes), int64(sentBytes), !success)
+	}()
 
 	// Check the RPC function ID.
 	maybeID, ok := mux.Vars(r)["id"]
@@ -106,7 +122,7 @@ func (s *ApiServer) RpcFuncHttp(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	id := strings.ToLower(maybeID)
+	id = strings.ToLower(maybeID)
 
 	// Find the correct RPC function.
 	fn := s.runtime.Rpc(id)
@@ -129,7 +145,7 @@ func (s *ApiServer) RpcFuncHttp(w http.ResponseWriter, r *http.Request) {
 	// Prepare input to function.
 	var payload string
 	if r.Method == "POST" {
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		if err != nil {
 			// Request body too large.
 			if err.Error() == "http: request body too large" {
@@ -173,14 +189,24 @@ func (s *ApiServer) RpcFuncHttp(w http.ResponseWriter, r *http.Request) {
 	queryParams.Del("http_key")
 
 	uid := ""
-	if tokenAuth {
+	if isTokenAuth {
 		uid = userID.String()
 	}
 
 	clientIP, clientPort := extractClientAddressFromRequest(s.logger, r)
 
+	// Extract http headers
+	headers := make(map[string][]string)
+	for k, v := range r.Header {
+		if k == "Grpc-Timeout" {
+			continue
+		}
+		headers[k] = make([]string, 0, len(v))
+		headers[k] = append(headers[k], v...)
+	}
+
 	// Execute the function.
-	result, fnErr, code := fn(r.Context(), queryParams, uid, username, vars, expiry, "", clientIP, clientPort, payload)
+	result, fnErr, code := fn(r.Context(), headers, queryParams, uid, username, vars, expiry, "", clientIP, clientPort, "", payload)
 	if fnErr != nil {
 		response, _ := json.Marshal(map[string]interface{}{"error": fnErr, "message": fnErr.Error(), "code": code})
 		w.Header().Set("content-type", "application/json")
@@ -246,6 +272,7 @@ func (s *ApiServer) RpcFunc(ctx context.Context, in *api.Rpc) (*api.Rpc, error) 
 		return nil, status.Error(codes.NotFound, "RPC function not found")
 	}
 
+	headers := make(map[string][]string, 0)
 	queryParams := make(map[string][]string, 0)
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -255,6 +282,8 @@ func (s *ApiServer) RpcFunc(ctx context.Context, in *api.Rpc) (*api.Rpc, error) 
 		// Only process the keys representing custom query parameters.
 		if strings.HasPrefix(k, "q_") {
 			queryParams[k[2:]] = vs
+		} else {
+			headers[k] = vs
 		}
 	}
 
@@ -277,7 +306,7 @@ func (s *ApiServer) RpcFunc(ctx context.Context, in *api.Rpc) (*api.Rpc, error) 
 
 	clientIP, clientPort := extractClientAddressFromContext(s.logger, ctx)
 
-	result, fnErr, code := fn(ctx, queryParams, uid, username, vars, expiry, "", clientIP, clientPort, in.Payload)
+	result, fnErr, code := fn(ctx, headers, queryParams, uid, username, vars, expiry, "", clientIP, clientPort, "", in.Payload)
 	if fnErr != nil {
 		return nil, status.Error(code, fnErr.Error())
 	}

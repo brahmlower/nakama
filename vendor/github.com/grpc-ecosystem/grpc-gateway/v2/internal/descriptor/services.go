@@ -1,6 +1,7 @@
 package descriptor
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -132,7 +133,7 @@ func (r *Registry) newMethod(svc *Service, md *descriptorpb.MethodDescriptorProt
 		tmpl := parsed.Compile()
 
 		if md.GetClientStreaming() && len(tmpl.Fields) > 0 {
-			return nil, fmt.Errorf("cannot use path parameter in client streaming")
+			return nil, errors.New("cannot use path parameter in client streaming")
 		}
 
 		b := &Binding{
@@ -248,7 +249,7 @@ func (r *Registry) newParam(meth *Method, path string) (Parameter, error) {
 		if IsWellKnownType(*target.TypeName) {
 			glog.V(2).Infoln("found well known aggregate type:", target)
 		} else {
-			return Parameter{}, fmt.Errorf("aggregate type %s in parameter of %s.%s: %s", target.Type, meth.Service.GetName(), meth.GetName(), path)
+			return Parameter{}, fmt.Errorf("%s.%s: %s is a protobuf message type. Protobuf message types cannot be used as path parameters, use a scalar value type (such as string) instead", meth.Service.GetName(), meth.GetName(), path)
 		}
 	}
 	return Parameter{
@@ -259,13 +260,13 @@ func (r *Registry) newParam(meth *Method, path string) (Parameter, error) {
 }
 
 func (r *Registry) newBody(meth *Method, path string) (*Body, error) {
-	msg := meth.RequestType
 	switch path {
 	case "":
 		return nil, nil
 	case "*":
 		return &Body{FieldPath: nil}, nil
 	}
+	msg := meth.RequestType
 	fields, err := r.resolveFieldPath(msg, path, false)
 	if err != nil {
 		return nil, err
@@ -325,8 +326,8 @@ func (r *Registry) resolveFieldPath(msg *Message, path string, isPathParam bool)
 		if f == nil {
 			return nil, fmt.Errorf("no field %q found in %s", path, root.GetName())
 		}
-		if !(isPathParam || r.allowRepeatedFieldsInBody) && f.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED {
-			return nil, fmt.Errorf("repeated field not allowed in field path: %s in %s", f.GetName(), path)
+		if isPathParam && f.GetProto3Optional() {
+			return nil, fmt.Errorf("optional field not allowed in field path: %s in %s", f.GetName(), path)
 		}
 		result = append(result, FieldPathComponent{Name: c, Target: f})
 	}

@@ -16,14 +16,17 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
-	"github.com/pkg/errors"
+	"github.com/gofrs/uuid/v5"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
+
+var ErrMatchInitStateNil = errors.New("Match initial state must not be nil")
 
 type MatchDataMessage struct {
 	UserID      uuid.UUID
@@ -69,6 +72,9 @@ func (m *MatchDataMessage) GetReliable() bool {
 func (m *MatchDataMessage) GetReceiveTime() int64 {
 	return m.ReceiveTime
 }
+func (m *MatchDataMessage) GetReason() runtime.PresenceReason {
+	return runtime.PresenceReasonUnknown
+}
 
 type MatchHandler struct {
 	logger          *zap.Logger
@@ -96,6 +102,7 @@ type MatchHandler struct {
 	ticker        *time.Ticker
 	callCh        chan func(*MatchHandler)
 	joinAttemptCh chan func(*MatchHandler)
+	signalCh      chan func(*MatchHandler)
 	stopCh        chan struct{}
 	stopped       *atomic.Bool
 
@@ -116,18 +123,15 @@ func NewMatchHandler(logger *zap.Logger, config Config, sessionRegistry SessionR
 		case deferredCh <- msg:
 			return nil
 		default:
-			return ErrDeferredBroadcastFull
+			return runtime.ErrDeferredBroadcastFull
 		}
 	}
 
 	state, rateInt, err := core.MatchInit(presenceList, deferMessageFn, params)
 	if err != nil {
 		core.Cancel()
+		core.Cleanup()
 		return nil, err
-	}
-	if state == nil {
-		core.Cancel()
-		return nil, errors.New("Match initial state must not be nil")
 	}
 
 	// Construct the match.
@@ -158,6 +162,7 @@ func NewMatchHandler(logger *zap.Logger, config Config, sessionRegistry SessionR
 		// Ticker below.
 		callCh:        make(chan func(mh *MatchHandler), config.GetMatch().CallQueueSize),
 		joinAttemptCh: make(chan func(mh *MatchHandler), config.GetMatch().JoinAttemptQueueSize),
+		signalCh:      make(chan func(mh *MatchHandler), config.GetMatch().SignalQueueSize),
 		deferredCh:    deferredCh,
 		stopCh:        make(chan struct{}),
 		stopped:       stopped,
@@ -172,6 +177,7 @@ func NewMatchHandler(logger *zap.Logger, config Config, sessionRegistry SessionR
 
 	// Continuously run queued actions until the match stops.
 	go func() {
+		defer core.Cleanup()
 		for {
 			select {
 			case <-mh.stopCh:
@@ -183,11 +189,14 @@ func NewMatchHandler(logger *zap.Logger, config Config, sessionRegistry SessionR
 					return
 				}
 			case call := <-mh.callCh:
-				// An invocation to one of the match functions, not including join attempts.
+				// An invocation to one of the match functions, not including join attempts or signals.
 				call(mh)
 			case joinAttempt := <-mh.joinAttemptCh:
 				// An invocation to the join attempt match function.
 				joinAttempt(mh)
+			case signal := <-mh.signalCh:
+				// An invocation to the signal match function.
+				signal(mh)
 			}
 		}
 	}()
@@ -199,15 +208,15 @@ func NewMatchHandler(logger *zap.Logger, config Config, sessionRegistry SessionR
 
 // Disconnect all clients currently connected to the server.
 func (mh *MatchHandler) disconnectClients() {
-	presenceIDs := mh.PresenceList.ListPresenceIDs()
-	for _, presenceID := range presenceIDs {
-		_ = mh.sessionRegistry.Disconnect(context.Background(), presenceID.SessionID)
+	presences := mh.PresenceList.ListPresences()
+	for _, presence := range presences {
+		_ = mh.sessionRegistry.Disconnect(context.Background(), presence.SessionID, false)
 	}
 }
 
 // Stop the match handler and clean up all its resources.
 func (mh *MatchHandler) Stop() {
-	if !mh.stopped.CAS(false, true) {
+	if !mh.stopped.CompareAndSwap(false, true) {
 		return
 	}
 
@@ -224,6 +233,18 @@ func (mh *MatchHandler) Stop() {
 
 func (mh *MatchHandler) Label() string {
 	return mh.Core.Label()
+}
+
+func (mh *MatchHandler) TickRate() int {
+	return mh.Core.TickRate()
+}
+
+func (mh *MatchHandler) HandlerName() string {
+	return mh.Core.HandlerName()
+}
+
+func (mh *MatchHandler) CreateTime() int64 {
+	return mh.Core.CreateTime()
 }
 
 func (mh *MatchHandler) queueCall(f func(*MatchHandler)) bool {
@@ -325,7 +346,7 @@ func (mh *MatchHandler) processDeferred() {
 	}
 }
 
-func (mh *MatchHandler) QueueJoinAttempt(ctx context.Context, resultCh chan<- *MatchJoinResult, userID, sessionID uuid.UUID, username string, sessionExpiry int64, vars map[string]string, clientIP, clientPort, node string, metadata map[string]string) bool {
+func (mh *MatchHandler) QueueJoinAttempt(ctx context.Context, resultCh chan<- *MatchJoinAttemptResult, userID, sessionID uuid.UUID, username string, sessionExpiry int64, vars map[string]string, clientIP, clientPort, node string, metadata map[string]string) bool {
 	if mh.stopped.Load() {
 		return false
 	}
@@ -334,21 +355,21 @@ func (mh *MatchHandler) QueueJoinAttempt(ctx context.Context, resultCh chan<- *M
 		select {
 		case <-ctx.Done():
 			// Do not process the match join attempt through the match handler if the client has gone away between
-			// when this call was inserted into the match call queue and when it's due for processing.
-			resultCh <- &MatchJoinResult{Allow: false}
+			// when this call was inserted into the match join attempt queue and when it's due for processing.
+			resultCh <- &MatchJoinAttemptResult{Allow: false}
 			return
 		default:
 		}
 
 		if mh.stopped.Load() {
-			resultCh <- &MatchJoinResult{Allow: false}
+			resultCh <- &MatchJoinAttemptResult{Allow: false}
 			return
 		}
 
 		state, allow, reason, err := mh.Core.MatchJoinAttempt(mh.tick, mh.state, userID, sessionID, username, sessionExpiry, vars, clientIP, clientPort, node, metadata)
 		if err != nil {
 			mh.Stop()
-			resultCh <- &MatchJoinResult{Allow: false}
+			resultCh <- &MatchJoinAttemptResult{Allow: false}
 			mh.disconnectClients()
 			mh.logger.Warn("Stopping match after error from match_join_attempt execution", zap.Int64("tick", mh.tick), zap.Error(err))
 			return
@@ -359,7 +380,7 @@ func (mh *MatchHandler) QueueJoinAttempt(ctx context.Context, resultCh chan<- *M
 			mh.processDeferred()
 		} else {
 			mh.Stop()
-			resultCh <- &MatchJoinResult{Allow: false}
+			resultCh <- &MatchJoinAttemptResult{Allow: false}
 			mh.logger.Info("Match join attempt returned nil or no state, stopping match")
 			return
 		}
@@ -371,16 +392,72 @@ func (mh *MatchHandler) QueueJoinAttempt(ctx context.Context, resultCh chan<- *M
 			mh.QueueJoin([]*MatchPresence{presence}, false)
 		}
 		// Signal client.
-		resultCh <- &MatchJoinResult{Allow: allow, Reason: reason, Label: mh.Core.Label()}
+		resultCh <- &MatchJoinAttemptResult{Allow: allow, Reason: reason, Label: mh.Core.Label()}
 	}
 
 	select {
 	case mh.joinAttemptCh <- joinAttempt:
 		return true
 	default:
-		// Match join queue is full, the handler isn't processing these fast enough or there are just too many.
+		// Match join attempt queue is full, the handler isn't processing these fast enough or there are just too many.
 		// Not necessarily a match processing speed problem, so the match is not closed for these.
 		mh.logger.Warn("Match handler join attempt queue full")
+		return false
+	}
+}
+
+func (mh *MatchHandler) QueueSignal(ctx context.Context, resultCh chan<- *MatchSignalResult, data string) bool {
+	if mh.stopped.Load() {
+		return false
+	}
+
+	signal := func(mh *MatchHandler) {
+		select {
+		case <-ctx.Done():
+			// Do not process the match signal through the match handler if the caller has gone away between
+			// when this call was inserted into the match signal queue and when it's due for processing.
+			resultCh <- &MatchSignalResult{Success: false}
+			return
+		default:
+		}
+
+		if mh.stopped.Load() {
+			resultCh <- &MatchSignalResult{Success: false}
+			return
+		}
+
+		state, resultData, err := mh.Core.MatchSignal(mh.tick, mh.state, data)
+		if err != nil {
+			mh.Stop()
+			resultCh <- &MatchSignalResult{Success: false}
+			mh.disconnectClients()
+			mh.logger.Warn("Stopping match after error from match_signal execution", zap.Int64("tick", mh.tick), zap.Error(err))
+			return
+		}
+
+		if state != nil {
+			// Broadcast any deferred messages. If match will be stopped broadcasting will be handled as part of the match end cycle.
+			mh.processDeferred()
+		} else {
+			mh.Stop()
+			resultCh <- &MatchSignalResult{Success: false}
+			mh.logger.Info("Match signal returned nil or no state, stopping match")
+			return
+		}
+
+		mh.state = state
+
+		// Signal caller.
+		resultCh <- &MatchSignalResult{Success: true, Result: resultData}
+	}
+
+	select {
+	case mh.signalCh <- signal:
+		return true
+	default:
+		// Match signal queue is full, the handler isn't processing these fast enough or there are just too many.
+		// Not necessarily a match processing speed problem, so the match is not closed for these.
+		mh.logger.Warn("Match handler signal queue full")
 		return false
 	}
 }
@@ -401,7 +478,7 @@ func (mh *MatchHandler) QueueGetState(ctx context.Context, resultCh chan<- *Matc
 		}
 
 		if mh.stopped.Load() {
-			resultCh <- &MatchGetStateResult{Error: ErrMatchNotFound}
+			resultCh <- &MatchGetStateResult{Error: runtime.ErrMatchNotFound}
 			return
 		}
 

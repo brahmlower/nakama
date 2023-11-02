@@ -21,29 +21,30 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
+	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx/pgtype"
-	"golang.org/x/crypto/bcrypt"
-
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/gofrs/uuid/v5"
 	"github.com/heroiclabs/nakama-common/api"
+	"github.com/heroiclabs/nakama/v3/console"
+	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/heroiclabs/nakama/v3/console"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+var validTrigramFilterRegex = regexp.MustCompile("^%?[^%]{3,}%?$")
 
 type consoleAccountCursor struct {
 	ID       uuid.UUID
 	Username string
 }
 
-func (s *ConsoleServer) BanAccount(ctx context.Context, in *console.AccountId) (*empty.Empty, error) {
+func (s *ConsoleServer) BanAccount(ctx context.Context, in *console.AccountId) (*emptypb.Empty, error) {
 	userID, err := uuid.FromString(in.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
@@ -52,15 +53,15 @@ func (s *ConsoleServer) BanAccount(ctx context.Context, in *console.AccountId) (
 		return nil, status.Error(codes.InvalidArgument, "Cannot ban the system user.")
 	}
 
-	if err := BanUsers(ctx, s.logger, s.db, []string{in.Id}); err != nil {
+	if err := BanUsers(ctx, s.logger, s.db, s.config, s.sessionCache, s.sessionRegistry, s.tracker, []uuid.UUID{userID}); err != nil {
 		// Error logged in the core function above.
 		return nil, status.Error(codes.Internal, "An error occurred while trying to ban the user.")
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *ConsoleServer) UnbanAccount(ctx context.Context, in *console.AccountId) (*empty.Empty, error) {
+func (s *ConsoleServer) UnbanAccount(ctx context.Context, in *console.AccountId) (*emptypb.Empty, error) {
 	userID, err := uuid.FromString(in.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
@@ -69,15 +70,15 @@ func (s *ConsoleServer) UnbanAccount(ctx context.Context, in *console.AccountId)
 		return nil, status.Error(codes.InvalidArgument, "Cannot unban the system user.")
 	}
 
-	if err := UnbanUsers(ctx, s.logger, s.db, []string{in.Id}); err != nil {
+	if err := UnbanUsers(ctx, s.logger, s.db, s.sessionCache, []uuid.UUID{userID}); err != nil {
 		// Error logged in the core function above.
 		return nil, status.Error(codes.Internal, "An error occurred while trying to unban the user.")
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *ConsoleServer) DeleteAccount(ctx context.Context, in *console.AccountDeleteRequest) (*empty.Empty, error) {
+func (s *ConsoleServer) DeleteAccount(ctx context.Context, in *console.AccountDeleteRequest) (*emptypb.Empty, error) {
 	userID, err := uuid.FromString(in.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
@@ -86,25 +87,26 @@ func (s *ConsoleServer) DeleteAccount(ctx context.Context, in *console.AccountDe
 		return nil, status.Error(codes.InvalidArgument, "Cannot delete the system user.")
 	}
 
-	if err = DeleteAccount(ctx, s.logger, s.db, userID, in.RecordDeletion != nil && in.RecordDeletion.Value); err != nil {
+	if err = DeleteAccount(ctx, s.logger, s.db, s.config, s.leaderboardCache, s.leaderboardRankCache, s.sessionRegistry, s.sessionCache, s.tracker, userID, in.RecordDeletion != nil && in.RecordDeletion.Value); err != nil {
 		// Error already logged in function above.
 		return nil, status.Error(codes.Internal, "An error occurred while trying to delete the user.")
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *ConsoleServer) DeleteAccounts(ctx context.Context, in *empty.Empty) (*empty.Empty, error) {
+// Deprecated: replaced by DeleteAllData
+func (s *ConsoleServer) DeleteAccounts(ctx context.Context, in *emptypb.Empty) (*emptypb.Empty, error) {
 	// Delete all but the system user. Related data will be removed by cascading constraints.
 	_, err := s.db.ExecContext(ctx, "DELETE FROM users WHERE id <> '00000000-0000-0000-0000-000000000000'")
 	if err != nil {
 		s.logger.Error("Error deleting all user accounts.", zap.Error(err))
 		return nil, status.Error(codes.Internal, "An error occurred while trying to delete all users.")
 	}
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *ConsoleServer) DeleteFriend(ctx context.Context, in *console.DeleteFriendRequest) (*empty.Empty, error) {
+func (s *ConsoleServer) DeleteFriend(ctx context.Context, in *console.DeleteFriendRequest) (*emptypb.Empty, error) {
 	userID, err := uuid.FromString(in.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
@@ -118,10 +120,10 @@ func (s *ConsoleServer) DeleteFriend(ctx context.Context, in *console.DeleteFrie
 		return nil, status.Error(codes.Internal, "An error occurred while trying to delete the friend relationship.")
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *ConsoleServer) DeleteGroupUser(ctx context.Context, in *console.DeleteGroupUserRequest) (*empty.Empty, error) {
+func (s *ConsoleServer) DeleteGroupUser(ctx context.Context, in *console.DeleteGroupUserRequest) (*emptypb.Empty, error) {
 	userID, err := uuid.FromString(in.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
@@ -131,15 +133,18 @@ func (s *ConsoleServer) DeleteGroupUser(ctx context.Context, in *console.DeleteG
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid group ID.")
 	}
 
-	if err = KickGroupUsers(ctx, s.logger, s.db, s.router, uuid.Nil, groupID, []uuid.UUID{userID}); err != nil {
+	if err = KickGroupUsers(ctx, s.logger, s.db, s.tracker, s.router, s.streamManager, uuid.Nil, groupID, []uuid.UUID{userID}, true); err != nil {
 		// Error already logged in function above.
+		if err == ErrEmptyMemberKick {
+			return nil, status.Error(codes.FailedPrecondition, "Cannot kick user from group.")
+		}
 		return nil, status.Error(codes.Internal, "An error occurred while trying to remove the user from the group.")
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *ConsoleServer) DeleteWalletLedger(ctx context.Context, in *console.DeleteWalletLedgerRequest) (*empty.Empty, error) {
+func (s *ConsoleServer) DeleteWalletLedger(ctx context.Context, in *console.DeleteWalletLedgerRequest) (*emptypb.Empty, error) {
 	userID, err := uuid.FromString(in.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
@@ -155,7 +160,7 @@ func (s *ConsoleServer) DeleteWalletLedger(ctx context.Context, in *console.Dele
 		return nil, status.Error(codes.Internal, "An error occurred while trying to remove the user's wallet ledger item.")
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *ConsoleServer) ExportAccount(ctx context.Context, in *console.AccountId) (*console.AccountExport, error) {
@@ -180,7 +185,7 @@ func (s *ConsoleServer) GetAccount(ctx context.Context, in *console.AccountId) (
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
 	}
 
-	account, err := GetAccount(ctx, s.logger, s.db, s.tracker, userID)
+	account, err := GetAccount(ctx, s.logger, s.db, s.statusRegistry, userID)
 	if err != nil {
 		// Error already logged in function above.
 		if err == ErrAccountNotFound {
@@ -201,7 +206,7 @@ func (s *ConsoleServer) GetFriends(ctx context.Context, in *console.AccountId) (
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
 	}
 
-	friends, err := ListFriends(ctx, s.logger, s.db, s.tracker, userID, 0, nil, "")
+	friends, err := ListFriends(ctx, s.logger, s.db, s.statusRegistry, userID, 0, nil, "")
 	if err != nil {
 		// Error already logged in function above.
 		return nil, status.Error(codes.Internal, "An error occurred while trying to list the user's friends.")
@@ -225,13 +230,18 @@ func (s *ConsoleServer) GetGroups(ctx context.Context, in *console.AccountId) (*
 	return groups, nil
 }
 
-func (s *ConsoleServer) GetWalletLedger(ctx context.Context, in *console.AccountId) (*console.WalletLedgerList, error) {
-	userID, err := uuid.FromString(in.Id)
+func (s *ConsoleServer) GetWalletLedger(ctx context.Context, in *console.GetWalletLedgerRequest) (*console.WalletLedgerList, error) {
+	userID, err := uuid.FromString(in.AccountId)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
 	}
 
-	ledger, _, err := ListWalletLedger(ctx, s.logger, s.db, userID, nil, "")
+	limit := int(in.Limit)
+	if limit < 1 || limit > 100 {
+		return nil, status.Error(codes.InvalidArgument, "expects a limit value between 1 and 100")
+	}
+
+	ledger, nextCursorStr, prevCursorStr, err := ListWalletLedger(ctx, s.logger, s.db, userID, &limit, in.Cursor)
 	if err != nil {
 		// Error already logged in function above.
 		return nil, status.Error(codes.Internal, "An error occurred while trying to list the user's wallet ledger.")
@@ -255,12 +265,12 @@ func (s *ConsoleServer) GetWalletLedger(ctx context.Context, in *console.Account
 			UserId:     ledgerItem.UserID,
 			Changeset:  string(changeset),
 			Metadata:   string(metadata),
-			CreateTime: &timestamp.Timestamp{Seconds: ledgerItem.CreateTime},
-			UpdateTime: &timestamp.Timestamp{Seconds: ledgerItem.UpdateTime},
+			CreateTime: &timestamppb.Timestamp{Seconds: ledgerItem.CreateTime},
+			UpdateTime: &timestamppb.Timestamp{Seconds: ledgerItem.UpdateTime},
 		})
 	}
 
-	return &console.WalletLedgerList{Items: consoleLedger}, nil
+	return &console.WalletLedgerList{Items: consoleLedger, NextCursor: nextCursorStr, PrevCursor: prevCursorStr}, nil
 }
 
 func (s *ConsoleServer) ListAccounts(ctx context.Context, in *console.ListAccountsRequest) (*console.AccountList, error) {
@@ -298,7 +308,7 @@ func (s *ConsoleServer) ListAccounts(ctx context.Context, in *console.ListAccoun
 				Users: []*api.User{
 					{
 						Id:         in.Filter,
-						UpdateTime: &timestamp.Timestamp{Seconds: createTime.Time.Unix()},
+						UpdateTime: &timestamppb.Timestamp{Seconds: createTime.Time.Unix()},
 					},
 				},
 				TotalCount: 1,
@@ -325,7 +335,7 @@ func (s *ConsoleServer) ListAccounts(ctx context.Context, in *console.ListAccoun
 
 			users = append(users, &api.User{
 				Id:         id,
-				UpdateTime: &timestamp.Timestamp{Seconds: createTime.Time.Unix()},
+				UpdateTime: &timestamppb.Timestamp{Seconds: createTime.Time.Unix()},
 			})
 		}
 		_ = rows.Close()
@@ -337,9 +347,9 @@ func (s *ConsoleServer) ListAccounts(ctx context.Context, in *console.ListAccoun
 	}
 
 	// Listing live (non-tombstone) users.
-	// Validate cursor, if provided.
+	// Validate cursor, if provided. Only applies for non-filtered listings.
 	var cursor *consoleAccountCursor
-	if in.Cursor != "" {
+	if in.Filter == "" && in.Cursor != "" {
 		cb, err := base64.RawURLEncoding.DecodeString(in.Cursor)
 		if err != nil {
 			s.logger.Error("Error decoding account list cursor.", zap.String("cursor", in.Cursor), zap.Error(err))
@@ -352,7 +362,7 @@ func (s *ConsoleServer) ListAccounts(ctx context.Context, in *console.ListAccoun
 		}
 	}
 
-	// Check if we have a filter and it's a user ID.
+	// If a filter is supplied, check if it's a valid user ID.
 	var userIDFilter *uuid.UUID
 	if in.Filter != "" {
 		userID, err := uuid.FromString(in.Filter)
@@ -362,34 +372,107 @@ func (s *ConsoleServer) ListAccounts(ctx context.Context, in *console.ListAccoun
 	}
 
 	limit := defaultLimit
+
+	// Filtered queries do not observe cursor or limit inputs, and do not return cursors.
+	if in.Filter != "" {
+		// Exact match based on username or social identifiers, and any.
+		params := []interface{}{in.Filter}
+		query := `
+			SELECT id, username, display_name, avatar_url, lang_tag, location, timezone, metadata, apple_id, facebook_id, facebook_instant_game_id, google_id, gamecenter_id, steam_id, edge_count, create_time, update_time
+				FROM users
+				WHERE username = $1
+					OR facebook_id = $1
+					OR google_id = $1
+					OR gamecenter_id = $1
+					OR steam_id = $1
+					OR custom_id = $1
+				  OR facebook_instant_game_id = $1
+					OR apple_id = $1
+			UNION
+			SELECT u.id, username, display_name, avatar_url, lang_tag, location, timezone, metadata, apple_id, facebook_id, facebook_instant_game_id, google_id, gamecenter_id, steam_id, edge_count, create_time, update_time
+      	FROM users u JOIN user_device ud on u.id = ud.user_id
+      	WHERE ud.id = $1
+		`
+		if userIDFilter != nil {
+			params = append(params, *userIDFilter)
+			query += `
+				UNION
+				SELECT id, username, display_name, avatar_url, lang_tag, location, timezone, metadata, apple_id, facebook_id, facebook_instant_game_id, google_id, gamecenter_id, steam_id, edge_count, create_time, update_time
+        	FROM users
+					WHERE id = $2`
+		}
+
+		users := make([]*api.User, 0, defaultLimit)
+
+		rows, err := s.db.QueryContext(ctx, query, params...)
+		if err != nil {
+			s.logger.Error("Error querying users.", zap.Any("in", in), zap.Error(err))
+			return nil, status.Error(codes.Internal, "An error occurred while trying to list users.")
+		}
+
+		for rows.Next() {
+			user, err := convertUser(rows)
+			if err != nil {
+				_ = rows.Close()
+				s.logger.Error("Error scanning users.", zap.Any("in", in), zap.Error(err))
+				return nil, status.Error(codes.Internal, "An error occurred while trying to list users.")
+			}
+			users = append(users, user)
+		}
+		_ = rows.Close()
+
+		// Secondary query for fuzzy matching, if the filter is eligible.
+		// Executed separately due to cost of query - enables separate limits and potentially extended context deadline.
+		if strings.Contains(in.Filter, "%") && validTrigramFilterRegex.MatchString(in.Filter) {
+			params = []interface{}{in.Filter, limit - len(users)}
+			query = `
+		SELECT id, username, display_name, avatar_url, lang_tag, location, timezone, metadata, apple_id, facebook_id, facebook_instant_game_id, google_id, gamecenter_id, steam_id, edge_count, create_time, update_time
+        FROM users
+				WHERE username ILIKE $1
+				LIMIT $2`
+
+			rows, err := s.db.QueryContext(ctx, query, params...)
+			if err != nil {
+				s.logger.Error("Error querying users.", zap.Any("in", in), zap.Error(err))
+				return nil, status.Error(codes.Internal, "An error occurred while trying to list users.")
+			}
+
+			for rows.Next() {
+				user, err := convertUser(rows)
+				if err != nil {
+					_ = rows.Close()
+					s.logger.Error("Error scanning users.", zap.Any("in", in), zap.Error(err))
+					return nil, status.Error(codes.Internal, "An error occurred while trying to list users.")
+				}
+				users = append(users, user)
+			}
+			_ = rows.Close()
+
+			// De-duplicate users in case of overlaps between the two queries.
+			seenUserIDs := make(map[string]struct{}, len(users))
+			for i := 0; i < len(users); i++ {
+				if _, seen := seenUserIDs[users[i].Id]; seen {
+					users = append(users[:i], users[i+1:]...)
+					i--
+					continue
+				}
+				seenUserIDs[users[i].Id] = struct{}{}
+			}
+		}
+
+		s.statusRegistry.FillOnlineUsers(users)
+
+		return &console.AccountList{
+			Users:      users,
+			TotalCount: countDatabase(ctx, s.logger, s.db, "users"),
+		}, nil
+	}
+
 	var params []interface{}
 	var query string
 
+	// Non-filtered query, pagination possible.
 	switch {
-	case userIDFilter != nil:
-		// Filtering for a single exact user ID. Querying on primary key (id).
-		query = "SELECT id, username, display_name, avatar_url, lang_tag, location, timezone, metadata, apple_id, facebook_id, facebook_instant_game_id, google_id, gamecenter_id, steam_id, edge_count, create_time, update_time FROM users WHERE id = $1"
-		params = []interface{}{*userIDFilter}
-		limit = 0
-		// Pagination not possible.
-	case in.Filter != "" && strings.Contains(in.Filter, "%"):
-		// Filtering for a partial username. Querying and paginating on unique index (username).
-		query = "SELECT id, username, display_name, avatar_url, lang_tag, location, timezone, metadata, apple_id, facebook_id, facebook_instant_game_id, google_id, gamecenter_id, steam_id, edge_count, create_time, update_time FROM users WHERE username ILIKE $1"
-		params = []interface{}{in.Filter}
-		// Pagination is possible.
-		if cursor != nil {
-			query += " AND username > $2"
-			params = append(params, cursor.Username)
-		}
-		// Order and limit.
-		params = append(params, limit+1)
-		query += "ORDER BY username ASC LIMIT $" + strconv.Itoa(len(params))
-	case in.Filter != "":
-		// Filtering for an exact username. Querying on unique index (username).
-		query = "SELECT id, username, display_name, avatar_url, lang_tag, location, timezone, metadata, apple_id, facebook_id, facebook_instant_game_id, google_id, gamecenter_id, steam_id, edge_count, create_time, update_time FROM users WHERE username = $1"
-		params = []interface{}{in.Filter}
-		limit = 0
-		// Pagination not possible.
 	case cursor != nil:
 		// Non-filtered, but paginated query. Assume pagination on user ID. Querying and paginating on primary key (id).
 		query = "SELECT id, username, display_name, avatar_url, lang_tag, location, timezone, metadata, apple_id, facebook_id, facebook_instant_game_id, google_id, gamecenter_id, steam_id, edge_count, create_time, update_time FROM users WHERE id > $1 ORDER BY id ASC LIMIT $2"
@@ -408,25 +491,30 @@ func (s *ConsoleServer) ListAccounts(ctx context.Context, in *console.ListAccoun
 
 	users := make([]*api.User, 0, defaultLimit)
 	var nextCursor *consoleAccountCursor
+	var previousUser *api.User
 
 	for rows.Next() {
-		user, err := convertUser(s.tracker, rows)
+		// Checks limit before processing for the edge case where (last page == limit) => null cursor.
+		if len(users) >= limit {
+			nextCursor = &consoleAccountCursor{
+				ID:       uuid.FromStringOrNil(previousUser.Id),
+				Username: previousUser.Username,
+			}
+			break
+		}
+
+		user, err := convertUser(rows)
 		if err != nil {
 			_ = rows.Close()
 			s.logger.Error("Error scanning users.", zap.Any("in", in), zap.Error(err))
 			return nil, status.Error(codes.Internal, "An error occurred while trying to list users.")
 		}
-
 		users = append(users, user)
-		if limit > 0 && len(users) >= limit {
-			nextCursor = &consoleAccountCursor{
-				ID:       uuid.FromStringOrNil(user.Id),
-				Username: user.Username,
-			}
-			break
-		}
+		previousUser = user
 	}
 	_ = rows.Close()
+
+	s.statusRegistry.FillOnlineUsers(users)
 
 	response := &console.AccountList{
 		Users:      users,
@@ -445,7 +533,7 @@ func (s *ConsoleServer) ListAccounts(ctx context.Context, in *console.ListAccoun
 	return response, nil
 }
 
-func (s *ConsoleServer) UpdateAccount(ctx context.Context, in *console.UpdateAccountRequest) (*empty.Empty, error) {
+func (s *ConsoleServer) UpdateAccount(ctx context.Context, in *console.UpdateAccountRequest) (*emptypb.Empty, error) {
 	userID, err := uuid.FromString(in.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
@@ -461,7 +549,7 @@ func (s *ConsoleServer) UpdateAccount(ctx context.Context, in *console.UpdateAcc
 		if len(v.Value) == 0 {
 			return nil, status.Error(codes.InvalidArgument, "Username cannot be empty.")
 		}
-		if invalidCharsRegex.MatchString(v.Value) {
+		if invalidUsernameRegex.MatchString(v.Value) {
 			return nil, status.Error(codes.InvalidArgument, "Username cannot contain spaces or control characters.")
 		}
 		params = append(params, v.Value)
@@ -555,7 +643,7 @@ func (s *ConsoleServer) UpdateAccount(ctx context.Context, in *console.UpdateAcc
 		}
 	}
 
-	var newPassword string
+	var newPassword []byte
 	if v := in.Password; v != nil {
 		p := v.Value
 		if len(p) < 8 {
@@ -566,7 +654,7 @@ func (s *ConsoleServer) UpdateAccount(ctx context.Context, in *console.UpdateAcc
 			s.logger.Error("Error hashing password.", zap.Error(err))
 			return nil, status.Error(codes.Internal, "Error updating user account password.")
 		}
-		newPassword = string(hashedPassword)
+		newPassword = hashedPassword
 	}
 
 	if v := in.Wallet; v != nil && v.Value != "" {
@@ -602,16 +690,10 @@ func (s *ConsoleServer) UpdateAccount(ctx context.Context, in *console.UpdateAcc
 
 	if len(statements) == 0 && !removeCustomID && !removeEmail && len(in.DeviceIds) == 0 && len(newPassword) == 0 {
 		// Nothing to update.
-		return &empty.Empty{}, nil
+		return &emptypb.Empty{}, nil
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		s.logger.Error("Could not begin database transaction.", zap.Error(err))
-		return nil, status.Error(codes.Internal, "An error occurred while trying to update the user.")
-	}
-
-	if err = ExecuteInTx(ctx, tx, func() error {
+	if err = ExecuteInTx(ctx, s.db, func(tx *sql.Tx) error {
 		for oldDeviceID, newDeviceID := range in.DeviceIds {
 			if newDeviceID == "" {
 				query := `DELETE FROM user_device WHERE id = $2 AND user_id = $1
@@ -742,5 +824,5 @@ AND ((facebook_id IS NOT NULL
 		return nil, status.Error(codes.Internal, "An error occurred while trying to update the user.")
 	}
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }

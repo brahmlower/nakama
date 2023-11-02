@@ -1,27 +1,42 @@
-<h2 class="pb-4">Status</h2>
+<script src="status.component.ts"></script><h2 class="pb-4">Status</h2>
 
 <ngb-alert *ngIf="error" type="danger" [dismissible]="false">
   <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">
   <h6 class="mr-2 d-inline font-weight-bold">An error occurred: {{error}}</h6>
 </ngb-alert>
 
-<table class="status-table table table-sm table-striped table-bordered mb-4">
+<table class="status-table table table-sm table-striped mb-4" (mouseover)="showDelta = true" (mouseout)="showDelta = false">
   <thead class="thead-light">
     <tr>
       <th scope="col">Node name</th>
       <th scope="col">Sessions</th>
       <th scope="col">Presences</th>
       <th scope="col">Authoritative Matches</th>
-      <th scope="col">Go Routines</th>
+      <th scope="col">Goroutines</th>
     </tr>
   </thead>
   <tbody *ngIf="statusData">
     <tr class="clickable" *ngFor="let nodeData of statusData.nodes">
-      <td>{{nodeData.name}}</td>
-      <td>{{nodeData.session_count}}</td>
-      <td>{{nodeData.presence_count}}</td>
-      <td>{{nodeData.match_count}}</td>
-      <td>{{nodeData.goroutine_count}}</td>
+      <td>
+        <ng-container [ngSwitch]="nodeData.health">
+          <img *ngSwitchCase="0" class="mr-2" src="/static/svg/green-tick.svg" alt="" width="15" height="" ngbTooltip="OK">
+          <img *ngSwitchCase="1" class="mr-2" src="/static/svg/red-triangle.svg" alt="" width="15" height="" ngbTooltip="Error">
+          <img *ngSwitchCase="2" class="mr-2" src="/static/blue-spinner.svg" alt="" width="15" height="" ngbTooltip="Connecting">
+          <img *ngSwitchCase="3" class="mr-2" src="/static/red-spinner.svg" alt="" width="15" height="" ngbTooltip="Disconnecting">
+        </ng-container>
+        <span>{{nodeData.name}}</span>
+      </td>
+      <td>{{nodeData.session_count}} <span [hidden]="!showDelta" class="text-muted small">({{getMaxSessionCount() - nodeData.session_count}} delta)</span></td>
+      <td>{{nodeData.presence_count}} <span [hidden]="!showDelta" class="text-muted small">({{getMaxPresenceCount() - nodeData.presence_count}} delta)</span></td>
+      <td>{{nodeData.match_count}} <span [hidden]="!showDelta" class="text-muted small">({{getMaxMatchCount() - nodeData.match_count}} delta)</span></td>
+      <td>{{nodeData.goroutine_count}} <span [hidden]="!showDelta" class="text-muted small">({{getMaxGoroutineCount() - nodeData.goroutine_count}} delta)</span></td>
+    </tr>
+    <tr class="thead-light">
+      <td class="border-0"></td>
+      <th class="thead-light">{{getTotalSessionCount()}}</th>
+      <th class="thead-light">{{getMaxPresenceCount()}}</th>
+      <th class="thead-light">{{getTotalMatchCount()}}</th>
+      <th class="thead-light">{{getTotalGorountineCount()}}</th>
     </tr>
   </tbody>
 </table>
@@ -41,7 +56,7 @@
 
 <div class="row">
   <div class="col-6 d-inline-flex justify-content-between align-items-center">
-    <div class="graph-title"><h5 class="d-inline">Latency</h5><small> (ms)</small></div>
+    <div class="graph-title"><h5 class="d-inline">Processing Latency</h5><small> (ms)</small></div>
   </div>
   <div class="col-6 d-inline-flex justify-content-between align-items-center">
     <div class="graph-title"><h5 class="d-inline">Rate</h5><small> (rpc/s)</small></div>
